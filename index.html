@@ -669,36 +669,52 @@
             ctx.fillRect(-this.tableWidth/2 + 5, this.tableHeight, 5, 20);
             ctx.fillRect(this.tableWidth/2 - 10, this.tableHeight, 5, 20);
 
-            // --- Draw VIP Guest (only if active) ---
-            if (this.isVipActive) {
-                // Purple dress/body
-                ctx.fillStyle = '#9C27B0'; 
-                ctx.beginPath();
-                ctx.arc(0, 0, 18, Math.PI, 0); 
-                ctx.fill();
+           // --- Draw VIP Guest (only if active) ---
+    if (this.isVipActive) {
+        // Offset for the guest to sit "behind" the table (facing away)
+        const guestOffsetY = tableTopY - 10;
+        
+        // 1. Purple Dress/Body (Flat Vector Style)
+        ctx.fillStyle = '#9C27B0'; // Purple
+        ctx.beginPath();
+        // A simple rounded shape for the body/back
+        ctx.ellipse(0, guestOffsetY + 10, 20, 15, 0, Math.PI, 0, true);
+        ctx.fill();
 
-                // Skin (Head)
-                ctx.fillStyle = '#FFE0B2'; 
-                ctx.beginPath();
-                ctx.arc(0, -20, 14, 0, Math.PI * 2);
-                ctx.fill();
+        // 2. Head (Skin tone)
+        ctx.fillStyle = '#FFE0B2'; // Skin tone
+        ctx.beginPath();
+        ctx.arc(0, guestOffsetY - 10, 10, 0, Math.PI * 2);
+        ctx.fill();
 
-                // Black Hair
-                ctx.fillStyle = '#212121';
-                ctx.beginPath();
-                ctx.arc(0, -22, 16, Math.PI, 0); 
-                ctx.lineTo(16, -5); 
-                ctx.quadraticCurveTo(0, 5, -16, -5);
-                ctx.fill();
+        // 3. Dark Hair (Flat bob or simple style)
+        ctx.fillStyle = '#212121'; // Black/dark hair
+        ctx.beginPath();
+        ctx.ellipse(0, guestOffsetY - 10, 12, 12, 0, 0, Math.PI, false); // Top curve
+        ctx.lineTo(12, guestOffsetY + 2); 
+        ctx.lineTo(-12, guestOffsetY + 2);
+        ctx.closePath();
+        ctx.fill();
 
-                // Table decoration / drink spot
-                ctx.fillStyle = 'rgba(255,255,255,0.2)';
-                ctx.fillRect(15, 2, 8, 12);
-            }
-
-            ctx.restore();
-        }
+        // --- Objects on Table: Empty Beer Glass (Left Side) ---
+        const glassX = -this.tableWidth/2 + 15;
+        const glassY = tableTopY + 5;
+        
+        // Glass Rim (White/Foam color for visibility)
+        ctx.fillStyle = '#fefefe';
+        ctx.fillRect(glassX - 5, glassY, 10, 2);
+        
+        // Glass Body (Transparent)
+        ctx.fillStyle = 'rgba(200, 200, 255, 0.3)';
+        ctx.fillRect(glassX - 5, glassY + 2, 10, 15);
+        
+        // Glass Base
+        ctx.fillStyle = '#4b5563';
+        ctx.fillRect(glassX - 6, glassY + 17, 12, 3);
     }
+
+    ctx.restore();
+}
 
     class Particle {
         constructor(x, y, color) {
