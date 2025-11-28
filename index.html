@@ -1,1054 +1,1103 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Law Brewing Defender: The Sheriff of Taps</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Rye&family=Roboto+Slab:wght=400;700&display=swap');
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Law Brewing Defender: The Sheriff of Taps</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Rye&family=Roboto+Slab:wght@400;700&display=swap');
 
-        body {
-            background-color: #1a1a1a;
-            color: white;
-            font-family: 'Roboto Slab', serif;
-            overflow: hidden;
-            touch-action: none; 
-            user-select: none;
-            margin: 0;
-            padding: 0;
-        }
+        body {
+            background-color: #1a1a1a;
+            color: white;
+            font-family: 'Roboto Slab', serif;
+            overflow: hidden;
+            touch-action: none; 
+            user-select: none;
+            margin: 0;
+            padding: 0;
+        }
 
-        #game-container {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-            background: radial-gradient(circle at center, #2a2a2a 0%, #000000 100%);
-            overflow: hidden;
-        }
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle at center, #2a2a2a 0%, #000000 100%);
+            overflow: hidden;
+        }
 
-        /* --- Background Logo --- */
-        #bg-logo {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 80vmin;
-            height: 80vmin;
-            opacity: 0.3;
-            pointer-events: none;
-            z-index: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+        /* --- Background Logo --- */
+        #bg-logo {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80vmin;
+            height: 80vmin;
+            opacity: 0.3;
+            pointer-events: none;
+            z-index: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
 
-        #bg-logo svg {
-            width: 100%;
-            height: 100%;
-        }
+        #bg-logo svg {
+            width: 100%;
+            height: 100%;
+        }
 
-        canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 10;
-            display: block;
-        }
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 10;
+            display: block;
+        }
 
-        /* --- UI Overlays --- */
-        .ui-overlay {
-            position: absolute;
-            z-index: 20;
-            pointer-events: none;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(5px);
-            transition: opacity 0.5s;
-        }
+        /* --- UI Overlays --- */
+        .ui-overlay {
+            position: absolute;
+            z-index: 20;
+            pointer-events: none;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(5px);
+            transition: opacity 0.5s;
+        }
 
-        .hud {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            padding: 20px;
-            display: flex;
-            justify-content: space-between;
-            font-size: 1.5rem;
-            text-shadow: 2px 2px 0 #000;
-            z-index: 20;
-            pointer-events: none;
-        }
+        .hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.5rem;
+            text-shadow: 2px 2px 0 #000;
+            z-index: 20;
+            pointer-events: none;
+        }
 
-        .btn {
-            background: #fff;
-            color: #000;
-            border: 4px solid #fff;
-            padding: 15px 40px;
-            font-size: 1.5rem;
-            font-family: 'Rye', serif;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            transition: transform 0.1s, background 0.2s;
-            pointer-events: auto;
-            margin-top: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-        }
+        .btn {
+            background: #fff;
+            color: #000;
+            border: 4px solid #fff;
+            padding: 15px 40px;
+            font-size: 1.5rem;
+            font-family: 'Rye', serif;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: transform 0.1s, background 0.2s;
+            pointer-events: auto;
+            margin-top: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
 
-        .btn:hover {
-            transform: scale(1.05);
-            background: #eee;
-        }
+        .btn:hover {
+            transform: scale(1.05);
+            background: #eee;
+        }
 
-        .btn:active {
-            transform: scale(0.95);
-        }
+        .btn:active {
+            transform: scale(0.95);
+        }
 
-        h1 {
-            font-family: 'Rye', serif;
-            font-size: 4rem;
-            margin-bottom: 0.5rem;
-            text-shadow: 0 4px 10px rgba(0,0,0,0.8);
-            color: #fff;
-            line-height: 1;
-        }
-        
-        h2 {
-            font-family: 'Rye', serif;
-            font-size: 2rem;
-            margin-bottom: 2rem;
-            color: #ccc;
-        }
+        h1 {
+            font-family: 'Rye', serif;
+            font-size: 4rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.8);
+            color: #fff;
+            line-height: 1;
+        }
+        
+        h2 {
+            font-family: 'Rye', serif;
+            font-size: 2rem;
+            margin-bottom: 2rem;
+            color: #ccc;
+        }
 
-        .hidden {
-            display: none !important;
-        }
-        
-        .tutorial {
-            background: rgba(0,0,0,0.6);
-            padding: 25px;
-            border-radius: 10px;
-            border: 1px solid #555;
-            max-width: 90%;
-            width: 550px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.8);
-        }
+        .hidden {
+            display: none !important;
+        }
+        
+        .tutorial {
+            background: rgba(0,0,0,0.6);
+            padding: 25px;
+            border-radius: 10px;
+            border: 1px solid #555;
+            max-width: 90%;
+            width: 550px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+        }
 
-        .icon-row {
-            display: flex;
-            justify-content: space-around;
-            margin: 20px 0;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-        
-        .icon-box {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 100px;
-            text-align: center;
-        }
-        
-        .icon-desc {
-            font-size: 0.8rem;
-            margin-top: 8px;
-            color: #aaa;
-            line-height: 1.2;
-        }
-        
-        /* Level Transition Text Style */
-        #level-transition {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-family: 'Rye', serif;
-            font-size: 5rem;
-            color: gold;
-            text-shadow: 0 0 10px rgba(255, 255, 0, 0.8), 0 0 20px black;
-            z-index: 30;
-            opacity: 0;
-            transition: opacity 0.5s;
-            pointer-events: none;
-            text-align: center;
-            width: 100%;
-        }
+        .icon-row {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .icon-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100px;
+            text-align: center;
+        }
+        
+        .icon-desc {
+            font-size: 0.8rem;
+            margin-top: 8px;
+            color: #aaa;
+            line-height: 1.2;
+        }
+        
+        /* Level Transition Text Style */
+        #level-transition {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Rye', serif;
+            font-size: 5rem;
+            color: gold;
+            text-shadow: 0 0 10px rgba(255, 255, 0, 0.8), 0 0 20px black;
+            z-index: 30;
+            opacity: 0;
+            transition: opacity 0.5s;
+            pointer-events: none;
+            text-align: center;
+            width: 100%;
+        }
 
-        #level-subtext {
-            display: block;
-            font-size: 2rem;
-            color: white;
-            font-family: 'Roboto Slab', serif;
-            margin-top: 10px;
-        }
+        #level-subtext {
+            display: block;
+            font-size: 2rem;
+            color: white;
+            font-family: 'Roboto Slab', serif;
+            margin-top: 10px;
+        }
 
-        .show-transition {
-            opacity: 1 !important;
-        }
-        
-        /* Title Page Specifics */
-        .title-img {
-            max-width: 80%;
-            max-height: 50vh;
-            border: 5px solid #fff;
-            box-shadow: 0 0 30px rgba(0,0,0,0.8);
-            margin-bottom: 30px;
-            border-radius: 4px;
-        }
+        .show-transition {
+            opacity: 1 !important;
+        }
+        
+        /* Title Page Specifics */
+        .title-img {
+            max-width: 80%;
+            max-height: 50vh;
+            border: 5px solid #fff;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+            margin-bottom: 30px;
+            border-radius: 4px;
+        }
 
-    </style>
+    </style>
 </head>
 <body>
 
 <div id="game-container">
-    <div id="bg-logo">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" preserveAspectRatio="xMidYMid meet">
-            <defs>
-                <linearGradient id="metal" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stop-color="#d9d9d9"/>
-                    <stop offset="100%" stop-color="#7a7a7a"/>
-                </linearGradient>
-                <linearGradient id="gold" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stop-color="#ffeb8a"/>
-                    <stop offset="100%" stop-color="#c59a00"/>
-                </linearGradient>
-            </defs>
-            <circle cx="300" cy="300" r="260" fill="url(#metal)" stroke="#000" stroke-width="6"/>
-            <polygon points="300,70 355,240 535,240 390,345 445,515 300,410 155,515 210,345 65,240 245,240" fill="url(#metal)" stroke="#000" stroke-width="5"/>
-            <text x="300" y="285" font-family="Rye, serif" font-size="150" text-anchor="middle" fill="url(#gold)" stroke="#000" stroke-width="4">LAW</text>
-            <text x="300" y="380" font-family="Rye, serif" font-size="70" text-anchor="middle" fill="url(#gold)" stroke="#000" stroke-width="3">BREWING</text>
-        </svg>
-    </div>
+    <div id="bg-logo">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" preserveAspectRatio="xMidYMid meet">
+            <defs>
+                <linearGradient id="metal" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#d9d9d9"/>
+                    <stop offset="100%" stop-color="#7a7a7a"/>
+                </linearGradient>
+                <linearGradient id="gold" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#ffeb8a"/>
+                    <stop offset="100%" stop-color="#c59a00"/>
+                </linearGradient>
+            </defs>
+            <circle cx="300" cy="300" r="260" fill="url(#metal)" stroke="#000" stroke-width="6"/>
+            <polygon points="300,70 355,240 535,240 390,345 445,515 300,410 155,515 210,345 65,240 245,240" fill="url(#metal)" stroke="#000" stroke-width="5"/>
+            <text x="300" y="285" font-family="Rye, serif" font-size="150" text-anchor="middle" fill="url(#gold)" stroke="#000" stroke-width="4">LAW</text>
+            <text x="300" y="380" font-family="Rye, serif" font-size="70" text-anchor="middle" fill="url(#gold)" stroke="#000" stroke-width="3">BREWING</text>
+        </svg>
+    </div>
 
-    <canvas id="gameCanvas"></canvas>
+    <canvas id="gameCanvas"></canvas>
 
-    <div id="hud" class="hud hidden">
-        <div>LEVEL: <span id="level">1</span></div>
-        <div>SCORE: <span id="score">0</span></div>
-        <div>LIVES: <span id="lives">3</span></div>
-    </div>
-    
-    <div id="level-transition">
-        <span id="level-title">LEVEL 1</span>
-        <span id="level-subtext"></span>
-    </div>
+    <div id="hud" class="hud hidden">
+        <div>LEVEL: <span id="level">1</span></div>
+        <div>SCORE: <span id="score">0</span></div>
+        <div>LIVES: <span id="lives">3</span></div>
+    </div>
+    
+    <div id="level-transition">
+        <span id="level-title">LEVEL 1</span>
+        <span id="level-subtext"></span>
+    </div>
 
-    <div id="landing-page" class="ui-overlay">
-        <img src="https://github.com/lawbrewing/LawBrewing/blob/main/Gemini_Generated_Image_f46i9af46i9af46i.png?raw=true" 
-              alt="Law Brewing Co." 
-              class="title-img">
-        
-        <button id="enter-btn" class="btn">ENTER TAPROOM</button>
-    </div>
+    <div id="landing-page" class="ui-overlay">
+        <img src="https://github.com/lawbrewing/LawBrewing/blob/main/Gemini_Generated_Image_f46i9af46i9af46i.png?raw=true" 
+              alt="Law Brewing Co." 
+              class="title-img">
+        
+        <button id="enter-btn" class="btn">ENTER TAPROOM</button>
+    </div>
 
-    <div id="start-screen" class="ui-overlay hidden">
-        <h1>LAW<br>BREWING</h1>
-        <h2>Quality Control</h2>
-        
-        <div class="tutorial">
-            <p style="margin-bottom: 15px; color: #fff; font-size: 1.1rem;">You are the Sheriff of Taps. Defend the quality of the brew!</p>
-            
-            <div class="icon-row">
-                <div class="icon-box">
-                    <svg width="40" height="60" viewBox="0 0 50 80">
-                        <rect x="10" y="10" width="30" height="60" rx="2" fill="#9ca3af" stroke="#4b5563" stroke-width="2"/>
-                        <rect x="10" y="20" width="30" height="40" fill="#ef4444" opacity="0.8"/>
-                        <text x="25" y="45" text-anchor="middle" font-family="sans-serif" font-size="10" fill="white">SWILL</text>
-                    </svg>
-                    <span class="icon-desc">SHOOT THIS<br><strong style="color: #ef4444">(Bad Beer)</strong><br>Must NOT reach the bar!</span>
-                </div>
-                <div class="icon-box">
-                    <svg width="40" height="60" viewBox="0 0 50 80">
-                        <path d="M10 10 L15 70 L35 70 L40 10 Z" fill="#d97706" stroke="#fff" stroke-width="2" opacity="0.8"/>
-                        <path d="M10 10 Q25 0 40 10 L40 20 L10 20 Z" fill="#fff"/>
-                    </svg>
-                    <span class="icon-desc">SAVE THIS<br><strong style="color: #d97706">(Law Brew)</strong><br>Must reach the bar!</span>
-                </div>
-            </div>
+    <div id="start-screen" class="ui-overlay hidden">
+        <h1>LAW<br>BREWING</h1>
+        <h2>Quality Control</h2>
+        
+        <div class="tutorial">
+            <p style="margin-bottom: 15px; color: #fff; font-size: 1.1rem;">You are the Sheriff of Taps. Defend the quality of the brew!</p>
+            
+            <div class="icon-row">
+                <div class="icon-box">
+                                        <svg width="40" height="60" viewBox="0 0 50 80">
+                        <rect x="10" y="15" width="30" height="50" fill="#9ca3af"/>
+                        <rect x="10" y="15" width="30" height="5" fill="#d1d5db"/>
+                        <rect x="10" y="60" width="30" height="5" fill="#d1d5db"/>
+                        <rect x="10" y="35" width="30" height="20" fill="#ef4444"/>
+                        <text x="25" y="49" text-anchor="middle" font-family="sans-serif" font-size="10" fill="white">SWILL</text>
+                    </svg>
+                    <span class="icon-desc">SHOOT THIS<br><strong style="color: #ef4444">(Bad Beer)</strong><br>Must NOT reach the bar!</span>
+                </div>
+                <div class="icon-box">
+                                        <svg width="40" height="60" viewBox="0 0 50 80">
+                        <path d="M15 15 L19 63 L31 63 L35 15 Z" fill="rgba(255, 255, 255, 0.3)" stroke="#fff" stroke-width="2"/>
+                        <path d="M17 25 L20 59 L30 59 L33 25 Z" fill="#d97706"/>
+                        <ellipse cx="25" cy="25" rx="13" ry="5" fill="#fff"/>
+                        <circle cx="25" cy="40" r="5" fill="black"/>
+                    </svg>
+                    <span class="icon-desc">SAVE THIS<br><strong style="color: #d97706">(Law Brew)</strong><br>Must reach the bar!</span>
+                </div>
+            </div>
 
-            <div style="margin-top: 15px; border-top: 1px dashed #555; padding-top: 15px;">
-                <p style="color: #ffeb3b; font-size: 0.9rem; font-weight: bold; margin-bottom: 10px;">STRATEGY & THREATS</p>
-                
-                <div class="icon-row">
-                    <div class="icon-box">
-                        <svg width="40" height="40" viewBox="0 0 50 50">
-                            <rect x="15" y="5" width="20" height="5" fill="#b45309"/>
-                            <path d="M15 10 A10 5 0 0 1 35 10" fill="#b45309"/>
-                            <circle cx="25" cy="15" r="7" fill="#fdbd9c"/>
-                            <rect x="10" y="22" width="30" height="20" fill="#4b5563"/>
-                        </svg>
-                        <span class="icon-desc"><strong>The Old Timer</strong><br>Shoot him if he grabs Swill!</span>
-                    </div>
+            <div style="margin-top: 15px; border-top: 1px dashed #555; padding-top: 15px;">
+                <p style="color: #ffeb3b; font-size: 0.9rem; font-weight: bold; margin-bottom: 10px;">STRATEGY & THREATS</p>
+                
+                <div class="icon-row">
+                    <div class="icon-box">
+                                                <svg width="40" height="40" viewBox="0 0 50 50">
+                            <rect x="15" y="15" width="30" height="30" fill="#4b5563"/>
+                            <rect x="35" y="25" width="10" height="20" fill="#4b5563"/>
+                            <circle cx="40" cy="45" r="5" fill="#fdbd9c"/>
+                            <rect x="42" y="40" width="10" height="5" fill="#8bc34a" stroke="#4c8c2a" stroke-width="1"/>
+                            <text x="47" y="44" font-family="Arial" font-size="6" text-anchor="middle" fill="#4c8c2a">$1</text>
+                            
+                            <circle cx="30" cy="15" r="10" fill="#fdbd9c"/>
+                            <path d="M18 5 A10 5 0 0 1 42 5" fill="#f0f0f0"/>
+                            <rect x="25" y="5" width="10" height="5" fill="#f0f0f0"/>
+                            <path d="M18 10 A12 12 0 0 1 42 10 L42 18 A12 12 0 0 1 18 18 Z" fill="#f0f0f0"/>
+                        </svg>
+                        <span class="icon-desc"><strong>The Old Timer</strong><br>Shoot him if he grabs Swill!</span>
+                    </div>
 
-                    <div class="icon-box">
-                        <svg width="50" height="50" viewBox="0 0 60 60">
-                            <rect x="5" y="40" width="50" height="15" fill="#5D4037" stroke="#3E2723" />
-                            <circle cx="30" cy="20" r="10" fill="#FFE0B2" />
-                            <path d="M20 20 Q30 5 40 20 Q42 35 30 38 Q18 35 20 20" fill="#212121" />
-                            <path d="M20 30 Q30 45 40 30" fill="#9C27B0" />
-                        </svg>
-                        <span class="icon-desc"><strong>The VIP</strong> (Lvl 3+)<br>Move the table to catch Law Brew for a bonus!</span>
-                    </div>
-                </div>
-                <p style="font-size: 1.1rem; color: #fff;">
-                    Tap/Drag the <strong style="color: #ffeb3b;">bottom half</strong> of the screen to move the VIP's table.
-                </p>
-            </div>
-        </div>
+                    <div class="icon-box">
+                                                <svg width="50" height="50" viewBox="0 0 60 60">
+                                                        <ellipse cx="30" cy="30" rx="20" ry="15" fill="#9C27B0" transform="translate(0, -10)"/>
+                            <circle cx="30" cy="10" r="10" fill="#FFE0B2"/>
+                            <path d="M18 10 A12 12 0 0 1 42 10 L42 22 L18 22 Z" fill="#212121"/>
+                            
+                                                        <rect x="15" y="40" width="30" height="20" fill="#5D4037" stroke="#3E2723" stroke-width="2" />
+                            <rect x="17" y="60" width="5" height="10" fill="#5D4037"/>
+                            <rect x="38" y="60" width="5" height="10" fill="#5D4037"/>
 
-        <button id="start-btn" class="btn">Start Shift</button>
-    </div>
+                                                        <rect x="18" y="43" width="10" height="15" fill="rgba(200, 200, 255, 0.3)"/>
+                            <rect x="18" y="41" width="10" height="2" fill="#fefefe"/>
+                            <rect x="17" y="58" width="12" height="3" fill="#4b5563"/>
+                        </svg>
+                        <span class="icon-desc"><strong>The VIP</strong> (Lvl 3+)<br>Move the table to catch Law Brew for a bonus!</span>
+                    </div>
+                </div>
+                <p style="font-size: 1.1rem; color: #fff;">
+                    Tap/Drag the <strong style="color: #ffeb3b;">bottom half</strong> of the screen to move the VIP's table.
+                </p>
+            </div>
+        </div>
 
-    <div id="game-over-screen" class="ui-overlay hidden">
-        <h1>SHIFT OVER</h1>
-        <h2>Final Score: <span id="final-score">0</span></h2>
-        <p id="game-over-msg" style="margin-bottom: 20px; font-size: 1.5rem; color: #aaa;">Last Call.</p>
-        <button id="restart-btn" class="btn">Re-Open Tab</button>
-    </div>
+        <button id="start-btn" class="btn">Start Shift</button>
+    </div>
+
+    <div id="game-over-screen" class="ui-overlay hidden">
+        <h1>SHIFT OVER</h1>
+        <h2>Final Score: <span id="final-score">0</span></h2>
+        <p id="game-over-msg" style="margin-bottom: 20px; font-size: 1.5rem; color: #aaa;">Last Call.</p>
+        <button id="restart-btn" class="btn">Re-Open Tab</button>
+    </div>
 </div>
 
 <script>
-    /* --- Game Setup --- */
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    
-    // UI Elements
-    const landingPage = document.getElementById('landing-page');
-    const enterBtn = document.getElementById('enter-btn');
-    const startScreen = document.getElementById('start-screen');
-    const gameOverScreen = document.getElementById('game-over-screen');
-    const hud = document.getElementById('hud');
-    
-    const scoreEl = document.getElementById('score');
-    const livesEl = document.getElementById('lives');
-    const levelEl = document.getElementById('level'); 
-    const finalScoreEl = document.getElementById('final-score');
-    
-    const startBtn = document.getElementById('start-btn');
-    const restartBtn = document.getElementById('restart-btn');
-    
-    const levelTransitionEl = document.getElementById('level-transition'); 
-    const levelTitleEl = document.getElementById('level-title');
-    const levelSubtextEl = document.getElementById('level-subtext');
-
-    /* --- Level Configuration --- */
-    const levelsConfig = [
-        { scoreToClear: 1000, spawnIntervalMs: 1500, speedMultiplier: 1.0, thiefSpawnMs: 999999, vipActive: false }, 
-        { scoreToClear: 2500, spawnIntervalMs: 1200, speedMultiplier: 1.3, thiefSpawnMs: 7000, vipActive: false }, 
-        { scoreToClear: 4500, spawnIntervalMs: 1000, speedMultiplier: 1.6, thiefSpawnMs: 6000, vipActive: true }, // VIP ACTIVE HERE
-        { scoreToClear: 7000, spawnIntervalMs: 800, speedMultiplier: 2.0, thiefSpawnMs: 5000, vipActive: true }, 
-        { scoreToClear: 11000, spawnIntervalMs: 700, speedMultiplier: 2.3, thiefSpawnMs: 4000, vipActive: true } 
-    ];
-
-    // Game State
-    let isPlaying = false;
-    let score = 0;
-    let lives = 3;
-    let currentLevel = 1;
-    let lastTime = 0;
-    
-    // Player/VIP State
-    let playerGuestX; // Player-controlled X position for the VIP table
-    let vipInstance;  // The single VIP object
-    let isMovingGuest = false; // Flag for drag/touch input on the VIP table area
-
-    // Spawning/Difficulty variables
-    let spawnTimer = 0;
-    let spawnInterval = levelsConfig[0].spawnIntervalMs; 
-    let speedMultiplier = levelsConfig[0].speedMultiplier;
-    
-    let thiefSpawnTimer = 0;
-    let thiefSpawnInterval = levelsConfig[0].thiefSpawnMs; 
-
-    let isTransitioning = false;
-    
-    // Arrays for entities
-    let beers = [];
-    let particles = [];
-    let clickEffects = [];
-    let thieves = []; 
-
-    /* --- Resize Handling --- */
-    function resize() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        // Reset VIP position on resize
-        playerGuestX = canvas.width / 2;
-        if (vipInstance) {
-            vipInstance.y = canvas.height - 100; // Keep it fixed at the bottom
-        }
-    }
-    window.addEventListener('resize', resize);
-    resize();
-
-    /* --- Input Handling for Shooting --- */
-    const handleShootInput = (x, y) => {
-        if (!isPlaying || isTransitioning) return;
-
-        // If the tap/click is in the VIP control zone (bottom 1/3), don't shoot!
-        if (y > canvas.height * 0.7) { 
-            return;
-        }
-
-        clickEffects.push({x, y, age: 0});
-
-        // 1. Thieves
-        for (let i = thieves.length - 1; i >= 0; i--) {
-            const t = thieves[i];
-            const dist = Math.hypot(t.x - x, t.y - y);
-            
-            if (dist < t.size / 2) { 
-                t.isHit = true;
-                lives--;
-                livesEl.innerText = lives;
-                createFloatingText(t.x, t.y, "DEAD TIMER", "red");
-                createExplosion(t.x, t.y, '#fdbd9c');
-                checkGameOver();
-                return;
-            }
-        }
-
-        // 2. Beers
-        for (let i = beers.length - 1; i >= 0; i--) {
-            const b = beers[i];
-            const dist = Math.hypot(b.x - x, b.y - y);
-            
-            if (dist < 40) {
-                if (b.type === 'BAD') {
-                    // CORRECT ACTION: Shoot the Swill
-                    createExplosion(b.x, b.y, '#9ca3af');
-                    beers.splice(i, 1);
-                    score += 100;
-                    scoreEl.innerText = score;
-                    createFloatingText(b.x, b.y, "+100", "white");
-                    checkLevelUp();
-                } else {
-                    // INCORRECT ACTION: Shot the Law Brew
-                    createExplosion(b.x, b.y, '#d97706');
-                    beers.splice(i, 1);
-                    lives--;
-                    livesEl.innerText = lives;
-                    createFloatingText(b.x, b.y, "WASTED BREW!", "red");
-                    checkGameOver();
-                }
-                return; 
-            }
-        }
-    };
-
-    /* --- Input Handlers for VIP Movement --- */
-
-    const handleGuestMoveStart = (x, y) => {
-        // Only start moving if input is in the bottom 1/3 of the screen
-        if (y > canvas.height * 0.7) {
-            isMovingGuest = true;
-        }
-    };
-
-    const handleGuestMove = (x) => {
-        if (isMovingGuest && isPlaying && !isTransitioning) {
-            // Clamp the VIP position within the canvas boundaries (with padding)
-            const minX = 60; // Table width approx. 70, so half padding
-            const maxX = canvas.width - 60;
-            playerGuestX = Math.min(Math.max(x, minX), maxX);
-        }
-    };
-
-    const handleGuestMoveEnd = () => {
-        isMovingGuest = false;
-    };
-
-    // MOUSE EVENTS
-    canvas.addEventListener('mousedown', (e) => {
-        // Check if the click is for movement first (bottom 30%)
-        if (e.clientY > canvas.height * 0.7) {
-             handleGuestMoveStart(e.clientX, e.clientY);
-        } else {
-            handleShootInput(e.clientX, e.clientY);
-        }
-    });
-
-    canvas.addEventListener('mousemove', (e) => {
-        handleGuestMove(e.clientX);
-    });
-
-    canvas.addEventListener('mouseup', handleGuestMoveEnd);
-    canvas.addEventListener('mouseleave', handleGuestMoveEnd); // In case they drag off the canvas
-
-    // TOUCH EVENTS
-    canvas.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        // Check only the first touch point for movement/shooting
-        const x = e.touches[0].clientX;
-        const y = e.touches[0].clientY;
-        
-        // Separate touch event initiation based on vertical zone
-        if (y > canvas.height * 0.7) {
-            handleGuestMoveStart(x, y); 
-        } else {
-            handleShootInput(x, y);
-        }
-    }, {passive: false});
-
-    canvas.addEventListener('touchmove', (e) => {
-        e.preventDefault();
-        handleGuestMove(e.touches[0].clientX);
-    }, {passive: false});
-
-    canvas.addEventListener('touchend', handleGuestMoveEnd);
-
-    /* --- Classes --- */
-
-    class Beer {
-        constructor() {
-            this.radius = 30;
-            this.x = Math.random() * (canvas.width - 60) + 30;
-            this.y = -50;
-            this.type = Math.random() > 0.35 ? 'BAD' : 'GOOD'; 
-            const baseSpeed = canvas.height / 500; 
-            this.speed = (baseSpeed * speedMultiplier) * (1 + Math.random() * 0.4); 
-            this.rotation = 0;
-            this.rotSpeed = (Math.random() - 0.5) * 0.1;
-        }
-
-        update(dt) {
-            this.y += this.speed;
-            this.rotation += this.rotSpeed;
-        }
-
-        draw(ctx) {
-            ctx.save();
-            ctx.translate(this.x, this.y);
-            ctx.rotate(this.rotation);
-
-            if (this.type === 'BAD') {
-                // Swill (Bad Beer) Drawing
-                ctx.fillStyle = '#9ca3af'; 
-                ctx.fillRect(-15, -25, 30, 50);
-                ctx.fillStyle = '#d1d5db';
-                ctx.fillRect(-15, -25, 30, 5);
-                ctx.fillRect(-15, 20, 30, 5);
-                ctx.fillStyle = '#ef4444';
-                ctx.fillRect(-15, -10, 30, 20);
-                ctx.fillStyle = 'white';
-                ctx.font = 'bold 10px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText("SWILL", 0, 5);
-            } else {
-                // Law Brew (Good Beer) Drawing 
-                ctx.beginPath();
-                ctx.moveTo(-15, -25);
-                ctx.lineTo(-10, 25);
-                ctx.lineTo(10, 25);
-                ctx.lineTo(15, -25);
-                ctx.closePath();
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-                ctx.fill();
-                ctx.lineWidth = 2;
-                ctx.strokeStyle = '#fff';
-                ctx.stroke();
-
-                ctx.beginPath();
-                ctx.moveTo(-13, -15);
-                ctx.lineTo(-9, 23);
-                ctx.lineTo(9, 23);
-                ctx.lineTo(13, -15);
-                ctx.closePath();
-                ctx.fillStyle = '#d97706'; 
-                ctx.fill();
-
-                ctx.fillStyle = '#fff';
-                ctx.beginPath();
-                ctx.ellipse(0, -15, 13, 5, 0, 0, Math.PI * 2);
-                ctx.fill();
-                
-                ctx.fillStyle = 'black';
-                ctx.beginPath();
-                ctx.arc(0, 0, 5, 0, Math.PI * 2);
-                ctx.fill();
-            }
-            ctx.restore();
-        }
-    }
-
-    class PatronRaider { 
-        constructor() {
-            this.size = 50;
-            this.y = Math.random() * (canvas.height * 0.3) + 100;
-            if (Math.random() < 0.5) {
-                this.x = -this.size;
-                this.vx = 0.5 + Math.random() * 0.5 * speedMultiplier;
-                this.side = 'left';
-            } else {
-                this.x = canvas.width + this.size;
-                this.vx = -(0.5 + Math.random() * 0.5 * speedMultiplier);
-                this.side = 'right';
-            }
-            this.vy = 0.1 + Math.random() * 0.1 * speedMultiplier; 
-            this.isHit = false;
-            this.life = 100;
-        }
-
-        update() {
-            this.x += this.vx;
-            this.y += this.vy;
-            if (this.isHit) this.life -= 3;
-        }
-
-        draw(ctx) {
-            ctx.save();
-            ctx.translate(this.x, this.y);
-            ctx.globalAlpha = this.life / 100;
-            let scaleX = 1;
-            if (this.side === 'right') scaleX = -1;
-            ctx.scale(scaleX, 1);
-
-            // Old Timer Hat (unchanged)
-            ctx.fillStyle = '#f0f0f0'; // Brown hat
-            ctx.beginPath();
-            ctx.ellipse(0, -25, 20, 10, 0, Math.PI, 0, true); // Hat brim
-            ctx.fill();
-            ctx.fillRect(-15, -25, 30, 5); // Hat crown base
-
-            // Head (Skin tone, unchanged)
-            ctx.fillStyle = '#fdbd9c'; // Skin tone
-            ctx.beginPath();
-            ctx.arc(0, -15, 10, 0, Math.PI * 2);
-            ctx.fill();
-
-            // White Hair (UPDATED)
-            ctx.fillStyle = '#f0f0f0'; // White hair
-            ctx.beginPath();
-            ctx.ellipse(0, -18, 12, 12, 0, Math.PI, 0); // Top of head
-            //ctx.arc(-8, -10, 5, 0, Math.PI * 2); // Sideburn/ear area left
-            //ctx.arc(8, -10, 5, 0, Math.PI * 2); // Sideburn/ear area right
-            ctx.fill();
-            
-            // Body (Blue shirt, unchanged)
-            ctx.fillStyle = '#4b5563'; // Blue shirt
-            ctx.fillRect(-15, -10, 30, 30);
-            
-            // Arm/Sleeve (right arm from his perspective)
-            ctx.fillStyle = '#4b5563'; 
-            ctx.fillRect(10, 0, 10, 20); // Arm
-
-            // Hand (skin tone)
-            ctx.fillStyle = '#fdbd9c';
-            ctx.beginPath();
-            ctx.arc(15, 20, 5, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Dollar Bill (UPDATED) - held in his hand
-            ctx.fillStyle = '#8bc34a'; // Green for dollar bill
-            ctx.strokeStyle = '#4c8c2a'; // Darker green outline
-            ctx.lineWidth = 1;
-            ctx.fillRect(18, 15, 20, 10); // Bill rectangle
-            ctx.strokeRect(18, 15, 20, 10);
-            ctx.fillStyle = '#4c8c2a';
-            ctx.font = '6px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('$1', 28, 22); // Value on bill
-
-            ctx.globalAlpha = 1.0;
-            ctx.restore();
-        }
-    }
-
-    class TableGuest { 
-        constructor(initialY) {
-            this.x = playerGuestX; 
-            this.y = initialY; 
-            this.isVipActive = false; 
-            this.tableWidth = 70;
-            this.tableHeight = 20;
-            this.chairHeight = 35;
-            this.bodyWidth = 30;
-            this.bodyHeight = 30;
-        }
-
-        update() {
-             this.x = playerGuestX;
-        }
-
-        draw(ctx) {
-            ctx.save();
-            ctx.translate(this.x, this.y);
-
-            // --- FIX: Declare tableTopY here ---
-            const tableTopY = 0;
-            // ------------------------------------
-
-            // --- Draw Table ---
-            ctx.fillStyle = '#5D4037'; 
-            ctx.fillRect(-this.tableWidth/2, tableTopY, this.tableWidth, this.tableHeight);
-            ctx.strokeStyle = '#3E2723';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(-this.tableWidth/2, tableTopY, this.tableWidth, this.tableHeight);
-
-            // Legs
-            ctx.fillRect(-this.tableWidth/2 + 5, this.tableHeight, 5, 20);
-            ctx.fillRect(this.tableWidth/2 - 10, this.tableHeight, 5, 20);
-
-           // --- Draw VIP Guest (only if active) ---
-            if (this.isVipActive) {
-                // Offset for the guest to sit "behind" the table (facing away)
-                const guestOffsetY = tableTopY - 10;
-                
-                // 1. Purple Dress/Body (Flat Vector Style)
-                ctx.fillStyle = '#9C27B0'; // Purple
-                ctx.beginPath();
-                // A simple rounded shape for the body/back
-                ctx.ellipse(0, guestOffsetY + 10, 20, 15, 0, Math.PI, 0, true);
-                ctx.fill();
-
-                // 2. Head (Skin tone)
-                ctx.fillStyle = '#FFE0B2'; // Skin tone
-                ctx.beginPath();
-                ctx.arc(0, guestOffsetY - 10, 10, 0, Math.PI * 2);
-                ctx.fill();
-
-                // 3. Dark Hair (Flat bob or simple style)
-                ctx.fillStyle = '#212121'; // Black/dark hair
-                ctx.beginPath();
-                ctx.ellipse(0, guestOffsetY - 10, 12, 12, 0, 0, Math.PI, false); // Top curve
-                ctx.lineTo(12, guestOffsetY + 2); 
-                ctx.lineTo(-12, guestOffsetY + 2);
-                ctx.closePath();
-                ctx.fill();
-
-                // --- Objects on Table: Empty Beer Glass (Left Side) ---
-                const glassX = -this.tableWidth/2 + 15;
-                const glassY = tableTopY + 5;
-                
-                // Glass Rim (White/Foam color for visibility)
-                ctx.fillStyle = '#fefefe';
-                ctx.fillRect(glassX - 5, glassY, 10, 2);
-                
-                // Glass Body (Transparent)
-                ctx.fillStyle = 'rgba(200, 200, 255, 0.3)';
-                ctx.fillRect(glassX - 5, glassY + 2, 10, 15);
-                
-                // Glass Base
-                ctx.fillStyle = '#4b5563';
-                ctx.fillRect(glassX - 6, glassY + 17, 12, 3);
-            }
-
-            ctx.restore();
-        }
-    }
-
-    class Particle {
-        constructor(x, y, color) {
-            this.x = x; this.y = y; this.color = color;
-            const angle = Math.random() * Math.PI * 2;
-            const speed = Math.random() * 5 + 2;
-            this.vx = Math.cos(angle) * speed;
-            this.vy = Math.sin(angle) * speed;
-            this.life = 1.0;
-            this.decay = Math.random() * 0.03 + 0.02;
-            this.size = Math.random() * 4 + 2;
-        }
-        update() {
-            this.x += this.vx; this.y += this.vy; this.vy += 0.2;
-            this.life -= this.decay;
-        }
-        draw(ctx) {
-            ctx.globalAlpha = Math.max(0, this.life);
-            ctx.fillStyle = this.color;
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
-            ctx.fill();
-            ctx.globalAlpha = 1.0;
-        }
-    }
-
-    class FloatingText {
-        constructor(x, y, text, color) {
-            this.x = x; this.y = y; this.text = text; this.color = color;
-            this.life = 1.0; this.vy = -2;
-        }
-        update() { this.y += this.vy; this.life -= 0.02; }
-        draw(ctx) {
-            ctx.globalAlpha = Math.max(0, this.life);
-            ctx.fillStyle = this.color;
-            ctx.font = "bold 20px 'Roboto Slab'";
-            ctx.textAlign = 'center';
-            ctx.fillText(this.text, this.x, this.y);
-            ctx.strokeStyle = 'black';
-            ctx.lineWidth = 2;
-            ctx.strokeText(this.text, this.x, this.y);
-            ctx.globalAlpha = 1.0;
-        }
-    }
-
-    /* --- Helper Functions --- */
-
-    function createExplosion(x, y, color) {
-        for(let i=0; i<15; i++) particles.push(new Particle(x, y, color));
-    }
-
-    function createFloatingText(x, y, text, color) {
-        particles.push(new FloatingText(x, y, text, color));
-    }
-
-    function checkGameOver() {
-        if (lives <= 0) endGame();
-    }
-
-    function checkLevelUp() {
-        if (currentLevel <= levelsConfig.length) {
-            const currentLevelIndex = currentLevel - 1;
-            const requiredScore = levelsConfig[currentLevelIndex].scoreToClear;
-
-            if (score >= requiredScore) {
-                currentLevel++;
-                transitionToLevel(currentLevel);
-            }
-        }
-    }
-
-    function transitionToLevel(newLevel) {
-        isTransitioning = true;
-        beers = []; thieves = []; 
-        spawnTimer = 0; thiefSpawnTimer = 0; 
-
-        let titleText, subText;
-        
-        if (newLevel <= levelsConfig.length) {
-            const cfg = levelsConfig[newLevel - 1];
-            titleText = `LEVEL ${newLevel}`;
-            
-            // --- VIP Activation Logic ---
-            if (cfg.vipActive) {
-                subText = "VIP IS NOW ACTIVE! CATCH LAW BREWS!";
-                vipInstance.isVipActive = true;
-            } else if (newLevel === 2) {
-                subText = "HERE COMES THE OLD TIMER!";
-                vipInstance.isVipActive = false;
-            } else {
-                subText = "FASTER!";
-                vipInstance.isVipActive = false;
-            }
-
-            // Config Logic
-            spawnInterval = cfg.spawnIntervalMs;
-            speedMultiplier = cfg.speedMultiplier;
-            thiefSpawnInterval = cfg.thiefSpawnMs;
-            levelEl.textContent = newLevel;
-        } else {
-            // Expert Mode
-            titleText = `EXPERT MODE`;
-            subText = "SURVIVE";
-            spawnInterval = 500;
-            speedMultiplier = 3.0;
-            thiefSpawnInterval = 3000;
-            vipInstance.isVipActive = true; 
-            levelEl.textContent = 'E';
-        }
-        
-        levelTitleEl.textContent = titleText;
-        levelSubtextEl.textContent = subText;
-        levelTransitionEl.classList.add('show-transition');
-
-        setTimeout(() => {
-            levelTransitionEl.classList.remove('show-transition');
-            isTransitioning = false;
-        }, 2500);
-    }
-
-    function endGame() {
-        isPlaying = false;
-        hud.classList.add('hidden');
-        gameOverScreen.classList.remove('hidden');
-        finalScoreEl.innerText = score;
-    }
-
-    function startGame() {
-        score = 0; lives = 3; currentLevel = 1;
-        
-        // Reset to Level 1 config
-        spawnInterval = levelsConfig[0].spawnIntervalMs;
-        speedMultiplier = levelsConfig[0].speedMultiplier;
-        thiefSpawnInterval = levelsConfig[0].thiefSpawnMs;
-
-        scoreEl.innerText = score;
-        livesEl.innerText = lives;
-        levelEl.innerText = currentLevel;
-        
-        beers = []; particles = []; clickEffects = []; thieves = [];
-        spawnTimer = 0; thiefSpawnTimer = 0;
-        isTransitioning = false;
-
-        // Initialize VIP instance
-        if (!vipInstance) {
-            vipInstance = new TableGuest(canvas.height - 100);
-        }
-        vipInstance.isVipActive = false; // Start on Lvl 1, VIP not yet active
-        
-        isPlaying = true;
-        startScreen.classList.add('hidden');
-        gameOverScreen.classList.add('hidden');
-        hud.classList.remove('hidden');
-        
-        lastTime = performance.now();
-        requestAnimationFrame(gameLoop);
-    }
-
-    /* --- Logic for Menu Flow --- */
-
-    // Transition from Landing Page to Instructions
-    enterBtn.addEventListener('click', () => {
-        landingPage.classList.add('hidden');
-        startScreen.classList.remove('hidden');
-    });
-
-    startBtn.addEventListener('click', startGame);
-    restartBtn.addEventListener('click', startGame);
-
-    /* --- Game Loop --- */
-
-    function gameLoop(timestamp) {
-        if (!isPlaying) return;
-
-        const dt = timestamp - lastTime;
-        lastTime = timestamp;
-
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // --- Spawning Logic ---
-        if (!isTransitioning) {
-            spawnTimer += dt;
-            if (spawnTimer > spawnInterval) {
-                beers.push(new Beer());
-                spawnTimer = 0;
-            }
-            thiefSpawnTimer += dt;
-            if (thiefSpawnTimer > thiefSpawnInterval) {
-                thieves.push(new PatronRaider());
-                thiefSpawnTimer = 0;
-            }
-        }
-
-        // --- VIP Guest (Movable Target) ---
-        if (vipInstance) {
-            vipInstance.update();
-            
-            // Only draw and check collision if the VIP is active (Level 3+)
-            if (vipInstance.isVipActive) {
-                vipInstance.draw(ctx);
-                
-                // VIP Collision Logic
-                for (let j = beers.length - 1; j >= 0; j--) {
-                    const b = beers[j];
-                    // Collision check: beer x,y is near the VIP's table top area
-                    if (b.x > vipInstance.x - 40 && b.x < vipInstance.x + 40 && 
-                        b.y > vipInstance.y - 40 && b.y < vipInstance.y + 20) {
-                        
-                        beers.splice(j, 1);
-                        
-                        if (b.type === 'GOOD') {
-                            // VIP CATCH: Law Brew is a score bonus
-                            score += 500;
-                            scoreEl.innerText = score;
-                            createFloatingText(vipInstance.x, vipInstance.y - 60, "VIP LAW BONUS!", "#d946ef"); 
-                            createExplosion(b.x, b.y, '#fff');
-                        } else {
-                            // VIP HIT: Swill deduction
-                            lives--;
-                            livesEl.innerText = lives;
-                            createFloatingText(vipInstance.x, vipInstance.y - 60, "VIP SWILL HIT!", "red");
-                            createExplosion(b.x, b.y, '#ef4444'); 
-                            checkGameOver();
-                        }
-                    }
-                }
-            }
-        }
-
-        // --- Beers, Thieves, Particles Update & Draw ---
-        
-        // 1. Beers
-        for (let i = beers.length - 1; i >= 0; i--) {
-            const b = beers[i];
-            b.update(dt);
-            b.draw(ctx);
-            
-            // Missed beer (hits the floor/bar area)
-            if (b.y > canvas.height) {
-                beers.splice(i, 1);
-                
-                if (b.type === 'GOOD') {
-                    // CORRECT ACTION: Law Brew reaches the bar. No penalty.
-                    createFloatingText(b.x, canvas.height - 50, "LAW BREW SERVED", "lime");
-                } else {
-                    // INCORRECT ACTION: Swill reaches the bar. Life penalty.
-                    lives--;
-                    livesEl.innerText = lives;
-                    checkGameOver();
-                    createFloatingText(b.x, canvas.height - 50, "SWILL SERVED!", "orange");
-                }
-            }
-        }
-
-        // 2. Thieves
-        for (let i = thieves.length - 1; i >= 0; i--) {
-            const t = thieves[i];
-            t.update(dt);
-            t.draw(ctx);
-
-            // Thief removal/passing logic
-            if (t.x < -t.size * 2 || t.x > canvas.width + t.size * 2 || t.life <= 0) {
-                thieves.splice(i, 1);
-            }
-            
-            // Thief grabbing bad beer logic
-            for (let j = beers.length - 1; j >= 0; j--) {
-                const b = beers[j];
-                if (b.type === 'BAD' && Math.hypot(t.x - b.x, t.y - b.y) < 50) {
-                    beers.splice(j, 1); 
-                    score += 50; 
-                    scoreEl.innerText = score;
-                    createFloatingText(t.x, t.y, "+50 (Swill Gone)", "lime");
-                    t.isHit = true; 
-                }
-            }
-        }
-        
-        // 3. Particles and Floating Text
-        for (let i = particles.length - 1; i >= 0; i--) {
-            particles[i].update();
-            particles[i].draw(ctx);
-            if (particles[i].life <= 0) {
-                particles.splice(i, 1);
-            }
-        }
-
-        // 4. Click Effects
-        for (let i = clickEffects.length - 1; i >= 0; i--) {
-            const c = clickEffects[i];
-            c.age++;
-            ctx.fillStyle = `rgba(255, 255, 255, ${1 - c.age / 10})`;
-            ctx.beginPath();
-            ctx.arc(c.x, c.y, 10 * (c.age / 10), 0, Math.PI * 2);
-            ctx.fill();
-            if (c.age > 10) {
-                clickEffects.splice(i, 1);
-            }
-        }
-
-        checkLevelUp();
-        
-        requestAnimationFrame(gameLoop);
-    }
+    /* --- Game Setup --- */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // UI Elements
+    const landingPage = document.getElementById('landing-page');
+    const enterBtn = document.getElementById('enter-btn');
+    const startScreen = document.getElementById('start-screen');
+    const gameOverScreen = document.getElementById('game-over-screen');
+    const hud = document.getElementById('hud');
+    
+    const scoreEl = document.getElementById('score');
+    const livesEl = document.getElementById('lives');
+    const levelEl = document.getElementById('level'); 
+    const finalScoreEl = document.getElementById('final-score');
+    
+    const startBtn = document.getElementById('start-btn');
+    const restartBtn = document.getElementById('restart-btn');
+    
+    const levelTransitionEl = document.getElementById('level-transition'); 
+    const levelTitleEl = document.getElementById('level-title');
+    const levelSubtextEl = document.getElementById('level-subtext');
+
+    /* --- Level Configuration --- */
+    const levelsConfig = [
+        { scoreToClear: 1000, spawnIntervalMs: 1500, speedMultiplier: 1.0, thiefSpawnMs: 999999, vipActive: false }, 
+        { scoreToClear: 2500, spawnIntervalMs: 1200, speedMultiplier: 1.3, thiefSpawnMs: 7000, vipActive: false }, 
+        { scoreToClear: 4500, spawnIntervalMs: 1000, speedMultiplier: 1.6, thiefSpawnMs: 6000, vipActive: true }, // VIP ACTIVE HERE
+        { scoreToClear: 7000, spawnIntervalMs: 800, speedMultiplier: 2.0, thiefSpawnMs: 5000, vipActive: true }, 
+        { scoreToClear: 11000, spawnIntervalMs: 700, speedMultiplier: 2.3, thiefSpawnMs: 4000, vipActive: true } 
+    ];
+
+    // Game State
+    let isPlaying = false;
+    let score = 0;
+    let lives = 3;
+    let currentLevel = 1;
+    let lastTime = 0;
+    
+    // Player/VIP State
+    let playerGuestX; // Player-controlled X position for the VIP table
+    let vipInstance;  // The single VIP object
+    let isMovingGuest = false; // Flag for drag/touch input on the VIP table area
+
+    // Spawning/Difficulty variables
+    let spawnTimer = 0;
+    let spawnInterval = levelsConfig[0].spawnIntervalMs; 
+    let speedMultiplier = levelsConfig[0].speedMultiplier;
+    
+    let thiefSpawnTimer = 0;
+    let thiefSpawnInterval = levelsConfig[0].thiefSpawnMs; 
+
+    let isTransitioning = false;
+    
+    // Arrays for entities
+    let beers = [];
+    let particles = [];
+    let clickEffects = [];
+    let thieves = []; 
+
+    /* --- Resize Handling --- */
+    function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        // Reset VIP position on resize
+        playerGuestX = canvas.width / 2;
+        if (vipInstance) {
+            vipInstance.y = canvas.height - 100; // Keep it fixed at the bottom
+        }
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    /* --- Input Handling for Shooting --- */
+    const handleShootInput = (x, y) => {
+        if (!isPlaying || isTransitioning) return;
+
+        // If the tap/click is in the VIP control zone (bottom 1/3), don't shoot!
+        if (y > canvas.height * 0.7) { 
+            return;
+        }
+
+        clickEffects.push({x, y, age: 0});
+
+        // 1. Thieves
+        for (let i = thieves.length - 1; i >= 0; i--) {
+            const t = thieves[i];
+            const dist = Math.hypot(t.x - x, t.y - y);
+            
+            if (dist < t.size / 2) { 
+                t.isHit = true;
+                lives--;
+                livesEl.innerText = lives;
+                createFloatingText(t.x, t.y, "DEAD TIMER", "red");
+                createExplosion(t.x, t.y, '#fdbd9c');
+                checkGameOver();
+                return;
+            }
+        }
+
+        // 2. Beers
+        for (let i = beers.length - 1; i >= 0; i--) {
+            const b = beers[i];
+            const dist = Math.hypot(b.x - x, b.y - y);
+            
+            if (dist < 40) {
+                if (b.type === 'BAD') {
+                    // CORRECT ACTION: Shoot the Swill
+                    createExplosion(b.x, b.y, '#9ca3af');
+                    beers.splice(i, 1);
+                    score += 100;
+                    scoreEl.innerText = score;
+                    createFloatingText(b.x, b.y, "+100", "white");
+                    checkLevelUp();
+                } else {
+                    // INCORRECT ACTION: Shot the Law Brew
+                    createExplosion(b.x, b.y, '#d97706');
+                    beers.splice(i, 1);
+                    lives--;
+                    livesEl.innerText = lives;
+                    createFloatingText(b.x, b.y, "WASTED BREW!", "red");
+                    checkGameOver();
+                }
+                return; 
+            }
+        }
+    };
+
+    /* --- Input Handlers for VIP Movement --- */
+
+    const handleGuestMoveStart = (x, y) => {
+        // Only start moving if input is in the bottom 1/3 of the screen
+        if (y > canvas.height * 0.7) {
+            isMovingGuest = true;
+        }
+    };
+
+    const handleGuestMove = (x) => {
+        if (isMovingGuest && isPlaying && !isTransitioning) {
+            // Clamp the VIP position within the canvas boundaries (with padding)
+            const minX = 60; // Table width approx. 70, so half padding
+            const maxX = canvas.width - 60;
+            playerGuestX = Math.min(Math.max(x, minX), maxX);
+        }
+    };
+
+    const handleGuestMoveEnd = () => {
+        isMovingGuest = false;
+    };
+
+    // MOUSE EVENTS
+    canvas.addEventListener('mousedown', (e) => {
+        // Check if the click is for movement first (bottom 30%)
+        if (e.clientY > canvas.height * 0.7) {
+             handleGuestMoveStart(e.clientX, e.clientY);
+        } else {
+            handleShootInput(e.clientX, e.clientY);
+        }
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+        handleGuestMove(e.clientX);
+    });
+
+    canvas.addEventListener('mouseup', handleGuestMoveEnd);
+    canvas.addEventListener('mouseleave', handleGuestMoveEnd); // In case they drag off the canvas
+
+    // TOUCH EVENTS
+    canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        // Check only the first touch point for movement/shooting
+        const x = e.touches[0].clientX;
+        const y = e.touches[0].clientY;
+        
+        // Separate touch event initiation based on vertical zone
+        if (y > canvas.height * 0.7) {
+            handleGuestMoveStart(x, y); 
+        } else {
+            handleShootInput(x, y);
+        }
+    }, {passive: false});
+
+    canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        handleGuestMove(e.touches[0].clientX);
+    }, {passive: false});
+
+    canvas.addEventListener('touchend', handleGuestMoveEnd);
+
+    /* --- Classes --- */
+
+    class Beer {
+        constructor() {
+            this.radius = 30;
+            this.x = Math.random() * (canvas.width - 60) + 30;
+            this.y = -50;
+            this.type = Math.random() > 0.35 ? 'BAD' : 'GOOD'; 
+            const baseSpeed = canvas.height / 500; 
+            this.speed = (baseSpeed * speedMultiplier) * (1 + Math.random() * 0.4); 
+            this.rotation = 0;
+            this.rotSpeed = (Math.random() - 0.5) * 0.1;
+        }
+
+        update(dt) {
+            this.y += this.speed;
+            this.rotation += this.rotSpeed;
+        }
+
+        draw(ctx) {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.rotate(this.rotation);
+
+            if (this.type === 'BAD') {
+                // Swill (Bad Beer) Drawing
+                ctx.fillStyle = '#9ca3af'; 
+                ctx.fillRect(-15, -25, 30, 50);
+                ctx.fillStyle = '#d1d5db';
+                ctx.fillRect(-15, -25, 30, 5);
+                ctx.fillRect(-15, 20, 30, 5);
+                ctx.fillStyle = '#ef4444';
+                ctx.fillRect(-15, -10, 30, 20);
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 10px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText("SWILL", 0, 5);
+            } else {
+                // Law Brew (Good Beer) Drawing 
+                ctx.beginPath();
+                ctx.moveTo(-15, -25);
+                ctx.lineTo(-10, 25);
+                ctx.lineTo(10, 25);
+                ctx.lineTo(15, -25);
+                ctx.closePath();
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#fff';
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(-13, -15);
+                ctx.lineTo(-9, 23);
+                ctx.lineTo(9, 23);
+                ctx.lineTo(13, -15);
+                ctx.closePath();
+                ctx.fillStyle = '#d97706'; 
+                ctx.fill();
+
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.ellipse(0, -15, 13, 5, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = 'black';
+                ctx.beginPath();
+                ctx.arc(0, 0, 5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+    }
+
+    class PatronRaider { 
+        constructor() {
+            this.size = 50;
+            this.y = Math.random() * (canvas.height * 0.3) + 100;
+            if (Math.random() < 0.5) {
+                this.x = -this.size;
+                this.vx = 0.5 + Math.random() * 0.5 * speedMultiplier;
+                this.side = 'left';
+            } else {
+                this.x = canvas.width + this.size;
+                this.vx = -(0.5 + Math.random() * 0.5 * speedMultiplier);
+                this.side = 'right';
+            }
+            this.vy = 0.1 + Math.random() * 0.1 * speedMultiplier; 
+            this.isHit = false;
+            this.life = 100;
+        }
+
+        update() {
+            this.x += this.vx;
+            this.y += this.vy;
+            if (this.isHit) this.life -= 3;
+        }
+
+        draw(ctx) {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.globalAlpha = this.life / 100;
+            let scaleX = 1;
+            if (this.side === 'right') scaleX = -1;
+            ctx.scale(scaleX, 1);
+
+            // Old Timer Hat (unchanged)
+            ctx.fillStyle = '#f0f0f0'; // Brown hat
+            ctx.beginPath();
+            ctx.ellipse(0, -25, 20, 10, 0, Math.PI, 0, true); // Hat brim
+            ctx.fill();
+            ctx.fillRect(-15, -25, 30, 5); // Hat crown base
+
+            // Head (Skin tone, unchanged)
+            ctx.fillStyle = '#fdbd9c'; // Skin tone
+            ctx.beginPath();
+            ctx.arc(0, -15, 10, 0, Math.PI * 2);
+            ctx.fill();
+
+            // White Hair (UPDATED)
+            ctx.fillStyle = '#f0f0f0'; // White hair
+            ctx.beginPath();
+            ctx.ellipse(0, -18, 12, 12, 0, Math.PI, 0); // Top of head
+            //ctx.arc(-8, -10, 5, 0, Math.PI * 2); // Sideburn/ear area left
+            //ctx.arc(8, -10, 5, 0, Math.PI * 2); // Sideburn/ear area right
+            ctx.fill();
+            
+            // Body (Blue shirt, unchanged)
+            ctx.fillStyle = '#4b5563'; // Blue shirt
+            ctx.fillRect(-15, -10, 30, 30);
+            
+            // Arm/Sleeve (right arm from his perspective)
+            ctx.fillStyle = '#4b5563'; 
+            ctx.fillRect(10, 0, 10, 20); // Arm
+
+            // Hand (skin tone)
+            ctx.fillStyle = '#fdbd9c';
+            ctx.beginPath();
+            ctx.arc(15, 20, 5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Dollar Bill (UPDATED) - held in his hand
+            ctx.fillStyle = '#8bc34a'; // Green for dollar bill
+            ctx.strokeStyle = '#4c8c2a'; // Darker green outline
+            ctx.lineWidth = 1;
+            ctx.fillRect(18, 15, 20, 10); // Bill rectangle
+            ctx.strokeRect(18, 15, 20, 10);
+            ctx.fillStyle = '#4c8c2a';
+            ctx.font = '6px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('$1', 28, 22); // Value on bill
+
+            ctx.globalAlpha = 1.0;
+            ctx.restore();
+        }
+    }
+
+    class TableGuest { 
+        constructor(initialY) {
+            this.x = playerGuestX; 
+            this.y = initialY; 
+            this.isVipActive = false; 
+            this.tableWidth = 70;
+            this.tableHeight = 20;
+            this.chairHeight = 35;
+            this.bodyWidth = 30;
+            this.bodyHeight = 30;
+        }
+
+        update() {
+             this.x = playerGuestX;
+        }
+
+        draw(ctx) {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+
+            // --- FIX: Declare tableTopY here ---
+            const tableTopY = 0;
+            // ------------------------------------
+
+            // --- Draw Table ---
+            ctx.fillStyle = '#5D4037'; 
+            ctx.fillRect(-this.tableWidth/2, tableTopY, this.tableWidth, this.tableHeight);
+            ctx.strokeStyle = '#3E2723';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(-this.tableWidth/2, tableTopY, this.tableWidth, this.tableHeight);
+
+            // Legs
+            ctx.fillRect(-this.tableWidth/2 + 5, this.tableHeight, 5, 20);
+            ctx.fillRect(this.tableWidth/2 - 10, this.tableHeight, 5, 20);
+
+           // --- Draw VIP Guest (only if active) ---
+            if (this.isVipActive) {
+                // Offset for the guest to sit "behind" the table (facing away)
+                const guestOffsetY = tableTopY - 10;
+                
+                // 1. Purple Dress/Body (Flat Vector Style)
+                ctx.fillStyle = '#9C27B0'; // Purple
+                ctx.beginPath();
+                // A simple rounded shape for the body/back
+                ctx.ellipse(0, guestOffsetY + 10, 20, 15, 0, Math.PI, 0, true);
+                ctx.fill();
+
+                // 2. Head (Skin tone)
+                ctx.fillStyle = '#FFE0B2'; // Skin tone
+                ctx.beginPath();
+                ctx.arc(0, guestOffsetY - 10, 10, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 3. Dark Hair (Flat bob or simple style)
+                ctx.fillStyle = '#212121'; // Black/dark hair
+                ctx.beginPath();
+                ctx.ellipse(0, guestOffsetY - 10, 12, 12, 0, 0, Math.PI, false); // Top curve
+                ctx.lineTo(12, guestOffsetY + 2); 
+                ctx.lineTo(-12, guestOffsetY + 2);
+                ctx.closePath();
+                ctx.fill();
+
+                // --- Objects on Table: Empty Beer Glass (Left Side) ---
+                const glassX = -this.tableWidth/2 + 15;
+                const glassY = tableTopY + 5;
+                
+                // Glass Rim (White/Foam color for visibility)
+                ctx.fillStyle = '#fefefe';
+                ctx.fillRect(glassX - 5, glassY, 10, 2);
+                
+                // Glass Body (Transparent)
+                ctx.fillStyle = 'rgba(200, 200, 255, 0.3)';
+                ctx.fillRect(glassX - 5, glassY + 2, 10, 15);
+                
+                // Glass Base
+                ctx.fillStyle = '#4b5563';
+                ctx.fillRect(glassX - 6, glassY + 17, 12, 3);
+            }
+
+            ctx.restore();
+        }
+    }
+
+    class Particle {
+        constructor(x, y, color) {
+            this.x = x; this.y = y; this.color = color;
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.random() * 5 + 2;
+            this.vx = Math.cos(angle) * speed;
+            this.vy = Math.sin(angle) * speed;
+            this.life = 1.0;
+            this.decay = Math.random() * 0.03 + 0.02;
+            this.size = Math.random() * 4 + 2;
+        }
+        update() {
+            this.x += this.vx; this.y += this.vy; this.vy += 0.2;
+            this.life -= this.decay;
+        }
+        draw(ctx) {
+            ctx.globalAlpha = Math.max(0, this.life);
+            ctx.fillStyle = this.color;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
+            ctx.fill();
+            ctx.globalAlpha = 1.0;
+        }
+    }
+
+    class FloatingText {
+        constructor(x, y, text, color) {
+            this.x = x; this.y = y; this.text = text; this.color = color;
+            this.life = 1.0; this.vy = -2;
+        }
+        update() { this.y += this.vy; this.life -= 0.02; }
+        draw(ctx) {
+            ctx.globalAlpha = Math.max(0, this.life);
+            ctx.fillStyle = this.color;
+            ctx.font = "bold 20px 'Roboto Slab'";
+            ctx.textAlign = 'center';
+            ctx.fillText(this.text, this.x, this.y);
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 2;
+            ctx.strokeText(this.text, this.x, this.y);
+            ctx.globalAlpha = 1.0;
+        }
+    }
+
+    /* --- Helper Functions --- */
+
+    function createExplosion(x, y, color) {
+        for(let i=0; i<15; i++) particles.push(new Particle(x, y, color));
+    }
+
+    function createFloatingText(x, y, text, color) {
+        particles.push(new FloatingText(x, y, text, color));
+    }
+
+    function checkGameOver() {
+        if (lives <= 0) endGame();
+    }
+
+    function checkLevelUp() {
+        if (currentLevel <= levelsConfig.length) {
+            const currentLevelIndex = currentLevel - 1;
+            const requiredScore = levelsConfig[currentLevelIndex].scoreToClear;
+
+            if (score >= requiredScore) {
+                currentLevel++;
+                transitionToLevel(currentLevel);
+            }
+        }
+    }
+
+    function transitionToLevel(newLevel) {
+        isTransitioning = true;
+        beers = []; thieves = []; 
+        spawnTimer = 0; thiefSpawnTimer = 0; 
+
+        let titleText, subText;
+        
+        if (newLevel <= levelsConfig.length) {
+            const cfg = levelsConfig[newLevel - 1];
+            titleText = `LEVEL ${newLevel}`;
+            
+            // --- VIP Activation Logic ---
+            if (cfg.vipActive) {
+                subText = "VIP IS NOW ACTIVE! CATCH LAW BREWS!";
+                vipInstance.isVipActive = true;
+            } else if (newLevel === 2) {
+                subText = "HERE COMES THE OLD TIMER!";
+                vipInstance.isVipActive = false;
+            } else {
+                subText = "FASTER!";
+                vipInstance.isVipActive = false;
+            }
+
+            // Config Logic
+            spawnInterval = cfg.spawnIntervalMs;
+            speedMultiplier = cfg.speedMultiplier;
+            thiefSpawnInterval = cfg.thiefSpawnMs;
+            levelEl.textContent = newLevel;
+        } else {
+            // Expert Mode
+            titleText = `EXPERT MODE`;
+            subText = "SURVIVE";
+            spawnInterval = 500;
+            speedMultiplier = 3.0;
+            thiefSpawnInterval = 3000;
+            vipInstance.isVipActive = true; 
+            levelEl.textContent = 'E';
+        }
+        
+        levelTitleEl.textContent = titleText;
+        levelSubtextEl.textContent = subText;
+        levelTransitionEl.classList.add('show-transition');
+
+        setTimeout(() => {
+            levelTransitionEl.classList.remove('show-transition');
+            isTransitioning = false;
+        }, 2500);
+    }
+
+    function endGame() {
+        isPlaying = false;
+        hud.classList.add('hidden');
+        gameOverScreen.classList.remove('hidden');
+        finalScoreEl.innerText = score;
+    }
+
+    function startGame() {
+        score = 0; lives = 3; currentLevel = 1;
+        
+        // Reset to Level 1 config
+        spawnInterval = levelsConfig[0].spawnIntervalMs;
+        speedMultiplier = levelsConfig[0].speedMultiplier;
+        thiefSpawnInterval = levelsConfig[0].thiefSpawnMs;
+
+        scoreEl.innerText = score;
+        livesEl.innerText = lives;
+        levelEl.innerText = currentLevel;
+        
+        beers = []; particles = []; clickEffects = []; thieves = [];
+        spawnTimer = 0; thiefSpawnTimer = 0;
+        isTransitioning = false;
+
+        // Initialize VIP instance
+        if (!vipInstance) {
+            vipInstance = new TableGuest(canvas.height - 100);
+        }
+        vipInstance.isVipActive = false; // Start on Lvl 1, VIP not yet active
+        
+        isPlaying = true;
+        startScreen.classList.add('hidden');
+        gameOverScreen.classList.add('hidden');
+        hud.classList.remove('hidden');
+        
+        lastTime = performance.now();
+        requestAnimationFrame(gameLoop);
+    }
+
+    /* --- Logic for Menu Flow --- */
+
+    // Transition from Landing Page to Instructions
+    enterBtn.addEventListener('click', () => {
+        landingPage.classList.add('hidden');
+        startScreen.classList.remove('hidden');
+        resize(); // Ensure canvas is sized correctly before game starts
+    });
+    
+    // Start Game from Instructions
+    startBtn.addEventListener('click', startGame);
+    
+    // Restart Game from Game Over Screen
+    restartBtn.addEventListener('click', startGame);
+
+    /* --- Game Loop & Drawing/Updating --- */
+
+    function update(dt) {
+        if (!isPlaying || isTransitioning) return;
+
+        // 1. Spawning Logic
+        spawnTimer += dt;
+        if (spawnTimer > spawnInterval) {
+            beers.push(new Beer());
+            spawnTimer = 0;
+        }
+        
+        thiefSpawnTimer += dt;
+        if (thiefSpawnTimer > thiefSpawnInterval && thieves.length < 2) {
+            thieves.push(new PatronRaider());
+            thiefSpawnTimer = 0;
+        }
+
+        // 2. Update Entities
+        beers.forEach(b => b.update(dt));
+        thieves.forEach(t => t.update());
+        if (vipInstance) vipInstance.update();
+
+        // 3. Collision/Boundary Logic
+
+        // Beers: Check if they reached the bottom (the bar)
+        for (let i = beers.length - 1; i >= 0; i--) {
+            const b = beers[i];
+            if (b.y > canvas.height) {
+                if (b.type === 'BAD') {
+                    // Bad beer reached bar
+                    createFloatingText(b.x, canvas.height - 20, "SWILL SERVED!", "red");
+                    lives--;
+                    livesEl.innerText = lives;
+                    checkGameOver();
+                } else {
+                    // Good beer reached bar (default safe delivery)
+                    score += 50;
+                    scoreEl.innerText = score;
+                    createFloatingText(b.x, canvas.height - 20, "+50", "lightgreen");
+                    checkLevelUp();
+                }
+                beers.splice(i, 1);
+            }
+        }
+
+        // Beers: Check collision with VIP Table (if active)
+        if (vipInstance && vipInstance.isVipActive) {
+            for (let i = beers.length - 1; i >= 0; i--) {
+                const b = beers[i];
+                const vipRect = {
+                    x: vipInstance.x - vipInstance.tableWidth/2,
+                    y: vipInstance.y,
+                    width: vipInstance.tableWidth,
+                    height: vipInstance.tableHeight
+                };
+
+                // Simple AABB check between beer center (b.x, b.y) and table rect
+                if (b.y + b.radius > vipRect.y &&
+                    b.y - b.radius < vipRect.y + vipRect.height &&
+                    b.x + b.radius > vipRect.x &&
+                    b.x - b.radius < vipRect.x + vipRect.width) {
+                    
+                    // Collision detected
+                    if (b.type === 'GOOD') {
+                        // HUGE BONUS for VIP catch!
+                        score += 200;
+                        scoreEl.innerText = score;
+                        createFloatingText(b.x, b.y, "VIP BONUS! +200", "gold");
+                        checkLevelUp();
+                    } else {
+                        // BIG PENALTY for VIP catch!
+                        lives -= 2; // Extra life deduction
+                        livesEl.innerText = lives;
+                        createFloatingText(b.x, b.y, "VIP ANGRY! -2 LIVES", "darkred");
+                        checkGameOver();
+                    }
+                    beers.splice(i, 1);
+                }
+            }
+        }
+
+        // Thieves: Check if they are off-screen or 'dead'
+        for (let i = thieves.length - 1; i >= 0; i--) {
+            const t = thieves[i];
+            if (t.isHit && t.life <= 0) {
+                thieves.splice(i, 1);
+            } else if (t.x < -t.size * 2 || t.x > canvas.width + t.size * 2) {
+                // Missed the thief
+                thieves.splice(i, 1);
+            }
+            
+            // Thief steals a beer!
+            if (!t.isHit) {
+                for (let j = beers.length - 1; j >= 0; j--) {
+                    const b = beers[j];
+                    const dist = Math.hypot(t.x - b.x, t.y - b.y);
+                    if (dist < t.size / 2 + b.radius / 2) {
+                        if (b.type === 'BAD') {
+                            // Thief stole bad beer - HUGE PENALTY, must shoot thief
+                            createFloatingText(t.x, t.y, "STOLEN SWILL!", "red");
+                            lives--;
+                            livesEl.innerText = lives;
+                            checkGameOver();
+                        } else {
+                            // Thief stole good beer - MINOR PENALTY, just lost points
+                            createFloatingText(t.x, t.y, "STOLEN BREW!", "yellow");
+                        }
+                        beers.splice(j, 1);
+                        t.isHit = true; // Mark thief as "done" for this pass
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Particles/Click Effects
+        particles = particles.filter(p => p.life > 0);
+        particles.forEach(p => p.update());
+        clickEffects = clickEffects.filter(c => c.age < 15);
+        clickEffects.forEach(c => c.age++);
+    }
+
+
+    function draw() {
+        // Background (Dark gradient, handled by CSS)
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw Entities
+        beers.forEach(b => b.draw(ctx));
+        thieves.forEach(t => t.draw(ctx));
+        if (vipInstance) vipInstance.draw(ctx);
+
+        // Draw Effects
+        particles.forEach(p => p.draw(ctx));
+
+        clickEffects.forEach(c => {
+            ctx.strokeStyle = 'rgba(255, 255, 255, ' + (1 - c.age / 15) + ')';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(c.x, c.y, c.age * 2, 0, Math.PI * 2);
+            ctx.stroke();
+        });
+        
+        // Draw Bar Line
+        ctx.strokeStyle = '#c59a00';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height);
+        ctx.lineTo(canvas.width, canvas.height);
+        ctx.stroke();
+    }
+
+    function gameLoop(currentTime) {
+        const dt = currentTime - lastTime;
+        lastTime = currentTime;
+
+        if (isPlaying) {
+            update(dt);
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+    }
 </script>
 </body>
 </html>
