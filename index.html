@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Law Brewing Defender: The Sheriff of Taps</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Rye&family=Roboto+Slab:wght@400;700&display=swap');
 
@@ -82,7 +81,6 @@
             padding: 20px;
             display: flex;
             justify-content: space-between;
-            align-items: center;
             font-size: 1.5rem;
             text-shadow: 2px 2px 0 #000;
             z-index: 20;
@@ -207,93 +205,6 @@
             border-radius: 4px;
         }
 
-        /* --- Leaderboard Styles --- */
-        .leaderboard-container {
-            width: 90%;
-            max-width: 600px;
-            background: rgba(40, 40, 40, 0.95);
-            border: 5px solid gold;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
-        }
-
-        .leaderboard-list {
-            list-style: none;
-            padding: 0;
-            margin: 20px 0 0;
-        }
-
-        .leaderboard-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px dashed #555;
-            font-size: 1.2rem;
-        }
-
-        .leaderboard-item:last-child {
-            border-bottom: none;
-        }
-
-        .leaderboard-rank {
-            font-family: 'Rye', serif;
-            color: gold;
-            width: 30px;
-            text-align: left;
-        }
-
-        .leaderboard-score {
-            font-weight: bold;
-            color: #fff;
-            text-align: right;
-        }
-
-        /* --- Share Card Design (Hidden Off-Screen) --- */
-        #share-card {
-            width: 400px; /* Fixed size for a good share image */
-            height: 400px;
-            background: radial-gradient(circle at center, #2a2a2a 0%, #000000 100%);
-            border: 10px solid gold;
-            border-radius: 10px;
-            position: absolute;
-            top: -9999px; /* Hide it off-screen, but keep it in the DOM for capture */
-            left: -9999px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            font-family: 'Roboto Slab', serif;
-            color: white;
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
-            z-index: 999;
-        }
-
-        #share-card-title {
-            font-family: 'Rye', serif;
-            font-size: 2.5rem;
-            color: gold;
-            margin-bottom: 5px;
-            text-shadow: 0 0 5px black;
-        }
-
-        #share-card-score {
-            font-size: 4rem;
-            font-weight: bold;
-            color: white;
-            margin-bottom: 20px;
-            text-shadow: 0 0 10px #ffeb3b;
-        }
-
-        #share-card-logo {
-            width: 150px;
-            height: 150px;
-            opacity: 0.8;
-            margin-top: 10px;
-        }
-
     </style>
 </head>
 <body>
@@ -324,7 +235,6 @@
         <div>LEVEL: <span id="level">1</span></div>
         <div>SCORE: <span id="score">0</span></div>
         <div>LIVES: <span id="lives">3</span></div>
-        <button id="show-leaderboard-btn" class="btn" style="padding: 5px 15px; font-size: 1rem; pointer-events: auto; margin-top: 0;">Board</button>
     </div>
     
     <div id="level-transition">
@@ -334,8 +244,8 @@
 
     <div id="landing-page" class="ui-overlay">
         <img src="https://github.com/lawbrewing/LawBrewing/blob/main/Gemini_Generated_Image_f46i9af46i9af46i.png?raw=true" 
-            alt="Law Brewing Co." 
-            class="title-img">
+              alt="Law Brewing Co." 
+              class="title-img">
         
         <button id="enter-btn" class="btn">ENTER TAPROOM</button>
     </div>
@@ -346,6 +256,10 @@
         
         <div class="tutorial">
             <p style="margin-bottom: 15px; color: #fff; font-size: 1.1rem;">You are the Sheriff of Taps. Defend the quality of the brew!</p>
+            
+            <p style="margin-bottom: 15px; color: gold; font-size: 1.2rem; font-weight: bold;">
+                HIGH SCORE: <span id="high-score-display">0</span>
+            </p>
             
             <div class="icon-row">
                 <div class="icon-box">
@@ -400,48 +314,10 @@
 
     <div id="game-over-screen" class="ui-overlay hidden">
         <h1>SHIFT OVER</h1>
-        <h2>Final Score: <span id="final-score">0</span></h2>
-        <p id="high-score-msg" style="margin-bottom: 15px; font-size: 1.5rem; color: #ffeb3b; font-family: 'Rye', serif; display: none;">New High Score!</p>
+        <h2 style="margin-bottom: 0;">Final Score: <span id="final-score">0</span></h2>
+        <p id="high-score-msg" style="margin-top: 5px; margin-bottom: 10px; font-size: 1.2rem; color: gold;"></p>
         <p id="game-over-msg" style="margin-bottom: 20px; font-size: 1.5rem; color: #aaa;">Last Call.</p>
-        
-        <button id="share-score-btn" class="btn hidden" style="background: gold; color: black; border-color: gold;">Share Score 📸</button>
         <button id="restart-btn" class="btn">Re-Open Tab</button>
-        <button id="show-leaderboard-final-btn" class="btn" style="background: #333; border-color: #555;">View Leaderboard</button>
-    </div>
-
-    <div id="leaderboard-screen" class="ui-overlay hidden">
-        <h1>TAPROOM HALL OF FAME</h1>
-        <div class="leaderboard-container">
-            <h2 style="margin-bottom: 10px;">Top 5 Sheriffs</h2>
-            <ul id="leaderboard-list" class="leaderboard-list">
-                </ul>
-        </div>
-        <button id="close-leaderboard-btn" class="btn">Back to Game</button>
-    </div>
-
-    <div id="share-card">
-        <h2 id="share-card-title">LAW BREWING DEFENDER</h2>
-        <p style="font-size: 1.5rem; margin-top: 5px;">NEW HIGH SCORE!</p>
-        <div id="share-card-score">0</div>
-        <div id="share-card-logo">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" preserveAspectRatio="xMidYMid meet">
-                <defs>
-                    <linearGradient id="metal" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stop-color="#d9d9d9"/>
-                        <stop offset="100%" stop-color="#7a7a7a"/>
-                    </linearGradient>
-                    <linearGradient id="gold" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stop-color="#ffeb8a"/>
-                        <stop offset="100%" stop-color="#c59a00"/>
-                    </linearGradient>
-                </defs>
-                <circle cx="300" cy="300" r="260" fill="url(#metal)" stroke="#000" stroke-width="6"/>
-                <polygon points="300,70 355,240 535,240 390,345 445,515 300,410 155,515 210,345 65,240 245,240" fill="url(#metal)" stroke="#000" stroke-width="5"/>
-                <text x="300" y="285" font-family="Rye, serif" font-size="150" text-anchor="middle" fill="url(#gold)" stroke="#000" stroke-width="4">LAW</text>
-                <text x="300" y="380" font-family="Rye, serif" font-size="70" text-anchor="middle" fill="url(#gold)" stroke="#000" stroke-width="3">BREWING</text>
-            </svg>
-        </div>
-        <p style="font-size: 1rem; margin-top: 15px; color: #ccc;">Can you beat the Sheriff of Taps?</p>
     </div>
 </div>
 
@@ -462,24 +338,16 @@
     const levelEl = document.getElementById('level'); 
     const finalScoreEl = document.getElementById('final-score');
     
+    // High Score Elements
+    const highScoreDisplayEl = document.getElementById('high-score-display');
+    const highScoreMsgEl = document.getElementById('high-score-msg');
+
     const startBtn = document.getElementById('start-btn');
     const restartBtn = document.getElementById('restart-btn');
     
     const levelTransitionEl = document.getElementById('level-transition'); 
     const levelTitleEl = document.getElementById('level-title');
     const levelSubtextEl = document.getElementById('level-subtext');
-
-    // NEW UI ELEMENTS FOR LEADERBOARD/SHARE
-    const leaderboardScreen = document.getElementById('leaderboard-screen');
-    const leaderboardList = document.getElementById('leaderboard-list');
-    const showLeaderboardBtn = document.getElementById('show-leaderboard-btn');
-    const showLeaderboardFinalBtn = document.getElementById('show-leaderboard-final-btn');
-    const closeLeaderboardBtn = document.getElementById('close-leaderboard-btn');
-    const highScoreMsg = document.getElementById('high-score-msg');
-    const shareScoreBtn = document.getElementById('share-score-btn');
-    const shareCard = document.getElementById('share-card');
-    const shareCardScore = document.getElementById('share-card-score');
-
 
     /* --- Level Configuration --- */
     const levelsConfig = [
@@ -496,6 +364,9 @@
     let lives = 3;
     let currentLevel = 1;
     let lastTime = 0;
+    
+    // High Score State
+    let highScore = 0;
     
     // Player/VIP State
     let playerGuestX; // Player-controlled X position for the VIP table
@@ -517,6 +388,39 @@
     let particles = [];
     let clickEffects = [];
     let thieves = []; 
+
+    /* --- High Score Functions --- */
+
+    function loadHighScore() {
+        // Retrieve score from localStorage, default to 0 if null/invalid
+        const storedScore = localStorage.getItem('lawBrewingHighScore');
+        highScore = parseInt(storedScore) || 0;
+        highScoreDisplayEl.textContent = highScore;
+    }
+
+    function saveHighScore(newScore) {
+        localStorage.setItem('lawBrewingHighScore', newScore);
+        highScore = newScore;
+        highScoreDisplayEl.textContent = highScore;
+    }
+    
+    function checkHighScore(finalScore) {
+        highScoreMsgEl.textContent = 'Last Call.'; // Default message
+        highScoreMsgEl.style.color = '#aaa';
+
+        if (finalScore > highScore) {
+            saveHighScore(finalScore);
+            highScoreMsgEl.textContent = "NEW HIGH SCORE! The people sing your praises!";
+            highScoreMsgEl.style.color = 'gold';
+            return true;
+        } else {
+            // Display the current high score on the game over screen
+            highScoreMsgEl.textContent = `High Score: ${highScore}`;
+            highScoreMsgEl.style.color = '#ccc';
+            return false;
+        }
+    }
+
 
     /* --- Resize Handling --- */
     function resize() {
@@ -569,7 +473,7 @@
                     createExplosion(b.x, b.y, '#9ca3af');
                     beers.splice(i, 1);
                     score += 100;
-                    scoreEl.innerText = score.toLocaleString();
+                    scoreEl.innerText = score;
                     createFloatingText(b.x, b.y, "+100", "white");
                     checkLevelUp();
                 } else {
@@ -610,6 +514,7 @@
 
     // MOUSE EVENTS
     canvas.addEventListener('mousedown', (e) => {
+        // Check if the click is for movement first (bottom 30%)
         if (e.clientY > canvas.height * 0.7) {
              handleGuestMoveStart(e.clientX, e.clientY);
         } else {
@@ -622,14 +527,16 @@
     });
 
     canvas.addEventListener('mouseup', handleGuestMoveEnd);
-    canvas.addEventListener('mouseleave', handleGuestMoveEnd);
+    canvas.addEventListener('mouseleave', handleGuestMoveEnd); // In case they drag off the canvas
 
     // TOUCH EVENTS
     canvas.addEventListener('touchstart', (e) => {
         e.preventDefault();
+        // Check only the first touch point for movement/shooting
         const x = e.touches[0].clientX;
         const y = e.touches[0].clientY;
         
+        // Separate touch event initiation based on vertical zone
         if (y > canvas.height * 0.7) {
             handleGuestMoveStart(x, y); 
         } else {
@@ -750,21 +657,29 @@
             if (this.side === 'right') scaleX = -1;
             ctx.scale(scaleX, 1);
 
-            // Old Timer Hat
-            ctx.fillStyle = '#f0f0f0';
+            // Old Timer Hat (unchanged)
+            ctx.fillStyle = '#f0f0f0'; // Brown hat
             ctx.beginPath();
-            ctx.ellipse(0, -25, 20, 10, 0, Math.PI, 0, true);
+            ctx.ellipse(0, -25, 20, 10, 0, Math.PI, 0, true); // Hat brim
             ctx.fill();
-            ctx.fillRect(-15, -25, 30, 5);
+            ctx.fillRect(-15, -25, 30, 5); // Hat crown base
 
-            // Head (Skin tone)
-            ctx.fillStyle = '#fdbd9c';
+            // Head (Skin tone, unchanged)
+            ctx.fillStyle = '#fdbd9c'; // Skin tone
             ctx.beginPath();
             ctx.arc(0, -15, 10, 0, Math.PI * 2);
             ctx.fill();
+
+            // White Hair (UPDATED)
+            //ctx.fillStyle = '#f0f0f0'; // White hair
+            //ctx.beginPath();
+            //ctx.ellipse(0, -18, 12, 12, 0, Math.PI, 0); // Top of head
+            //ctx.arc(-8, -10, 5, 0, Math.PI * 2); // Sideburn/ear area left
+            //ctx.arc(8, -10, 5, 0, Math.PI * 2); // Sideburn/ear area right
+            //ctx.fill();
             
-            // Body (Blue shirt)
-            ctx.fillStyle = '#4b5563';
+            // Body (Blue shirt, unchanged)
+            ctx.fillStyle = '#4b5563'; // Blue shirt
             ctx.fillRect(-15, -10, 30, 30);
             
             // Arm/Sleeve (right arm from his perspective)
@@ -777,16 +692,16 @@
             ctx.arc(15, 20, 5, 0, Math.PI * 2);
             ctx.fill();
 
-            // Dollar Bill
-            ctx.fillStyle = '#8bc34a';
-            ctx.strokeStyle = '#4c8c2a';
+            // Dollar Bill (UPDATED) - held in his hand
+            ctx.fillStyle = '#8bc34a'; // Green for dollar bill
+            ctx.strokeStyle = '#4c8c2a'; // Darker green outline
             ctx.lineWidth = 1;
-            ctx.fillRect(18, 15, 20, 10);
+            ctx.fillRect(18, 15, 20, 10); // Bill rectangle
             ctx.strokeRect(18, 15, 20, 10);
             ctx.fillStyle = '#4c8c2a';
             ctx.font = '6px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText('$1', 28, 22);
+            ctx.fillText('$1', 28, 22); // Value on bill
 
             ctx.globalAlpha = 1.0;
             ctx.restore();
@@ -812,7 +727,10 @@
         draw(ctx) {
             ctx.save();
             ctx.translate(this.x, this.y);
+
+            // --- FIX: Declare tableTopY here ---
             const tableTopY = 0;
+            // ------------------------------------
 
             // --- Draw Table ---
             ctx.fillStyle = '#5D4037'; 
@@ -827,11 +745,13 @@
 
            // --- Draw VIP Guest (only if active) ---
             if (this.isVipActive) {
+                // Offset for the guest to sit "behind" the table (facing away)
                 const guestOffsetY = tableTopY - 10;
                 
                 // 1. Purple Dress/Body (Flat Vector Style)
                 ctx.fillStyle = '#9C27B0'; // Purple
                 ctx.beginPath();
+                // A simple rounded shape for the body/back
                 ctx.ellipse(0, guestOffsetY + 10, 20, 15, 0, Math.PI, 0, true);
                 ctx.fill();
 
@@ -854,7 +774,7 @@
                 const glassX = -this.tableWidth/2 + 15;
                 const glassY = tableTopY + 5;
                 
-                // Glass Rim
+                // Glass Rim (White/Foam color for visibility)
                 ctx.fillStyle = '#fefefe';
                 ctx.fillRect(glassX - 5, glassY, 10, 2);
                 
@@ -990,135 +910,14 @@
         }, 2500);
     }
 
-    /* --- Leaderboard & High Score Logic --- */
-    const LEADERBOARD_KEY = 'lawbrewing_highscores';
-
-    /**
-     * Loads high scores from local storage.
-     * @returns {Array<number>} Sorted array of scores.
-     */
-    function loadHighScores() {
-        const scores = localStorage.getItem(LEADERBOARD_KEY);
-        try {
-            return scores ? JSON.parse(scores).sort((a, b) => b - a) : [];
-        } catch (e) {
-            console.error("Error loading scores from localStorage:", e);
-            return [];
-        }
-    }
-
-    /**
-     * Saves a new score and checks if it's a new high score.
-     * @param {number} newScore - The score to save.
-     * @returns {boolean} True if a new high score was set.
-     */
-    function saveNewScore(newScore) {
-        let scores = loadHighScores();
-        const isNewHighScore = (scores.length === 0 || newScore > scores[0]);
-
-        // Add the new score, sort, and keep only the top 5
-        scores.push(newScore);
-        scores.sort((a, b) => b - a);
-        scores = scores.slice(0, 5);
-
-        localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(scores));
-        return isNewHighScore;
-    }
-
-    /**
-     * Renders the leaderboard HTML list.
-     */
-    function renderLeaderboard() {
-        const scores = loadHighScores();
-        leaderboardList.innerHTML = '';
-
-        if (scores.length === 0) {
-            leaderboardList.innerHTML = '<li class="text-center text-gray-400 py-4">No scores yet! Play a game.</li>';
-            return;
-        }
-
-        scores.forEach((s, index) => {
-            const listItem = document.createElement('li');
-            listItem.className = 'leaderboard-item';
-            
-            if (index === 0) {
-                listItem.classList.add('text-yellow-300');
-            }
-            
-            listItem.innerHTML = `
-                <span class="leaderboard-rank">${index + 1}.</span>
-                <span class="leaderboard-score">${s.toLocaleString()}</span>
-            `;
-            leaderboardList.appendChild(listItem);
-        });
-    }
-
-    /**
-     * Generates an image of the share card using html2canvas and triggers the share dialog.
-     */
-    function generateAndShareImage() {
-        // 1. Prepare the off-screen card
-        shareCardScore.textContent = finalScoreEl.textContent;
-
-        // 2. Capture the HTML element
-        html2canvas(shareCard, {
-            backgroundColor: null, 
-            scale: 2 
-        }).then(canvas => {
-            canvas.toBlob((blob) => {
-                if (!blob) {
-                    alert("Could not create share image.");
-                    return;
-                }
-                const file = new File([blob], 'LawBrewingHighscore.png', {type: 'image/png'});
-                const data = {
-                    files: [file],
-                    title: 'Law Brewing Defender High Score!',
-                    text: `I just scored ${finalScoreEl.textContent} in Law Brewing Defender: The Sheriff of Taps! Can you beat my score? #LawBrewing #Highscore`
-                };
-
-                // 3. Use the Web Share API if available
-                if (navigator.canShare && navigator.canShare(data)) {
-                    navigator.share(data).catch(error => {
-                        console.error('Sharing failed:', error);
-                        alert("Sharing failed or was cancelled.");
-                    });
-                } else {
-                    // 4. Fallback for browsers that don't support the Web Share API: offer a download
-                    const dataUrl = canvas.toDataURL('image/png');
-                    const link = document.createElement('a');
-                    link.download = 'LawBrewingHighscore.png';
-                    link.href = dataUrl;
-                    link.click();
-                    alert("Sharing is not supported on this browser. Your image has been downloaded!");
-                }
-            }, 'image/png');
-        });
-    }
-
-
-    /* --- Menu Flow Functions (Updated) --- */
     function endGame() {
         isPlaying = false;
         hud.classList.add('hidden');
         gameOverScreen.classList.remove('hidden');
-        finalScoreEl.innerText = score.toLocaleString();
-
-        // NEW: Check and save the score
-        const isNewHighScore = saveNewScore(score);
-
-        // NEW: Update Game Over Screen based on result
-        if (isNewHighScore) {
-            highScoreMsg.style.display = 'block';
-            shareScoreBtn.classList.remove('hidden');
-        } else {
-            highScoreMsg.style.display = 'none';
-            shareScoreBtn.classList.add('hidden');
-        }
-
-        document.getElementById('game-over-msg').textContent = isNewHighScore 
-            ? "A legendary shift! Share your victory!" 
-            : "Last Call. Try for a better score!";
+        finalScoreEl.innerText = score;
+        
+        // --- High Score Check ---
+        checkHighScore(score);
     }
 
     function startGame() {
@@ -1129,7 +928,7 @@
         speedMultiplier = levelsConfig[0].speedMultiplier;
         thiefSpawnInterval = levelsConfig[0].thiefSpawnMs;
 
-        scoreEl.innerText = score.toLocaleString();
+        scoreEl.innerText = score;
         livesEl.innerText = lives;
         levelEl.innerText = currentLevel;
         
@@ -1141,7 +940,7 @@
         if (!vipInstance) {
             vipInstance = new TableGuest(canvas.height - 100);
         }
-        vipInstance.isVipActive = false;
+        vipInstance.isVipActive = false; // Start on Lvl 1, VIP not yet active
         
         isPlaying = true;
         startScreen.classList.add('hidden');
@@ -1152,208 +951,161 @@
         requestAnimationFrame(gameLoop);
     }
 
-    /* --- Game Loop and Drawing Functions --- */
+    /* --- Logic for Menu Flow --- */
 
-    function update(dt) {
-        if (!isPlaying || isTransitioning) return;
+    // Transition from Landing Page to Instructions
+    enterBtn.addEventListener('click', () => {
+        landingPage.classList.add('hidden');
+        startScreen.classList.remove('hidden');
+        loadHighScore(); // Load score when entering instructions/start screen
+    });
+    
+    // Start Game from Instructions
+    startBtn.addEventListener('click', startGame);
 
-        // --- Spawning Logic ---
-        spawnTimer += dt;
-        if (spawnTimer >= spawnInterval) {
-            beers.push(new Beer());
-            spawnTimer = 0;
+    // Restart Game from Game Over Screen
+    restartBtn.addEventListener('click', () => {
+        // Just show the start screen again, let startGame handle the actual reset
+        gameOverScreen.classList.add('hidden');
+        startScreen.classList.remove('hidden');
+        loadHighScore(); // Reload high score in case it was just updated
+    });
+    
+    /* --- Main Game Loop --- */
+    
+    function gameLoop(currentTime) {
+        if (!isPlaying) return;
+
+        const deltaTime = currentTime - lastTime;
+        lastTime = currentTime;
+        
+        // 1. Clear Canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // 2. Spawning Logic
+        if (!isTransitioning) {
+            // Beer Spawning
+            spawnTimer += deltaTime;
+            if (spawnTimer >= spawnInterval) {
+                beers.push(new Beer());
+                spawnTimer = 0;
+            }
+            
+            // Thief Spawning
+            if (currentLevel >= 2) {
+                thiefSpawnTimer += deltaTime;
+                if (thiefSpawnTimer >= thiefSpawnInterval) {
+                    thieves.push(new PatronRaider());
+                    thiefSpawnTimer = 0;
+                }
+            }
         }
 
-        thiefSpawnTimer += dt;
-        if (thieves.length === 0 && thiefSpawnTimer >= thiefSpawnInterval && currentLevel >= 2) {
-            thieves.push(new PatronRaider());
-            thiefSpawnTimer = 0;
+        // 3. Update Entities and Check for Collisions/Loss
+        
+        // VIP Update
+        if (vipInstance) {
+            vipInstance.update();
         }
 
-        // --- Update Entities ---
-        beers.forEach(b => b.update(dt));
-        vipInstance.update();
-        particles.forEach(p => p.update(dt));
-        thieves.forEach(t => t.update(dt));
-
-        // --- Collision and Cleanup ---
-
-        // 1. Beer cleanup and score/life updates
+        // Beer Update
         for (let i = beers.length - 1; i >= 0; i--) {
             const b = beers[i];
+            b.update(deltaTime);
 
-            // Check if beer reached the bottom (the bar)
-            if (b.y > canvas.height + 50) {
+            // Check if beer reaches the bottom (bar line)
+            if (b.y > canvas.height) {
+                beers.splice(i, 1);
+                
                 if (b.type === 'BAD') {
-                    // Fail: Bad beer reached the bar
+                    // CORRECT: Bad Beer made it - no change/no loss (it was meant for the bar)
+                    score += 50; 
+                    scoreEl.innerText = score;
+                    createFloatingText(b.x, canvas.height, "+50 [BAR]", "yellow");
+                    checkLevelUp();
+                } else {
+                    // INCORRECT: Good Beer made it - lose life!
                     lives--;
                     livesEl.innerText = lives;
-                    createFloatingText(b.x, canvas.height - 20, "-1 LIFE!", "red");
-                    beers.splice(i, 1);
+                    createFloatingText(b.x, canvas.height, "MISSED BREW!", "red");
                     checkGameOver();
-                    continue;
-                } else {
-                    // Success: Good beer reached the bar
-                    score += 50;
-                    scoreEl.innerText = score.toLocaleString();
-                    createFloatingText(b.x, canvas.height - 20, "+50 (Bar)", "green");
-                    beers.splice(i, 1);
+                }
+                continue;
+            }
+            
+            // Check collision with VIP table
+            if (vipInstance && vipInstance.isVipActive && b.y + b.radius >= vipInstance.y && b.y - b.radius <= vipInstance.y + vipInstance.tableHeight && Math.abs(b.x - vipInstance.x) < vipInstance.tableWidth / 2) {
+                
+                beers.splice(i, 1); // Remove beer
+                
+                if (b.type === 'GOOD') {
+                    // CORRECT: Good Beer caught by VIP
+                    score += 500;
+                    lives = Math.min(3, lives + 1); // Extra life, max 3
+                    livesEl.innerText = lives;
+                    scoreEl.innerText = score;
+                    createFloatingText(b.x, b.y, "+500 & LIFE!", "lime");
                     checkLevelUp();
-                    continue;
-                }
-            }
-
-            // Check collision with VIP table (only if VIP is active)
-            if (vipInstance.isVipActive && b.y > vipInstance.y - b.radius * 2) {
-                const dx = b.x - vipInstance.x;
-                // Check if the beer is horizontally over the table's width
-                if (Math.abs(dx) < vipInstance.tableWidth / 2) {
-                    if (b.type === 'GOOD') {
-                        // VIP Success: Law Brew caught by VIP
-                        score += 500;
-                        scoreEl.innerText = score.toLocaleString();
-                        createFloatingText(b.x, b.y, "+500 (VIP!)", "yellow");
-                        createExplosion(b.x, b.y, '#ffeb3b');
-                        beers.splice(i, 1);
-                        checkLevelUp();
-                        continue;
-                    } 
-                    // Bad beer is just passed to the bar/bottom line
-                }
-            }
-
-            // Check collision with thieves (Old Timer)
-            for (let j = thieves.length - 1; j >= 0; j--) {
-                const t = thieves[j];
-                const dist = Math.hypot(b.x - t.x, b.y - t.y);
-                if (dist < t.size / 2 + b.radius * 0.5) {
-                    if (b.type === 'BAD') {
-                        // Fail: Old Timer got the Swill
-                        lives--;
-                        livesEl.innerText = lives;
-                        createFloatingText(t.x, t.y, "DRANK SWILL!", "red");
-                        createExplosion(t.x, t.y, 'red');
-                        thieves.splice(j, 1);
-                        beers.splice(i, 1);
-                        checkGameOver();
-                        break;
-                    } else {
-                        // Success: Old Timer got the good stuff (removes threat)
-                        score += 250;
-                        scoreEl.innerText = score.toLocaleString();
-                        createFloatingText(t.x, t.y, "+250 (Fed Timer)", "gold");
-                        createExplosion(t.x, t.y, 'gold');
-                        thieves.splice(j, 1);
-                        beers.splice(i, 1);
-                        checkLevelUp();
-                        break;
-                    }
+                } else {
+                    // INCORRECT: Bad Beer caught by VIP
+                    lives--;
+                    livesEl.innerText = lives;
+                    createFloatingText(b.x, b.y, "VIP SWILL!", "red");
+                    checkGameOver();
                 }
             }
         }
-        
-        // 2. Thief cleanup (off-screen or hit)
+
+        // Thief Update
         for (let i = thieves.length - 1; i >= 0; i--) {
             const t = thieves[i];
-            if (t.life <= 0 || t.x < -t.size || t.x > canvas.width + t.size) {
+            t.update();
+            
+            if (t.life <= 0 || (t.side === 'left' && t.x > canvas.width + t.size) || (t.side === 'right' && t.x < -t.size)) {
                 thieves.splice(i, 1);
             }
         }
 
-        // 3. Particle cleanup
-        particles = particles.filter(p => p.life > 0);
-    }
+        // Particle/Text Update
+        for (let i = particles.length - 1; i >= 0; i--) {
+            const p = particles[i];
+            p.update();
+            if (p.life <= 0) particles.splice(i, 1);
+        }
+        
+        // Click Effect Update
+        for (let i = clickEffects.length - 1; i >= 0; i--) {
+            clickEffects[i].age += 0.05;
+            if (clickEffects[i].age > 1) clickEffects.splice(i, 1);
+        }
 
-
-    function draw() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // Draw entities
+        // 4. Draw Entities
+        // Draw VIP table first, so beers fall *over* it
+        if (vipInstance) {
+            vipInstance.draw(ctx);
+        }
+        
         beers.forEach(b => b.draw(ctx));
         thieves.forEach(t => t.draw(ctx));
-        vipInstance.draw(ctx); // Draw VIP table/guest last to appear in front of beers
-
-        // Draw bar line / bottom boundary
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-        ctx.fillRect(0, canvas.height - 5, canvas.width, 5);
-        ctx.fillStyle = '#6d4c41'; // Wood/bar color
-        ctx.fillRect(0, canvas.height, canvas.width, -30);
-
-        // Draw effects
         particles.forEach(p => p.draw(ctx));
         
-        // Draw click effects
-        for (let i = clickEffects.length - 1; i >= 0; i--) {
-            const c = clickEffects[i];
-            ctx.strokeStyle = `rgba(255, 255, 255, ${1 - c.age / 10})`;
-            ctx.lineWidth = 3;
+        // Draw Click Effects (Visual feedback for shooting)
+        clickEffects.forEach(c => {
+            ctx.globalAlpha = 1 - c.age;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.arc(c.x, c.y, c.age * 5, 0, Math.PI * 2);
+            ctx.arc(c.x, c.y, 20 * c.age, 0, Math.PI * 2);
             ctx.stroke();
-            c.age++;
-            if (c.age > 10) clickEffects.splice(i, 1);
-        }
-    }
+            ctx.globalAlpha = 1.0;
+        });
 
-    function gameLoop(currentTime) {
-        if (!isPlaying) return;
-
-        const deltaTime = (currentTime - lastTime) / 16.666; // Approx 60 FPS delta
-        lastTime = currentTime;
-
-        update(deltaTime);
-        draw();
-
+        // 5. Loop
         requestAnimationFrame(gameLoop);
     }
-
-    /* --- Event Listeners --- */
-
-    enterBtn.addEventListener('click', () => {
-        landingPage.classList.add('hidden');
-        startScreen.classList.remove('hidden');
-    });
-
-    startBtn.addEventListener('click', startGame);
-    restartBtn.addEventListener('click', startGame);
-
-    // Show Leaderboard from HUD
-    showLeaderboardBtn.addEventListener('click', () => {
-        if(isPlaying) {
-            isPlaying = false;
-            hud.classList.add('hidden');
-        }
-        renderLeaderboard();
-        leaderboardScreen.classList.remove('hidden');
-    });
-
-    // Show Leaderboard from Game Over Screen
-    showLeaderboardFinalBtn.addEventListener('click', () => {
-        renderLeaderboard();
-        gameOverScreen.classList.add('hidden');
-        leaderboardScreen.classList.remove('hidden');
-    });
-
-    // Close Leaderboard
-    closeLeaderboardBtn.addEventListener('click', () => {
-        leaderboardScreen.classList.add('hidden');
-        
-        // If returning from the in-game pause
-        if (hud.classList.contains('hidden') && gameOverScreen.classList.contains('hidden')) {
-             isPlaying = true;
-             hud.classList.remove('hidden');
-             lastTime = performance.now(); // Reset time to avoid jump
-             requestAnimationFrame(gameLoop);
-        } 
-        // If returning from the game over screen, stay on game over screen
-        else if (gameOverScreen.classList.contains('hidden') === false) {
-            // Do nothing, stay on game over screen
-        }
-    });
-
-    // Share Score
-    shareScoreBtn.addEventListener('click', generateAndShareImage);
-
+    
+    // Initial high score load when the page first loads
+    document.addEventListener('DOMContentLoaded', loadHighScore); 
 </script>
 </body>
 </html>
