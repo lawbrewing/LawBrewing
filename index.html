@@ -1011,32 +1011,14 @@
             }
             
             // Thief grabbing bad beer logic
-         for (let j = beers.length - 1; j >= 0; j--) {
-    const b = beers[j];
-    
-    // Check for collision with 'BAD' beer
-    if (b.type === 'BAD' && Math.hypot(t.x - b.x, t.y - b.y) < 50) {
-        
-        // 1. Remove the beer so it doesn't hit the player again in the next frame
-        beers.splice(j, 1); 
-
-        // 2. Decrease Life
-        lives--; 
-
-        // 3. Update the UI 
-        // (Make sure 'livesEl' matches your HTML element variable)
-        livesEl.innerText = lives; 
-
-        // 4. Visual Feedback (Red text instead of Lime)
-        createFloatingText(t.x, t.y, "Swill Served!", "red");
-        
-        // 5. Trigger the thief's hit state (animation/sound)
-        t.isHit = true; 
-        
-        
-        }
-    }
-}
+            for (let j = beers.length - 1; j >= 0; j--) {
+                const b = beers[j];
+                if (b.type === 'BAD' && Math.hypot(t.x - b.x, t.y - b.y) < 50) {
+                    beers.splice(j, 1); 
+                    score += 50; 
+                    scoreEl.innerText = score;
+                    createFloatingText(t.x, t.y, "+50 (Swill Gone)", "lime");
+                    t.isHit = true; 
                 }
             }
         }
