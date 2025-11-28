@@ -613,7 +613,7 @@
             ctx.scale(scaleX, 1);
 
             // Old Timer Hat (unchanged)
-            ctx.fillStyle = '#f0f0f0'; // Brown hat
+            ctx.fillStyle = '#b45309'; // Brown hat
             ctx.beginPath();
             ctx.ellipse(0, -25, 20, 10, 0, Math.PI, 0, true); // Hat brim
             ctx.fill();
@@ -629,8 +629,8 @@
             ctx.fillStyle = '#f0f0f0'; // White hair
             ctx.beginPath();
             ctx.ellipse(0, -18, 12, 12, 0, Math.PI, 0); // Top of head
-            //ctx.arc(-8, -10, 5, 0, Math.PI * 2); // Sideburn/ear area left
-            //ctx.arc(8, -10, 5, 0, Math.PI * 2); // Sideburn/ear area right
+            ctx.arc(-8, -10, 5, 0, Math.PI * 2); // Sideburn/ear area left
+            ctx.arc(8, -10, 5, 0, Math.PI * 2); // Sideburn/ear area right
             ctx.fill();
             
             // Body (Blue shirt, unchanged)
