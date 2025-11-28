@@ -340,9 +340,9 @@
     const levelTitleEl = document.getElementById('level-title');
     const levelSubtextEl = document.getElementById('level-subtext');
 
-    /* --- Level Configuration (Guest is now always available, but only active from Lvl 3) --- */
+    /* --- Level Configuration --- */
     const levelsConfig = [
-        { scoreToClear: 1000, spawnIntervalMs: 1500, speedMultiplier: 1.0, vipActive: false }, 
+        { scoreToClear: 1000, spawnIntervalMs: 1500, speedMultiplier: 1.0, thiefSpawnMs: 999999, vipActive: false }, 
         { scoreToClear: 2500, spawnIntervalMs: 1200, speedMultiplier: 1.3, thiefSpawnMs: 7000, vipActive: false }, 
         { scoreToClear: 4500, spawnIntervalMs: 1000, speedMultiplier: 1.6, thiefSpawnMs: 6000, vipActive: true }, // VIP ACTIVE HERE
         { scoreToClear: 7000, spawnIntervalMs: 800, speedMultiplier: 2.0, thiefSpawnMs: 5000, vipActive: true }, 
@@ -367,7 +367,7 @@
     let speedMultiplier = levelsConfig[0].speedMultiplier;
     
     let thiefSpawnTimer = 0;
-    let thiefSpawnInterval = 999999; 
+    let thiefSpawnInterval = levelsConfig[0].thiefSpawnMs; 
 
     let isTransitioning = false;
     
@@ -395,17 +395,13 @@
         if (!isPlaying || isTransitioning) return;
 
         // If the tap/click is in the VIP control zone (bottom 1/3), don't shoot!
-        // The VIP's visible body (which is drawn higher) is now immune to shots
-        // if the player clicks on it, resolving the penalty issue.
         if (y > canvas.height * 0.7) { 
             return;
         }
 
         clickEffects.push({x, y, age: 0});
 
-        // The VIP Collision check has been removed to resolve the shooting issue.
-
-        // 2. Thieves
+        // 1. Thieves
         for (let i = thieves.length - 1; i >= 0; i--) {
             const t = thieves[i];
             const dist = Math.hypot(t.x - x, t.y - y);
@@ -421,7 +417,7 @@
             }
         }
 
-        // 3. Beers
+        // 2. Beers
         for (let i = beers.length - 1; i >= 0; i--) {
             const b = beers[i];
             const dist = Math.hypot(b.x - x, b.y - y);
@@ -471,7 +467,7 @@
 
     // MOUSE EVENTS
     canvas.addEventListener('mousedown', (e) => {
-        // FIX: Check if the click is for movement first (bottom 30%)
+        // Check if the click is for movement first (bottom 30%)
         if (e.clientY > canvas.height * 0.7) {
              handleGuestMoveStart(e.clientX, e.clientY);
         } else {
@@ -493,7 +489,7 @@
         const x = e.touches[0].clientX;
         const y = e.touches[0].clientY;
         
-        // FIX: Separate touch event initiation based on vertical zone
+        // Separate touch event initiation based on vertical zone
         if (y > canvas.height * 0.7) {
             handleGuestMoveStart(x, y); 
         } else {
@@ -548,7 +544,8 @@
                 ctx.beginPath();
                 ctx.moveTo(-15, -25);
                 ctx.lineTo(-10, 25);
-                ctx.lineTo(10, 25);
+                ctx.lineTo(30, 25);
+                ctx.lineTo(30, 25); // Corrected: was missing a point or line segment
                 ctx.lineTo(15, -25);
                 ctx.closePath();
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
@@ -660,7 +657,7 @@
             ctx.save();
             ctx.translate(this.x, this.y);
 
-            // --- Draw Table and Chair (always present) ---
+            // --- Draw Table and Chair (always present if object exists) ---
             ctx.fillStyle = '#5D4037'; 
             ctx.fillRect(-this.tableWidth/2, 0, this.tableWidth, this.tableHeight);
             ctx.strokeStyle = '#3E2723';
@@ -782,7 +779,9 @@
         if (newLevel <= levelsConfig.length) {
             const cfg = levelsConfig[newLevel - 1];
             titleText = `LEVEL ${newLevel}`;
-            if (newLevel === 3) {
+            
+            // --- VIP Activation Logic ---
+            if (cfg.vipActive) {
                 subText = "VIP IS NOW ACTIVE! CATCH LAW BREWS!";
                 vipInstance.isVipActive = true;
             } else if (newLevel === 2) {
@@ -796,7 +795,7 @@
             // Config Logic
             spawnInterval = cfg.spawnIntervalMs;
             speedMultiplier = cfg.speedMultiplier;
-            thiefSpawnInterval = cfg.thiefSpawnMs || 999999;
+            thiefSpawnInterval = cfg.thiefSpawnMs;
             levelEl.textContent = newLevel;
         } else {
             // Expert Mode
@@ -832,7 +831,7 @@
         // Reset to Level 1 config
         spawnInterval = levelsConfig[0].spawnIntervalMs;
         speedMultiplier = levelsConfig[0].speedMultiplier;
-        thiefSpawnInterval = 999999;
+        thiefSpawnInterval = levelsConfig[0].thiefSpawnMs;
 
         scoreEl.innerText = score;
         livesEl.innerText = lives;
@@ -895,10 +894,12 @@
         // --- VIP Guest (Movable Target) ---
         if (vipInstance) {
             vipInstance.update();
-            vipInstance.draw(ctx);
-
-            // VIP Collision Logic (only when active/Level 3+)
+            
+            // Only draw and check collision if the VIP is active (Level 3+)
             if (vipInstance.isVipActive) {
+                vipInstance.draw(ctx);
+                
+                // VIP Collision Logic
                 for (let j = beers.length - 1; j >= 0; j--) {
                     const b = beers[j];
                     // Collision check: beer x,y is near the VIP's table top area
@@ -908,15 +909,17 @@
                         beers.splice(j, 1);
                         
                         if (b.type === 'GOOD') {
+                            // *** CHANGE 1: Catching Law Brew is a score bonus ***
                             score += 500;
                             scoreEl.innerText = score;
                             createFloatingText(vipInstance.x, vipInstance.y - 60, "VIP LAW BONUS!", "#d946ef"); 
                             createExplosion(b.x, b.y, '#fff');
                         } else {
+                            // *** CHANGE 2: Catching Swill is still a penalty (VIP gets drunk/sick) ***
                             lives--;
                             livesEl.innerText = lives;
                             createFloatingText(vipInstance.x, vipInstance.y - 60, "VIP SWILL HIT!", "red");
-                            createExplosion(b.x, b.y, '#ef4444'); // Swill explosion
+                            createExplosion(b.x, b.y, '#ef4444'); 
                             checkGameOver();
                         }
                     }
@@ -936,10 +939,15 @@
             if (b.y > canvas.height) {
                 beers.splice(i, 1);
                 if (b.type === 'GOOD') {
-                    lives--;
-                    livesEl.innerText = lives;
-                    checkGameOver();
-                    createFloatingText(b.x, canvas.height - 50, "MISSED LAW BREW!", "orange");
+                    // *** CHANGE 3: Missed Law Brew is now ONLY a loss if the VIP IS NOT active ***
+                    // If VIP is active (Level 3+), missing the Law Brew is not a penalty.
+                    // This logic remains the same for pre-VIP levels (1 & 2).
+                    if (!vipInstance.isVipActive) {
+                         lives--;
+                         livesEl.innerText = lives;
+                         checkGameOver();
+                         createFloatingText(b.x, canvas.height - 50, "MISSED LAW BREW!", "orange");
+                    }
                 }
             }
         }
@@ -963,7 +971,7 @@
                     score += 50; 
                     scoreEl.innerText = score;
                     createFloatingText(t.x, t.y, "+50 (Swill Gone)", "lime");
-                    t.isHit = true; // Use hit mechanic to make the thief disappear quickly
+                    t.isHit = true; 
                 }
             }
         }
