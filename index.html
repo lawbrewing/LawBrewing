@@ -308,12 +308,13 @@
         <button id="start-btn" class="btn">Start Shift</button>
     </div>
 
-    <div id="game-over-screen" class="ui-overlay hidden">
-        <h1>SHIFT OVER</h1>
-        <h2>Final Score: <span id="final-score">0</span></h2>
-        <p id="game-over-msg" style="margin-bottom: 20px; font-size: 1.5rem; color: #aaa;">Last Call.</p>
-        <button id="restart-btn" class="btn">Re-Open Tab</button>
-    </div>
+   <div id="game-over-screen" class="ui-overlay hidden">
+    <h1>SHIFT OVER</h1>
+    <h2>Final Score: <span id="final-score">0</span></h2>
+    <p id="high-score-display" style="margin-top: 10px; font-size: 1.2rem; color: gold;">HIGH SCORE: 0</p>
+    <p id="game-over-msg" style="margin-bottom: 20px; font-size: 1.5rem; color: #aaa;">Last Call.</p>
+    <button id="restart-btn" class="btn">Re-Open Tab</button>
+</div>
 </div>
 
 <script>
@@ -339,7 +340,8 @@
     const levelTransitionEl = document.getElementById('level-transition'); 
     const levelTitleEl = document.getElementById('level-title');
     const levelSubtextEl = document.getElementById('level-subtext');
-
+const finalScoreEl = document.getElementById('final-score');
+const highScoreDisplayEl = document.getElementById('high-score-display'); 
     /* --- Level Configuration --- */
     const levelsConfig = [
         { scoreToClear: 1000, spawnIntervalMs: 1500, speedMultiplier: 1.0, thiefSpawnMs: 999999, vipActive: false }, 
@@ -355,6 +357,9 @@
     let lives = 3;
     let currentLevel = 1;
     let lastTime = 0;
+    
+// Add High Score Variable
+let highScore = 0;
     
     // Player/VIP State
     let playerGuestX; // Player-controlled X position for the VIP table
@@ -865,15 +870,54 @@
         }, 2500);
     }
 
-    function endGame() {
-        isPlaying = false;
-        hud.classList.add('hidden');
-        gameOverScreen.classList.remove('hidden');
-        finalScoreEl.innerText = score;
-    }
+   function endGame() {
+    isPlaying = false;
+    hud.classList.add('hidden');
+    gameOverScreen.classList.remove('hidden');
+    finalScoreEl.innerText = score;
+    
+    // --- High Score Logic ---
+    const isNewHighScore = saveHighScore(score);
+    
+    if (isNewHighScore) {
+        document.getElementById('game-over-msg').textContent = "NEW RECORD!";
+        highScoreDisplayEl.style.color = 'lime';
+    } else {
+        document.getElementById('game-over-msg').textContent = "Last Call. Better luck next shift.";
+        highScoreDisplayEl.style.color = 'gold';
+    }
+
+    highScoreDisplayEl.textContent = `HIGH SCORE: ${highScore}`;
+    // ------------------------
+    
+    // The rest of your game loop continuation (removed for brevity)
+    // ...
+}
 
     function startGame() {
-        score = 0; lives = 3; currentLevel = 1;
+    // --- ADD THE LOAD HERE ---
+    loadHighScore() {
+    const storedScore = localStorage.getItem('lawBrewingHighScore');
+    if (storedScore) {
+        highScore = parseInt(storedScore, 10);
+    } else {
+        highScore = 0;
+    }
+}
+
+// Function to check and save the high score
+function saveHighScore(currentScore) {
+    if (currentScore > highScore) {
+        highScore = currentScore;
+        localStorage.setItem('lawBrewingHighScore', highScore.toString());
+        return true; // New high score achieved
+    }
+    return false; // Did not beat high score
+}
+    // -------------------------
+
+    score = 0; lives = 3; currentLevel = 1;
+    // ... rest of startGame function ...
         
         // Reset to Level 1 config
         spawnInterval = levelsConfig[0].spawnIntervalMs;
