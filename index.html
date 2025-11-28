@@ -6,7 +6,7 @@
     <title>Law Brewing Defender: The Sheriff of Taps</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Rye&family=Roboto+Slab:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Rye&family=Roboto+Slab:wght=400;700&display=swap');
 
         body {
             background-color: #1a1a1a;
@@ -259,21 +259,17 @@
             
             <div class="icon-row">
                 <div class="icon-box">
-                                        <svg width="40" height="60" viewBox="0 0 50 80">
-                        <rect x="10" y="15" width="30" height="50" fill="#9ca3af"/>
-                        <rect x="10" y="15" width="30" height="5" fill="#d1d5db"/>
-                        <rect x="10" y="60" width="30" height="5" fill="#d1d5db"/>
-                        <rect x="10" y="35" width="30" height="20" fill="#ef4444"/>
-                        <text x="25" y="49" text-anchor="middle" font-family="sans-serif" font-size="10" fill="white">SWILL</text>
+                    <svg width="40" height="60" viewBox="0 0 50 80">
+                        <rect x="10" y="10" width="30" height="60" rx="2" fill="#9ca3af" stroke="#4b5563" stroke-width="2"/>
+                        <rect x="10" y="20" width="30" height="40" fill="#ef4444" opacity="0.8"/>
+                        <text x="25" y="45" text-anchor="middle" font-family="sans-serif" font-size="10" fill="white">SWILL</text>
                     </svg>
                     <span class="icon-desc">SHOOT THIS<br><strong style="color: #ef4444">(Bad Beer)</strong><br>Must NOT reach the bar!</span>
                 </div>
                 <div class="icon-box">
-                                        <svg width="40" height="60" viewBox="0 0 50 80">
-                        <path d="M15 15 L19 63 L31 63 L35 15 Z" fill="rgba(255, 255, 255, 0.3)" stroke="#fff" stroke-width="2"/>
-                        <path d="M17 25 L20 59 L30 59 L33 25 Z" fill="#d97706"/>
-                        <ellipse cx="25" cy="25" rx="13" ry="5" fill="#fff"/>
-                        <circle cx="25" cy="40" r="5" fill="black"/>
+                    <svg width="40" height="60" viewBox="0 0 50 80">
+                        <path d="M10 10 L15 70 L35 70 L40 10 Z" fill="#d97706" stroke="#fff" stroke-width="2" opacity="0.8"/>
+                        <path d="M10 10 Q25 0 40 10 L40 20 L10 20 Z" fill="#fff"/>
                     </svg>
                     <span class="icon-desc">SAVE THIS<br><strong style="color: #d97706">(Law Brew)</strong><br>Must reach the bar!</span>
                 </div>
@@ -284,34 +280,21 @@
                 
                 <div class="icon-row">
                     <div class="icon-box">
-                                                <svg width="40" height="40" viewBox="0 0 50 50">
-                            <rect x="15" y="15" width="30" height="30" fill="#4b5563"/>
-                            <rect x="35" y="25" width="10" height="20" fill="#4b5563"/>
-                            <circle cx="40" cy="45" r="5" fill="#fdbd9c"/>
-                            <rect x="42" y="40" width="10" height="5" fill="#8bc34a" stroke="#4c8c2a" stroke-width="1"/>
-                            <text x="47" y="44" font-family="Arial" font-size="6" text-anchor="middle" fill="#4c8c2a">$1</text>
-                            
-                            <circle cx="30" cy="15" r="10" fill="#fdbd9c"/>
-                            <path d="M18 5 A10 5 0 0 1 42 5" fill="#f0f0f0"/>
-                            <rect x="25" y="5" width="10" height="5" fill="#f0f0f0"/>
-                            <path d="M18 10 A12 12 0 0 1 42 10 L42 18 A12 12 0 0 1 18 18 Z" fill="#f0f0f0"/>
+                        <svg width="40" height="40" viewBox="0 0 50 50">
+                            <rect x="15" y="5" width="20" height="5" fill="#b45309"/>
+                            <path d="M15 10 A10 5 0 0 1 35 10" fill="#b45309"/>
+                            <circle cx="25" cy="15" r="7" fill="#fdbd9c"/>
+                            <rect x="10" y="22" width="30" height="20" fill="#4b5563"/>
                         </svg>
                         <span class="icon-desc"><strong>The Old Timer</strong><br>Shoot him if he grabs Swill!</span>
                     </div>
 
                     <div class="icon-box">
-                                                <svg width="50" height="50" viewBox="0 0 60 60">
-                                                        <ellipse cx="30" cy="30" rx="20" ry="15" fill="#9C27B0" transform="translate(0, -10)"/>
-                            <circle cx="30" cy="10" r="10" fill="#FFE0B2"/>
-                            <path d="M18 10 A12 12 0 0 1 42 10 L42 22 L18 22 Z" fill="#212121"/>
-                            
-                                                        <rect x="15" y="40" width="30" height="20" fill="#5D4037" stroke="#3E2723" stroke-width="2" />
-                            <rect x="17" y="60" width="5" height="10" fill="#5D4037"/>
-                            <rect x="38" y="60" width="5" height="10" fill="#5D4037"/>
-
-                                                        <rect x="18" y="43" width="10" height="15" fill="rgba(200, 200, 255, 0.3)"/>
-                            <rect x="18" y="41" width="10" height="2" fill="#fefefe"/>
-                            <rect x="17" y="58" width="12" height="3" fill="#4b5563"/>
+                        <svg width="50" height="50" viewBox="0 0 60 60">
+                            <rect x="5" y="40" width="50" height="15" fill="#5D4037" stroke="#3E2723" />
+                            <circle cx="30" cy="20" r="10" fill="#FFE0B2" />
+                            <path d="M20 20 Q30 5 40 20 Q42 35 30 38 Q18 35 20 20" fill="#212121" />
+                            <path d="M20 30 Q30 45 40 30" fill="#9C27B0" />
                         </svg>
                         <span class="icon-desc"><strong>The VIP</strong> (Lvl 3+)<br>Move the table to catch Law Brew for a bonus!</span>
                     </div>
@@ -924,180 +907,4 @@
 
     // Transition from Landing Page to Instructions
     enterBtn.addEventListener('click', () => {
-        landingPage.classList.add('hidden');
-        startScreen.classList.remove('hidden');
-        resize(); // Ensure canvas is sized correctly before game starts
-    });
-    
-    // Start Game from Instructions
-    startBtn.addEventListener('click', startGame);
-    
-    // Restart Game from Game Over Screen
-    restartBtn.addEventListener('click', startGame);
-
-    /* --- Game Loop & Drawing/Updating --- */
-
-    function update(dt) {
-        if (!isPlaying || isTransitioning) return;
-
-        // 1. Spawning Logic
-        spawnTimer += dt;
-        if (spawnTimer > spawnInterval) {
-            beers.push(new Beer());
-            spawnTimer = 0;
-        }
-        
-        thiefSpawnTimer += dt;
-        if (thiefSpawnTimer > thiefSpawnInterval && thieves.length < 2) {
-            thieves.push(new PatronRaider());
-            thiefSpawnTimer = 0;
-        }
-
-        // 2. Update Entities
-        beers.forEach(b => b.update(dt));
-        thieves.forEach(t => t.update());
-        if (vipInstance) vipInstance.update();
-
-        // 3. Collision/Boundary Logic
-
-        // Beers: Check if they reached the bottom (the bar)
-        for (let i = beers.length - 1; i >= 0; i--) {
-            const b = beers[i];
-            if (b.y > canvas.height) {
-                if (b.type === 'BAD') {
-                    // Bad beer reached bar
-                    createFloatingText(b.x, canvas.height - 20, "SWILL SERVED!", "red");
-                    lives--;
-                    livesEl.innerText = lives;
-                    checkGameOver();
-                } else {
-                    // Good beer reached bar (default safe delivery)
-                    score += 50;
-                    scoreEl.innerText = score;
-                    createFloatingText(b.x, canvas.height - 20, "+50", "lightgreen");
-                    checkLevelUp();
-                }
-                beers.splice(i, 1);
-            }
-        }
-
-        // Beers: Check collision with VIP Table (if active)
-        if (vipInstance && vipInstance.isVipActive) {
-            for (let i = beers.length - 1; i >= 0; i--) {
-                const b = beers[i];
-                const vipRect = {
-                    x: vipInstance.x - vipInstance.tableWidth/2,
-                    y: vipInstance.y,
-                    width: vipInstance.tableWidth,
-                    height: vipInstance.tableHeight
-                };
-
-                // Simple AABB check between beer center (b.x, b.y) and table rect
-                if (b.y + b.radius > vipRect.y &&
-                    b.y - b.radius < vipRect.y + vipRect.height &&
-                    b.x + b.radius > vipRect.x &&
-                    b.x - b.radius < vipRect.x + vipRect.width) {
-                    
-                    // Collision detected
-                    if (b.type === 'GOOD') {
-                        // HUGE BONUS for VIP catch!
-                        score += 200;
-                        scoreEl.innerText = score;
-                        createFloatingText(b.x, b.y, "VIP BONUS! +200", "gold");
-                        checkLevelUp();
-                    } else {
-                        // BIG PENALTY for VIP catch!
-                        lives -= 2; // Extra life deduction
-                        livesEl.innerText = lives;
-                        createFloatingText(b.x, b.y, "VIP ANGRY! -2 LIVES", "darkred");
-                        checkGameOver();
-                    }
-                    beers.splice(i, 1);
-                }
-            }
-        }
-
-        // Thieves: Check if they are off-screen or 'dead'
-        for (let i = thieves.length - 1; i >= 0; i--) {
-            const t = thieves[i];
-            if (t.isHit && t.life <= 0) {
-                thieves.splice(i, 1);
-            } else if (t.x < -t.size * 2 || t.x > canvas.width + t.size * 2) {
-                // Missed the thief
-                thieves.splice(i, 1);
-            }
-            
-            // Thief steals a beer!
-            if (!t.isHit) {
-                for (let j = beers.length - 1; j >= 0; j--) {
-                    const b = beers[j];
-                    const dist = Math.hypot(t.x - b.x, t.y - b.y);
-                    if (dist < t.size / 2 + b.radius / 2) {
-                        if (b.type === 'BAD') {
-                            // Thief stole bad beer - HUGE PENALTY, must shoot thief
-                            createFloatingText(t.x, t.y, "STOLEN SWILL!", "red");
-                            lives--;
-                            livesEl.innerText = lives;
-                            checkGameOver();
-                        } else {
-                            // Thief stole good beer - MINOR PENALTY, just lost points
-                            createFloatingText(t.x, t.y, "STOLEN BREW!", "yellow");
-                        }
-                        beers.splice(j, 1);
-                        t.isHit = true; // Mark thief as "done" for this pass
-                        break;
-                    }
-                }
-            }
-        }
-
-        // Particles/Click Effects
-        particles = particles.filter(p => p.life > 0);
-        particles.forEach(p => p.update());
-        clickEffects = clickEffects.filter(c => c.age < 15);
-        clickEffects.forEach(c => c.age++);
-    }
-
-
-    function draw() {
-        // Background (Dark gradient, handled by CSS)
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // Draw Entities
-        beers.forEach(b => b.draw(ctx));
-        thieves.forEach(t => t.draw(ctx));
-        if (vipInstance) vipInstance.draw(ctx);
-
-        // Draw Effects
-        particles.forEach(p => p.draw(ctx));
-
-        clickEffects.forEach(c => {
-            ctx.strokeStyle = 'rgba(255, 255, 255, ' + (1 - c.age / 15) + ')';
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.arc(c.x, c.y, c.age * 2, 0, Math.PI * 2);
-            ctx.stroke();
-        });
-        
-        // Draw Bar Line
-        ctx.strokeStyle = '#c59a00';
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.moveTo(0, canvas.height);
-        ctx.lineTo(canvas.width, canvas.height);
-        ctx.stroke();
-    }
-
-    function gameLoop(currentTime) {
-        const dt = currentTime - lastTime;
-        lastTime = currentTime;
-
-        if (isPlaying) {
-            update(dt);
-            draw();
-            requestAnimationFrame(gameLoop);
-        }
-    }
-</script>
-</body>
-</html>
+        landingPage.classList.add('hidden'
