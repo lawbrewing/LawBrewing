@@ -13,7 +13,7 @@
             color: white;
             font-family: 'Roboto Slab', serif;
             overflow: hidden;
-            touch-action: none; /* Prevents default touch scrolling/gestures */
+            touch-action: none; 
             user-select: none;
             margin: 0;
             padding: 0;
@@ -286,7 +286,7 @@
                             <circle cx="25" cy="15" r="7" fill="#fdbd9c"/>
                             <rect x="10" y="22" width="30" height="20" fill="#4b5563"/>
                         </svg>
-                        <span class="icon-desc"><strong>The Old Timer</strong><br>Don't Let Him Buy Swill!</span>
+                        <span class="icon-desc"><strong>The Old Timer</strong><br>Shoot him if he grabs Swill!</span>
                     </div>
 
                     <div class="icon-box">
@@ -544,7 +544,7 @@
                 ctx.textAlign = 'center';
                 ctx.fillText("SWILL", 0, 5);
             } else {
-                // Law Brew (Good Beer) Drawing (Reverted to clean bottle)
+                // Law Brew (Good Beer) Drawing 
                 ctx.beginPath();
                 ctx.moveTo(-15, -25);
                 ctx.lineTo(-10, 25);
@@ -605,62 +605,63 @@
         }
 
         draw(ctx) {
-    ctx.save();
-    ctx.translate(this.x, this.y);
-    ctx.globalAlpha = this.life / 100;
-    let scaleX = 1;
-    if (this.side === 'right') scaleX = -1;
-    ctx.scale(scaleX, 1);
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.globalAlpha = this.life / 100;
+            let scaleX = 1;
+            if (this.side === 'right') scaleX = -1;
+            ctx.scale(scaleX, 1);
 
-    // Old Timer Hat (unchanged)
-    ctx.fillStyle = '#b45309'; // Brown hat
-    ctx.beginPath();
-    ctx.ellipse(0, -25, 20, 10, 0, Math.PI, 0, true); // Hat brim
-    ctx.fill();
-    ctx.fillRect(-15, -25, 30, 5); // Hat crown base
+            // Old Timer Hat (unchanged)
+            ctx.fillStyle = '#b45309'; // Brown hat
+            ctx.beginPath();
+            ctx.ellipse(0, -25, 20, 10, 0, Math.PI, 0, true); // Hat brim
+            ctx.fill();
+            ctx.fillRect(-15, -25, 30, 5); // Hat crown base
 
-    // Head (Skin tone, unchanged)
-    ctx.fillStyle = '#fdbd9c'; // Skin tone
-    ctx.beginPath();
-    ctx.arc(0, -15, 10, 0, Math.PI * 2);
-    ctx.fill();
+            // Head (Skin tone, unchanged)
+            ctx.fillStyle = '#fdbd9c'; // Skin tone
+            ctx.beginPath();
+            ctx.arc(0, -15, 10, 0, Math.PI * 2);
+            ctx.fill();
 
-    // White Hair (NEW)
-    ctx.fillStyle = '#f0f0f0'; // White hair
-    ctx.beginPath();
-    ctx.ellipse(0, -18, 12, 12, 0, Math.PI, 0); // Top of head
-    ctx.arc(-8, -10, 5, 0, Math.PI * 2); // Sideburn/ear area left
-    ctx.arc(8, -10, 5, 0, Math.PI * 2); // Sideburn/ear area right
-    ctx.fill();
-    
-    // Body (Blue shirt, unchanged)
-    ctx.fillStyle = '#4b5563'; // Blue shirt
-    ctx.fillRect(-15, -10, 30, 30);
-    
-    // Arm/Sleeve (right arm from his perspective)
-    ctx.fillStyle = '#4b5563'; 
-    ctx.fillRect(10, 0, 10, 20); // Arm
+            // White Hair (UPDATED)
+            ctx.fillStyle = '#f0f0f0'; // White hair
+            ctx.beginPath();
+            ctx.ellipse(0, -18, 12, 12, 0, Math.PI, 0); // Top of head
+            ctx.arc(-8, -10, 5, 0, Math.PI * 2); // Sideburn/ear area left
+            ctx.arc(8, -10, 5, 0, Math.PI * 2); // Sideburn/ear area right
+            ctx.fill();
+            
+            // Body (Blue shirt, unchanged)
+            ctx.fillStyle = '#4b5563'; // Blue shirt
+            ctx.fillRect(-15, -10, 30, 30);
+            
+            // Arm/Sleeve (right arm from his perspective)
+            ctx.fillStyle = '#4b5563'; 
+            ctx.fillRect(10, 0, 10, 20); // Arm
 
-    // Hand (skin tone)
-    ctx.fillStyle = '#fdbd9c';
-    ctx.beginPath();
-    ctx.arc(15, 20, 5, 0, Math.PI * 2);
-    ctx.fill();
+            // Hand (skin tone)
+            ctx.fillStyle = '#fdbd9c';
+            ctx.beginPath();
+            ctx.arc(15, 20, 5, 0, Math.PI * 2);
+            ctx.fill();
 
-    // Dollar Bill (NEW) - held in his hand
-    ctx.fillStyle = '#8bc34a'; // Green for dollar bill
-    ctx.strokeStyle = '#4c8c2a'; // Darker green outline
-    ctx.lineWidth = 1;
-    ctx.fillRect(18, 15, 20, 10); // Bill rectangle
-    ctx.strokeRect(18, 15, 20, 10);
-    ctx.fillStyle = '#4c8c2a';
-    ctx.font = '6px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('$1', 28, 22); // Value on bill
+            // Dollar Bill (UPDATED) - held in his hand
+            ctx.fillStyle = '#8bc34a'; // Green for dollar bill
+            ctx.strokeStyle = '#4c8c2a'; // Darker green outline
+            ctx.lineWidth = 1;
+            ctx.fillRect(18, 15, 20, 10); // Bill rectangle
+            ctx.strokeRect(18, 15, 20, 10);
+            ctx.fillStyle = '#4c8c2a';
+            ctx.font = '6px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('$1', 28, 22); // Value on bill
 
-    ctx.globalAlpha = 1.0;
-    ctx.restore();
-}
+            ctx.globalAlpha = 1.0;
+            ctx.restore();
+        }
+    }
 
     class TableGuest { 
         constructor(initialY) {
@@ -682,63 +683,68 @@
             ctx.save();
             ctx.translate(this.x, this.y);
 
+            // --- FIX: Declare tableTopY here ---
+            const tableTopY = 0;
+            // ------------------------------------
+
             // --- Draw Table ---
             ctx.fillStyle = '#5D4037'; 
-            ctx.fillRect(-this.tableWidth/2, 0, this.tableWidth, this.tableHeight);
+            ctx.fillRect(-this.tableWidth/2, tableTopY, this.tableWidth, this.tableHeight);
             ctx.strokeStyle = '#3E2723';
             ctx.lineWidth = 2;
-            ctx.strokeRect(-this.tableWidth/2, 0, this.tableWidth, this.tableHeight);
+            ctx.strokeRect(-this.tableWidth/2, tableTopY, this.tableWidth, this.tableHeight);
 
             // Legs
             ctx.fillRect(-this.tableWidth/2 + 5, this.tableHeight, 5, 20);
             ctx.fillRect(this.tableWidth/2 - 10, this.tableHeight, 5, 20);
 
            // --- Draw VIP Guest (only if active) ---
-    if (this.isVipActive) {
-        // Offset for the guest to sit "behind" the table (facing away)
-        const guestOffsetY = tableTopY - 10;
-        
-        // 1. Purple Dress/Body (Flat Vector Style)
-        ctx.fillStyle = '#9C27B0'; // Purple
-        ctx.beginPath();
-        // A simple rounded shape for the body/back
-        ctx.ellipse(0, guestOffsetY + 10, 20, 15, 0, Math.PI, 0, true);
-        ctx.fill();
+            if (this.isVipActive) {
+                // Offset for the guest to sit "behind" the table (facing away)
+                const guestOffsetY = tableTopY - 10;
+                
+                // 1. Purple Dress/Body (Flat Vector Style)
+                ctx.fillStyle = '#9C27B0'; // Purple
+                ctx.beginPath();
+                // A simple rounded shape for the body/back
+                ctx.ellipse(0, guestOffsetY + 10, 20, 15, 0, Math.PI, 0, true);
+                ctx.fill();
 
-        // 2. Head (Skin tone)
-        ctx.fillStyle = '#FFE0B2'; // Skin tone
-        ctx.beginPath();
-        ctx.arc(0, guestOffsetY - 10, 10, 0, Math.PI * 2);
-        ctx.fill();
+                // 2. Head (Skin tone)
+                ctx.fillStyle = '#FFE0B2'; // Skin tone
+                ctx.beginPath();
+                ctx.arc(0, guestOffsetY - 10, 10, 0, Math.PI * 2);
+                ctx.fill();
 
-        // 3. Dark Hair (Flat bob or simple style)
-        ctx.fillStyle = '#212121'; // Black/dark hair
-        ctx.beginPath();
-        ctx.ellipse(0, guestOffsetY - 10, 12, 12, 0, 0, Math.PI, false); // Top curve
-        ctx.lineTo(12, guestOffsetY + 2); 
-        ctx.lineTo(-12, guestOffsetY + 2);
-        ctx.closePath();
-        ctx.fill();
+                // 3. Dark Hair (Flat bob or simple style)
+                ctx.fillStyle = '#212121'; // Black/dark hair
+                ctx.beginPath();
+                ctx.ellipse(0, guestOffsetY - 10, 12, 12, 0, 0, Math.PI, false); // Top curve
+                ctx.lineTo(12, guestOffsetY + 2); 
+                ctx.lineTo(-12, guestOffsetY + 2);
+                ctx.closePath();
+                ctx.fill();
 
-        // --- Objects on Table: Empty Beer Glass (Left Side) ---
-        const glassX = -this.tableWidth/2 + 15;
-        const glassY = tableTopY + 5;
-        
-        // Glass Rim (White/Foam color for visibility)
-        ctx.fillStyle = '#fefefe';
-        ctx.fillRect(glassX - 5, glassY, 10, 2);
-        
-        // Glass Body (Transparent)
-        ctx.fillStyle = 'rgba(200, 200, 255, 0.3)';
-        ctx.fillRect(glassX - 5, glassY + 2, 10, 15);
-        
-        // Glass Base
-        ctx.fillStyle = '#4b5563';
-        ctx.fillRect(glassX - 6, glassY + 17, 12, 3);
+                // --- Objects on Table: Empty Beer Glass (Left Side) ---
+                const glassX = -this.tableWidth/2 + 15;
+                const glassY = tableTopY + 5;
+                
+                // Glass Rim (White/Foam color for visibility)
+                ctx.fillStyle = '#fefefe';
+                ctx.fillRect(glassX - 5, glassY, 10, 2);
+                
+                // Glass Body (Transparent)
+                ctx.fillStyle = 'rgba(200, 200, 255, 0.3)';
+                ctx.fillRect(glassX - 5, glassY + 2, 10, 15);
+                
+                // Glass Base
+                ctx.fillStyle = '#4b5563';
+                ctx.fillRect(glassX - 6, glassY + 17, 12, 3);
+            }
+
+            ctx.restore();
+        }
     }
-
-    ctx.restore();
-}
 
     class Particle {
         constructor(x, y, color) {
@@ -981,9 +987,8 @@
                 beers.splice(i, 1);
                 
                 if (b.type === 'GOOD') {
-                    // CORRECT ACTION: Law Brew reaches the bar. No penalty, no score (already safe).
-                    // This is the core objective now.
-                    createFloatingText(b.x, canvas.height - 50, "LAW BREW SERVED", "green");
+                    // CORRECT ACTION: Law Brew reaches the bar. No penalty.
+                    createFloatingText(b.x, canvas.height - 50, "LAW BREW SERVED", "lime");
                 } else {
                     // INCORRECT ACTION: Swill reaches the bar. Life penalty.
                     lives--;
