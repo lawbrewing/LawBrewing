@@ -900,4 +900,160 @@
         hud.classList.remove('hidden');
         
         lastTime = performance.now();
-        requestAnimationFrame(gameLoo
+        requestAnimationFrame(gameLoop);
+    }
+
+/* --- Logic for Menu Flow --- */
+
+    // Transition from Landing Page to Instructions
+    enterBtn.addEventListener('click', () => {
+        landingPage.classList.add('hidden');
+        startScreen.classList.remove('hidden');
+            });
+    
+    // Start Game from Instructions
+    startBtn.addEventListener('click', startGame);
+
+    // Restart Game from Game Over Screen
+    restartBtn.addEventListener('click', () => {
+        // Just show the start screen again, let startGame handle the actual reset
+        gameOverScreen.classList.add('hidden');
+        startScreen.classList.remove('hidden');
+            });
+    
+    /* --- Main Game Loop --- */
+    
+    function gameLoop(currentTime) {
+        if (!isPlaying) return;
+
+        const deltaTime = currentTime - lastTime;
+        lastTime = currentTime;
+        
+        // 1. Clear Canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // 2. Spawning Logic
+        if (!isTransitioning) {
+            // Beer Spawning
+            spawnTimer += deltaTime;
+            if (spawnTimer >= spawnInterval) {
+                beers.push(new Beer());
+                spawnTimer = 0;
+            }
+            
+            // Thief Spawning
+            if (currentLevel >= 2) {
+                thiefSpawnTimer += deltaTime;
+                if (thiefSpawnTimer >= thiefSpawnInterval) {
+                    thieves.push(new PatronRaider());
+                    thiefSpawnTimer = 0;
+                }
+            }
+        }
+
+        // 3. Update Entities and Check for Collisions/Loss
+        
+        // VIP Update
+        if (vipInstance) {
+            vipInstance.update();
+        }
+
+        // Beer Update
+        for (let i = beers.length - 1; i >= 0; i--) {
+            const b = beers[i];
+            b.update(deltaTime);
+
+            // Check if beer reaches the bottom (bar line)
+            if (b.y > canvas.height) {
+                beers.splice(i, 1);
+                
+                if (b.type === 'BAD') {
+                    // CORRECT: Bad Beer made it - no change/no loss (it was meant for the bar)
+                    score += 50; 
+                    scoreEl.innerText = score;
+                    createFloatingText(b.x, canvas.height, "+50 [BAR]", "yellow");
+                    checkLevelUp();
+                } else {
+                    // INCORRECT: Good Beer made it - lose life!
+                    lives--;
+                    livesEl.innerText = lives;
+                    createFloatingText(b.x, canvas.height, "MISSED BREW!", "red");
+                    checkGameOver();
+                }
+                continue;
+            }
+            
+            // Check collision with VIP table
+            if (vipInstance && vipInstance.isVipActive && b.y + b.radius >= vipInstance.y && b.y - b.radius <= vipInstance.y + vipInstance.tableHeight && Math.abs(b.x - vipInstance.x) < vipInstance.tableWidth / 2) {
+                
+                beers.splice(i, 1); // Remove beer
+                
+                if (b.type === 'GOOD') {
+                    // CORRECT: Good Beer caught by VIP
+                    score += 500;
+                    lives = Math.min(3, lives + 1); // Extra life, max 3
+                    livesEl.innerText = lives;
+                    scoreEl.innerText = score;
+                    createFloatingText(b.x, b.y, "+500 & LIFE!", "lime");
+                    checkLevelUp();
+                } else {
+                    // INCORRECT: Bad Beer caught by VIP
+                    lives--;
+                    livesEl.innerText = lives;
+                    createFloatingText(b.x, b.y, "VIP SWILL!", "red");
+                    checkGameOver();
+                }
+            }
+        }
+
+        // Thief Update
+        for (let i = thieves.length - 1; i >= 0; i--) {
+            const t = thieves[i];
+            t.update();
+            
+            if (t.life <= 0 || (t.side === 'left' && t.x > canvas.width + t.size) || (t.side === 'right' && t.x < -t.size)) {
+                thieves.splice(i, 1);
+            }
+        }
+
+        // Particle/Text Update
+        for (let i = particles.length - 1; i >= 0; i--) {
+            const p = particles[i];
+            p.update();
+            if (p.life <= 0) particles.splice(i, 1);
+        }
+        
+        // Click Effect Update
+        for (let i = clickEffects.length - 1; i >= 0; i--) {
+            clickEffects[i].age += 0.05;
+            if (clickEffects[i].age > 1) clickEffects.splice(i, 1);
+        }
+
+        // 4. Draw Entities
+        // Draw VIP table first, so beers fall *over* it
+        if (vipInstance) {
+            vipInstance.draw(ctx);
+        }
+        
+        beers.forEach(b => b.draw(ctx));
+        thieves.forEach(t => t.draw(ctx));
+        particles.forEach(p => p.draw(ctx));
+        
+        // Draw Click Effects (Visual feedback for shooting)
+        clickEffects.forEach(c => {
+            ctx.globalAlpha = 1 - c.age;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(c.x, c.y, 20 * c.age, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.globalAlpha = 1.0;
+        });
+
+        // 5. Loop
+        requestAnimationFrame(gameLoop);
+    }
+   
+</script>
+</body>
+</html>
