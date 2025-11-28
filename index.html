@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Law Brewing Defender: VIP Expansion</title>
+    <title>Law Brewing Defender: The Sheriff of Taps</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Rye&family=Roboto+Slab:wght@400;700&display=swap');
@@ -13,7 +13,7 @@
             color: white;
             font-family: 'Roboto Slab', serif;
             overflow: hidden;
-            touch-action: none;
+            touch-action: none; /* Prevents default touch scrolling/gestures */
             user-select: none;
             margin: 0;
             padding: 0;
@@ -68,7 +68,7 @@
             justify-content: center;
             align-items: center;
             text-align: center;
-            background: rgba(0,0,0,0.85); /* Darker background for screens */
+            background: rgba(0,0,0,0.85);
             backdrop-filter: blur(5px);
             transition: opacity 0.5s;
         }
@@ -129,10 +129,6 @@
         }
 
         .hidden {
-            opacity: 0;
-            pointer-events: none;
-            /* Using opacity/pointer-events allows for transition, but display:none is safer for logic. 
-               We will use display:none via !important helper below for hard hides */
             display: none !important;
         }
         
@@ -248,8 +244,8 @@
 
     <div id="landing-page" class="ui-overlay">
         <img src="https://github.com/lawbrewing/LawBrewing/blob/main/Gemini_Generated_Image_f46i9af46i9af46i.png?raw=true" 
-             alt="Law Brewing Co." 
-             class="title-img">
+              alt="Law Brewing Co." 
+              class="title-img">
         
         <button id="enter-btn" class="btn">ENTER TAPROOM</button>
     </div>
@@ -280,7 +276,7 @@
             </div>
 
             <div style="margin-top: 15px; border-top: 1px dashed #555; padding-top: 15px;">
-                <p style="color: #ffeb3b; font-size: 0.9rem; font-weight: bold; margin-bottom: 10px;">THREATS & VIPS</p>
+                <p style="color: #ffeb3b; font-size: 0.9rem; font-weight: bold; margin-bottom: 10px;">STRATEGY & THREATS</p>
                 
                 <div class="icon-row">
                     <div class="icon-box">
@@ -290,7 +286,7 @@
                             <circle cx="25" cy="15" r="7" fill="#fdbd9c"/>
                             <rect x="10" y="22" width="30" height="20" fill="#4b5563"/>
                         </svg>
-                        <span class="icon-desc"><strong>The Old Timer</strong><br>Annoying Patrons!<br>Trying To Spend His Last $1 On Swill.</span>
+                        <span class="icon-desc"><strong>The Old Timer</strong><br>Annoying Patrons!<br>Don't let him grab Swill.</span>
                     </div>
 
                     <div class="icon-box">
@@ -300,9 +296,12 @@
                             <path d="M20 20 Q30 5 40 20 Q42 35 30 38 Q18 35 20 20" fill="#212121" />
                             <path d="M20 30 Q30 45 40 30" fill="#9C27B0" />
                         </svg>
-                        <span class="icon-desc"><strong>The VIP</strong> (Lvl 5)<br>Needs Law Brew!<br>Hit with Swill = -1 Life</span>
+                        <span class="icon-desc"><strong>The VIP</strong> (Lvl 3+)<br>Move the table to catch Law Brew!</span>
                     </div>
                 </div>
+                <p style="font-size: 1.1rem; color: #fff;">
+                    Tap/Drag the <strong style="color: #ffeb3b;">bottom half</strong> of the screen to move the VIP's table.
+                </p>
             </div>
         </div>
 
@@ -341,13 +340,13 @@
     const levelTitleEl = document.getElementById('level-title');
     const levelSubtextEl = document.getElementById('level-subtext');
 
-    /* --- Level Configuration --- */
+    /* --- Level Configuration (Guest is now always available, but only active from Lvl 3) --- */
     const levelsConfig = [
-        { scoreToClear: 1000, spawnIntervalMs: 1500, speedMultiplier: 1.0 }, 
-        { scoreToClear: 2500, spawnIntervalMs: 1200, speedMultiplier: 1.3, thiefSpawnMs: 7000 }, 
-        { scoreToClear: 4500, spawnIntervalMs: 1000, speedMultiplier: 1.6, thiefSpawnMs: 6000, guestSpawnMs: 7000 }, 
-        { scoreToClear: 7000, spawnIntervalMs: 800, speedMultiplier: 2.0, thiefSpawnMs: 5000, guestSpawnMs: 6000 },  
-        { scoreToClear: 11000, spawnIntervalMs: 700, speedMultiplier: 2.3, thiefSpawnMs: 4000, guestSpawnMs: 5000 } 
+        { scoreToClear: 1000, spawnIntervalMs: 1500, speedMultiplier: 1.0, vipActive: false }, 
+        { scoreToClear: 2500, spawnIntervalMs: 1200, speedMultiplier: 1.3, thiefSpawnMs: 7000, vipActive: false }, 
+        { scoreToClear: 4500, spawnIntervalMs: 1000, speedMultiplier: 1.6, thiefSpawnMs: 6000, vipActive: true }, // VIP ACTIVE HERE
+        { scoreToClear: 7000, spawnIntervalMs: 800, speedMultiplier: 2.0, thiefSpawnMs: 5000, vipActive: true }, 
+        { scoreToClear: 11000, spawnIntervalMs: 700, speedMultiplier: 2.3, thiefSpawnMs: 4000, vipActive: true } 
     ];
 
     // Game State
@@ -357,6 +356,11 @@
     let currentLevel = 1;
     let lastTime = 0;
     
+    // Player/VIP State
+    let playerGuestX; // Player-controlled X position for the VIP table
+    let vipInstance;  // The single VIP object
+    let isMovingGuest = false; // Flag for drag/touch input on the VIP table area
+
     // Spawning/Difficulty variables
     let spawnTimer = 0;
     let spawnInterval = levelsConfig[0].spawnIntervalMs; 
@@ -365,9 +369,6 @@
     let thiefSpawnTimer = 0;
     let thiefSpawnInterval = 999999; 
 
-    let guestSpawnTimer = 0;
-    let guestSpawnInterval = 999999;
-
     let isTransitioning = false;
     
     // Arrays for entities
@@ -375,34 +376,40 @@
     let particles = [];
     let clickEffects = [];
     let thieves = []; 
-    let guests = []; 
 
     /* --- Resize Handling --- */
     function resize() {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
+        // Reset VIP position on resize
+        playerGuestX = canvas.width / 2;
+        if (vipInstance) {
+            vipInstance.y = canvas.height - 100; // Keep it fixed at the bottom
+        }
     }
     window.addEventListener('resize', resize);
     resize();
 
-    /* --- Input Handling --- */
-    const handleInput = (x, y) => {
+    /* --- Input Handling for Shooting --- */
+    const handleShootInput = (x, y) => {
         if (!isPlaying || isTransitioning) return;
+
+        // If the tap/click is in the VIP control zone (bottom 1/3), don't shoot!
+        if (y > canvas.height * 0.7) { 
+            return;
+        }
 
         clickEffects.push({x, y, age: 0});
 
-        // 1. VIP GUESTS (Don't shoot!)
-        for (let i = guests.length - 1; i >= 0; i--) {
-            const g = guests[i];
-            if (g.state !== 'ACTIVE') continue; 
-
-            // Hitbox approximation
-            if (x > g.x - 40 && x < g.x + 40 && y > g.y - 40 && y < g.y + 40) {
+        // 1. VIP GUEST (Since the VIP is now always drawn, this handles the collision when shooting)
+        if (vipInstance && currentLevel >= 3) {
+            // Hitbox approximation for the VIP's head/body when shooting
+            const g = vipInstance;
+            if (x > g.x - 30 && x < g.x + 30 && y > g.y - 30 && y < g.y + 20) {
                 lives--;
                 livesEl.innerText = lives;
-                createFloatingText(g.x, g.y - 20, "DON'T SHOOT!", "red");
+                createFloatingText(g.x, g.y - 40, "DON'T SHOOT VIP!", "red");
                 createExplosion(g.x, g.y, '#9C27B0'); 
-                g.triggerLeave(); 
                 checkGameOver();
                 return;
             }
@@ -417,7 +424,7 @@
                 t.isHit = true;
                 lives--;
                 livesEl.innerText = lives;
-                createFloatingText(t.x, t.y, "INNOCENT SHOT", "red");
+                createFloatingText(t.x, t.y, "DEAD TIMER", "red");
                 createExplosion(t.x, t.y, '#fdbd9c');
                 checkGameOver();
                 return;
@@ -435,6 +442,7 @@
                     beers.splice(i, 1);
                     score += 100;
                     scoreEl.innerText = score;
+                    createFloatingText(b.x, b.y, "+100", "white");
                     checkLevelUp();
                 } else {
                     createExplosion(b.x, b.y, '#d97706');
@@ -449,16 +457,58 @@
         }
     };
 
+    /* --- Input Handlers for VIP Movement --- */
+
+    const handleGuestMoveStart = (x, y) => {
+        // Only start moving if input is in the bottom 1/3 of the screen
+        if (y > canvas.height * 0.7) {
+            isMovingGuest = true;
+        }
+    };
+
+    const handleGuestMove = (x) => {
+        if (isMovingGuest && isPlaying && !isTransitioning) {
+            // Clamp the VIP position within the canvas boundaries (with padding)
+            const minX = 60; // Table width approx. 70, so half padding
+            const maxX = canvas.width - 60;
+            playerGuestX = Math.min(Math.max(x, minX), maxX);
+        }
+    };
+
+    const handleGuestMoveEnd = () => {
+        isMovingGuest = false;
+    };
+
+    // MOUSE EVENTS
     canvas.addEventListener('mousedown', (e) => {
-        handleInput(e.clientX, e.clientY);
+        handleShootInput(e.clientX, e.clientY);
+        handleGuestMoveStart(e.clientX, e.clientY);
     });
 
+    canvas.addEventListener('mousemove', (e) => {
+        handleGuestMove(e.clientX);
+    });
+
+    canvas.addEventListener('mouseup', handleGuestMoveEnd);
+    canvas.addEventListener('mouseleave', handleGuestMoveEnd); // In case they drag off the canvas
+
+    // TOUCH EVENTS
     canvas.addEventListener('touchstart', (e) => {
         e.preventDefault();
-        for (let i = 0; i < e.touches.length; i++) {
-            handleInput(e.touches[i].clientX, e.touches[i].clientY);
-        }
+        // Check only the first touch point for movement/shooting
+        const x = e.touches[0].clientX;
+        const y = e.touches[0].clientY;
+        
+        handleShootInput(x, y);
+        handleGuestMoveStart(x, y);
     }, {passive: false});
+
+    canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        handleGuestMove(e.touches[0].clientX);
+    }, {passive: false});
+
+    canvas.addEventListener('touchend', handleGuestMoveEnd);
 
     /* --- Classes --- */
 
@@ -591,70 +641,65 @@
     }
 
     class TableGuest { 
-        constructor() {
-            this.x = Math.random() * (canvas.width - 120) + 60;
-            this.y = canvas.height - (Math.random() * 150 + 100);
-            this.alpha = 0;
-            this.state = 'FADE_IN'; 
-            this.timer = 0;
-            this.stayDuration = 4000; 
+        constructor(initialY) {
+            // X is controlled externally by playerGuestX
+            this.x = playerGuestX; 
+            this.y = initialY; 
+            this.isVipActive = false; // Controlled by level logic
+            this.tableWidth = 70;
+            this.tableHeight = 20;
+            this.chairHeight = 35;
+            this.bodyWidth = 30;
+            this.bodyHeight = 30;
         }
 
-        update(dt) {
-            if (this.state === 'FADE_IN') {
-                this.alpha += 0.02;
-                if (this.alpha >= 1) {
-                    this.alpha = 1;
-                    this.state = 'ACTIVE';
-                }
-            } else if (this.state === 'ACTIVE') {
-                this.timer += dt;
-                if (this.timer > this.stayDuration) {
-                    this.state = 'FADE_OUT';
-                }
-            } else if (this.state === 'FADE_OUT') {
-                this.alpha -= 0.02;
-            }
-        }
-
-        triggerLeave() {
-            this.state = 'FADE_OUT';
+        // The only update is setting its X position from the player input
+        update() {
+             this.x = playerGuestX;
         }
 
         draw(ctx) {
-            if (this.alpha <= 0) return;
-            
             ctx.save();
             ctx.translate(this.x, this.y);
-            ctx.globalAlpha = this.alpha;
 
+            // --- Draw Table and Chair (always present) ---
             ctx.fillStyle = '#5D4037'; 
-            ctx.fillRect(-35, 10, 70, 20);
+            ctx.fillRect(-this.tableWidth/2, 0, this.tableWidth, this.tableHeight);
             ctx.strokeStyle = '#3E2723';
             ctx.lineWidth = 2;
-            ctx.strokeRect(-35, 10, 70, 20);
+            ctx.strokeRect(-this.tableWidth/2, 0, this.tableWidth, this.tableHeight);
 
-            ctx.fillStyle = '#9C27B0'; 
-            ctx.beginPath();
-            ctx.arc(0, 10, 18, Math.PI, 0); 
-            ctx.fill();
+            // Legs
+            ctx.fillRect(-this.tableWidth/2 + 5, this.tableHeight, 5, 20);
+            ctx.fillRect(this.tableWidth/2 - 10, this.tableHeight, 5, 20);
 
-            ctx.fillStyle = '#FFE0B2'; 
-            ctx.beginPath();
-            ctx.arc(0, -10, 14, 0, Math.PI * 2);
-            ctx.fill();
+            // --- Draw VIP Guest (only if active) ---
+            if (this.isVipActive) {
+                // Purple dress/body
+                ctx.fillStyle = '#9C27B0'; 
+                ctx.beginPath();
+                ctx.arc(0, 0, 18, Math.PI, 0); 
+                ctx.fill();
 
-            ctx.fillStyle = '#212121';
-            ctx.beginPath();
-            ctx.arc(0, -12, 16, Math.PI, 0); 
-            ctx.lineTo(16, 5); 
-            ctx.quadraticCurveTo(0, 10, -16, 5);
-            ctx.fill();
+                // Skin (Head)
+                ctx.fillStyle = '#FFE0B2'; 
+                ctx.beginPath();
+                ctx.arc(0, -20, 14, 0, Math.PI * 2);
+                ctx.fill();
 
-            ctx.fillStyle = 'rgba(255,255,255,0.2)';
-            ctx.fillRect(15, 12, 8, 12);
+                // Black Hair
+                ctx.fillStyle = '#212121';
+                ctx.beginPath();
+                ctx.arc(0, -22, 16, Math.PI, 0); 
+                ctx.lineTo(16, -5); 
+                ctx.quadraticCurveTo(0, 5, -16, -5);
+                ctx.fill();
 
-            ctx.globalAlpha = 1.0;
+                // Table decoration / drink spot
+                ctx.fillStyle = 'rgba(255,255,255,0.2)';
+                ctx.fillRect(15, 2, 8, 12);
+            }
+
             ctx.restore();
         }
     }
@@ -731,50 +776,49 @@
 
     function transitionToLevel(newLevel) {
         isTransitioning = true;
-        beers = []; thieves = []; guests = [];
-        spawnTimer = 0; thiefSpawnTimer = 0; guestSpawnTimer = 0;
+        beers = []; thieves = []; 
+        spawnTimer = 0; thiefSpawnTimer = 0; 
 
         let titleText, subText;
         
         if (newLevel <= levelsConfig.length) {
+            const cfg = levelsConfig[newLevel - 1];
             titleText = `LEVEL ${newLevel}`;
             if (newLevel === 3) {
-                subText = "VIP ARRIVING!";
+                subText = "VIP IS NOW ACTIVE! CATCH LAW BREWS!";
+                vipInstance.isVipActive = true;
             } else if (newLevel === 2) {
                 subText = "HERE COMES THE OLD TIMER!";
+                vipInstance.isVipActive = false;
             } else {
                 subText = "FASTER!";
+                vipInstance.isVipActive = false;
             }
+
+            // Config Logic
+            spawnInterval = cfg.spawnIntervalMs;
+            speedMultiplier = cfg.speedMultiplier;
+            thiefSpawnInterval = cfg.thiefSpawnMs || 999999;
+            levelEl.textContent = newLevel;
         } else {
+            // Expert Mode
             titleText = `EXPERT MODE`;
             subText = "SURVIVE";
+            spawnInterval = 500;
+            speedMultiplier = 3.0;
+            thiefSpawnInterval = 3000;
+            vipInstance.isVipActive = true; 
+            levelEl.textContent = 'E';
         }
         
         levelTitleEl.textContent = titleText;
         levelSubtextEl.textContent = subText;
         levelTransitionEl.classList.add('show-transition');
 
-        // Config Logic
-        if (newLevel <= levelsConfig.length) {
-            const cfg = levelsConfig[newLevel - 1];
-            spawnInterval = cfg.spawnIntervalMs;
-            speedMultiplier = cfg.speedMultiplier;
-            thiefSpawnInterval = cfg.thiefSpawnMs || 999999;
-            guestSpawnInterval = cfg.guestSpawnMs || 999999;
-            levelEl.textContent = newLevel;
-        } else {
-            // Expert
-            spawnInterval = 500;
-            speedMultiplier = 3.0;
-            thiefSpawnInterval = 3000;
-            guestSpawnInterval = 5000; 
-            levelEl.textContent = 'E';
-        }
-
         setTimeout(() => {
             levelTransitionEl.classList.remove('show-transition');
             isTransitioning = false;
-        }, 2000);
+        }, 2500);
     }
 
     function endGame() {
@@ -787,19 +831,24 @@
     function startGame() {
         score = 0; lives = 3; currentLevel = 1;
         
-        // Reset to Level 1
+        // Reset to Level 1 config
         spawnInterval = levelsConfig[0].spawnIntervalMs;
         speedMultiplier = levelsConfig[0].speedMultiplier;
         thiefSpawnInterval = 999999;
-        guestSpawnInterval = 999999;
 
         scoreEl.innerText = score;
         livesEl.innerText = lives;
         levelEl.innerText = currentLevel;
         
-        beers = []; particles = []; clickEffects = []; thieves = []; guests = [];
-        spawnTimer = 0; thiefSpawnTimer = 0; guestSpawnTimer = 0;
+        beers = []; particles = []; clickEffects = []; thieves = [];
+        spawnTimer = 0; thiefSpawnTimer = 0;
         isTransitioning = false;
+
+        // Initialize VIP instance
+        if (!vipInstance) {
+            vipInstance = new TableGuest(canvas.height - 100);
+        }
+        vipInstance.isVipActive = false; // Start on Lvl 1, VIP not yet active
         
         isPlaying = true;
         startScreen.classList.add('hidden');
@@ -843,49 +892,40 @@
                 thieves.push(new PatronRaider());
                 thiefSpawnTimer = 0;
             }
-            guestSpawnTimer += dt;
-            if (guestSpawnTimer > guestSpawnInterval) {
-                if(guests.length === 0) {
-                    guests.push(new TableGuest());
-                    guestSpawnTimer = 0;
-                }
-            }
         }
 
-        // --- Guests ---
-        for (let i = guests.length - 1; i >= 0; i--) {
-            const g = guests[i];
-            g.update(dt);
-            g.draw(ctx);
+        // --- VIP Guest (Movable Target) ---
+        if (vipInstance) {
+            vipInstance.update();
+            vipInstance.draw(ctx);
 
-            if (g.state === 'ACTIVE') {
+            // VIP Collision Logic (only when active/Level 3+)
+            if (vipInstance.isVipActive) {
                 for (let j = beers.length - 1; j >= 0; j--) {
                     const b = beers[j];
-                    // Collision guest/beer
-                    if (b.x > g.x - 30 && b.x < g.x + 30 && b.y > g.y - 20 && b.y < g.y + 40) {
+                    // Collision check: beer x,y is near the VIP's table top area
+                    if (b.x > vipInstance.x - 40 && b.x < vipInstance.x + 40 && 
+                        b.y > vipInstance.y - 40 && b.y < vipInstance.y + 20) {
+                        
+                        beers.splice(j, 1);
+                        
                         if (b.type === 'GOOD') {
                             score += 500;
                             scoreEl.innerText = score;
-                            createFloatingText(g.x, g.y - 40, "VIP BONUS!", "#d946ef"); 
+                            createFloatingText(vipInstance.x, vipInstance.y - 60, "VIP LAW BONUS!", "#d946ef"); 
                             createExplosion(b.x, b.y, '#fff');
                         } else {
                             lives--;
                             livesEl.innerText = lives;
-                            createFloatingText(g.x, g.y - 40, "VIP HIT!", "red");
+                            createFloatingText(vipInstance.x, vipInstance.y - 60, "VIP SWILL HIT!", "red");
                             createExplosion(b.x, b.y, '#555');
-                            g.triggerLeave(); 
                         }
-                        beers.splice(j, 1);
                         checkGameOver();
                     }
                 }
             }
-
-            if (g.alpha <= 0 && g.state === 'FADE_OUT') {
-                guests.splice(i, 1);
-            }
         }
-
+        
         // --- Thieves ---
         for (let i = thieves.length - 1; i >= 0; i--) {
             const t = thieves[i];
@@ -899,15 +939,13 @@
                     if (dist < b.radius + t.size / 4) { 
                         if (b.type === 'BAD') {
                             lives--; livesEl.innerText = lives;
-                            createFloatingText(t.x, t.y, "STOLEN SWILL!", "red");
+                            createFloatingText(t.x, t.y, "LAST $1 SPENT!", "red");
                             createExplosion(t.x, t.y, 'red'); 
-                            beers.splice(j, 1);
-                            t.isHit = true; 
                         } else {
-                            createFloatingText(b.x, b.y, "SAFE LAW BREW!", "#4ade80");
-                            beers.splice(j, 1);
-                            t.isHit = true;
+                            createFloatingText(b.x, b.y, "STOLEN LAW BREW!", "#4ade80");
                         }
+                        beers.splice(j, 1);
+                        t.isHit = true; 
                         checkGameOver();
                         break;
                     }
@@ -930,40 +968,33 @@
                 beers.splice(i, 1);
                 if (b.type === 'BAD') {
                     lives--; livesEl.innerText = lives;
-                    createFloatingText(canvas.width/2, canvas.height - 100, "BAD BEER SERVED!", "red");
+                    createFloatingText(canvas.width/2, canvas.height - 150, "BAD BEER SERVED!", "red");
                 } else {
                     score += 50; scoreEl.innerText = score;
-                    createFloatingText(b.x, canvas.height - 50, "+50", "#4ade80");
+                    createFloatingText(canvas.width/2, canvas.height - 150, "LAW BREW SERVED", "#4ade80");
                 }
                 checkGameOver();
             }
         }
 
-        // Particles
+        // --- Particles/Text ---
         for (let i = particles.length - 1; i >= 0; i--) {
             const p = particles[i];
-            p.update(); p.draw(ctx);
+            p.update();
+            p.draw(ctx);
             if (p.life <= 0) particles.splice(i, 1);
         }
 
-        // Click Effects
+        // --- Click Effects ---
         for (let i = clickEffects.length - 1; i >= 0; i--) {
             const c = clickEffects[i];
-            c.age++;
+            ctx.fillStyle = `rgba(255, 255, 255, ${1 - c.age})`;
             ctx.beginPath();
-            ctx.arc(c.x, c.y, 10 + c.age * 2, 0, Math.PI * 2);
-            ctx.strokeStyle = `rgba(255, 255, 255, ${1 - c.age / 10})`;
-            ctx.lineWidth = 2; ctx.stroke();
-            if (c.age > 10) clickEffects.splice(i, 1);
+            ctx.arc(c.x, c.y, 20 * c.age, 0, Math.PI * 2);
+            ctx.fill();
+            c.age += 0.1;
+            if (c.age >= 1) clickEffects.splice(i, 1);
         }
-
-        // Danger Line
-        ctx.fillStyle = 'rgba(255, 0, 0, 0.1)';
-        ctx.fillRect(0, canvas.height - 20, canvas.width, 20);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-        ctx.font = '12px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText("PATRONS (BAR)", canvas.width/2, canvas.height - 5);
 
         requestAnimationFrame(gameLoop);
     }
