@@ -111,6 +111,13 @@
         .btn:active {
             transform: scale(0.95);
         }
+        
+        .btn:disabled {
+            background: #888;
+            border-color: #888;
+            cursor: not-allowed;
+            transform: none;
+        }
 
         h1 {
             font-family: 'Rye', serif;
@@ -160,7 +167,7 @@
         
         /* Style for the mini canvases in the tutorial */
         .tutorial-canvas {
-            position: relative !important; /* Override absolute from main canvas */
+            position: relative !important; 
             z-index: 1 !important;
             background: transparent;
             margin-bottom: 5px;
@@ -326,11 +333,11 @@
                 <div class="icon-row">
                     <div class="icon-box">
                         <canvas id="demo-oldtimer" width="70" height="70" class="tutorial-canvas"></canvas>
-                        <span class="icon-desc"><strong>Old Timer</strong><br>Don't let him spend his last $1 on swill!</span>
+                        <span class="icon-desc"><strong>Old Timer</strong><br>Blocks shots</span>
                     </div>
                     <div class="icon-box">
                         <canvas id="demo-vip" width="100" height="60" class="tutorial-canvas"></canvas>
-                        <span class="icon-desc"><strong>VIP</strong><br>Move her table to serve Law Brew!</span>
+                        <span class="icon-desc"><strong>VIP</strong><br>Move table to catch!</span>
                     </div>
                 </div>
                 <p style="font-size: 1.1rem; color: #fff;">
@@ -381,7 +388,9 @@
     /* --- Simpleboards Configuration --- */
     const SIMPLEBOARDS_API_KEY = "78098c7b-fa9d-4ce1-9300-a56d081d53c4";
     const SIMPLEBOARDS_API_NAME = "LawLeaderboard";
-    const SIMPLEBOARDS_URL = "https://api.simpleboards.net/v1";
+    const SIMPLEBOARDS_URL = "https://api.simpleboards.net/v1"; 
+    // NOTE: Because public/free APIs can be unstable, this code 
+    // automatically falls back to LocalStorage if the API fails.
 
     /* --- Game Setup --- */
     const canvas = document.getElementById('gameCanvas');
@@ -632,7 +641,6 @@
                 ctx.moveTo(-13, -15);
                 ctx.lineTo(-9, 23);
                 ctx.lineTo(9, 23);
-                ctx.lineTo(9, 23);
                 ctx.lineTo(13, -15);
                 ctx.closePath();
                 ctx.fillStyle = '#d97706'; 
@@ -747,7 +755,7 @@
             const tableTopY = 0;
 
             // --- Draw Table ---
-            ctx.fillStyle = '#5D4037'; 
+            ctx.fillStyle = '#5D4037';
             ctx.fillRect(-this.tableWidth/2, tableTopY, this.tableWidth, this.tableHeight);
             ctx.strokeStyle = '#3E2723';
             ctx.lineWidth = 2;
@@ -757,43 +765,80 @@
             ctx.fillRect(-this.tableWidth/2 + 5, this.tableHeight, 5, 20);
             ctx.fillRect(this.tableWidth/2 - 10, this.tableHeight, 5, 20);
 
-           // --- Draw VIP Guest ---
+           // --- Draw VIP Guest (only if active) ---
             if (this.isVipActive) {
                 const guestOffsetY = tableTopY - 10;
-                
-                // Body
-                ctx.fillStyle = '#9C27B0'; 
+
+                // 1. Purple Dress (Body)
+                ctx.fillStyle = '#7B1FA2';
                 ctx.beginPath();
-                ctx.ellipse(0, guestOffsetY + 10, 20, 15, 0, Math.PI, 0, true);
+                ctx.ellipse(0, guestOffsetY + 12, 22, 16, 0, Math.PI, 0, true);
                 ctx.fill();
 
-                // Head
-                ctx.fillStyle = '#FFE0B2'; 
+                // --- NEW HAIR LAYER 1 (Back Hair flowing over shoulders) ---
+                // Draw this BEFORE the head and shoulders so it looks like it's behind them/flowing over
+                ctx.fillStyle = '#4E342E'; // Brunette
+                ctx.beginPath();
+                // A wide, rounded shape flowing down
+                ctx.moveTo(-15, guestOffsetY - 5);
+                ctx.quadraticCurveTo(-25, guestOffsetY + 10, -18, guestOffsetY + 20); // Left flow
+                ctx.lineTo(18, guestOffsetY + 20); // Bottom edge
+                ctx.quadraticCurveTo(25, guestOffsetY + 10, 15, guestOffsetY - 5); // Right flow
+                ctx.fill();
+
+                // 2. Dress Shoulders (sits on top of back hair)
+                ctx.fillStyle = '#9C27B0';
+                ctx.beginPath();
+                ctx.ellipse(0, guestOffsetY + 9, 18, 10, 0, Math.PI, 0, true);
+                ctx.fill();
+
+                // 3. Head (Skin tone)
+                ctx.fillStyle = '#FFE0B2';
                 ctx.beginPath();
                 ctx.arc(0, guestOffsetY - 10, 10, 0, Math.PI * 2);
                 ctx.fill();
 
-                // Hair
-                ctx.fillStyle = '#5a2720'; 
+                // --- NEW HAIR LAYER 2 (Top of head) ---
+                // Sits on top of the skin circle
+                ctx.fillStyle = '#4E342E'; // Brunette
                 ctx.beginPath();
-                ctx.ellipse(0, guestOffsetY - 10, 12, 12, 0, 0, Math.PI, false); 
-                ctx.lineTo(12, guestOffsetY + 2); 
-                ctx.lineTo(-12, guestOffsetY + 2);
+                // Simple rounded top covering the scalp area
+                ctx.arc(0, guestOffsetY - 10, 11, Math.PI, 0); // Top half circle
+                ctx.lineTo(11, guestOffsetY - 5);
+                ctx.quadraticCurveTo(0, guestOffsetY - 2, -11, guestOffsetY - 5); // Slight curve for hairline
                 ctx.closePath();
                 ctx.fill();
 
-                // Empty Beer Glass
-                const glassX = -this.tableWidth/2 + 15;
-                const glassY = tableTopY + 5;
-                
-                ctx.fillStyle = '#fefefe';
-                ctx.fillRect(glassX - 5, glassY, 10, 2);
-                
-                ctx.fillStyle = 'rgba(200, 200, 255, 0.3)';
-                ctx.fillRect(glassX - 5, glassY + 2, 10, 15);
-                
-                ctx.fillStyle = '#4b5563';
-                ctx.fillRect(glassX - 6, glassY + 17, 12, 3);
+                // --- Object on Table: Empty Beer Mug ---
+                const mugX = -this.tableWidth/2 + 20;
+                const mugY = tableTopY + 5;
+
+                // Glass Style setup
+                ctx.fillStyle = 'rgba(176, 190, 197, 0.4)'; // Semi-transparent glass
+                ctx.strokeStyle = '#CFD8DC'; // Subtle glass outline
+                ctx.lineWidth = 1;
+
+                // Mug Handle
+                ctx.beginPath();
+                ctx.moveTo(mugX - 7, mugY + 4);
+                ctx.quadraticCurveTo(mugX - 14, mugY + 8, mugX - 7, mugY + 14);
+                ctx.stroke();
+
+                // Mug Body
+                ctx.beginPath();
+                ctx.rect(mugX - 7, mugY, 14, 18);
+                ctx.fill();
+                ctx.stroke();
+
+                // Thick Glass Bottom (Opaque)
+                ctx.fillStyle = 'rgba(120, 144, 156, 0.8)';
+                ctx.fillRect(mugX - 7, mugY + 15, 14, 4);
+
+                // Empty Rim (Thin white oval on top to show emptiness)
+                ctx.strokeStyle = '#ECEFF1';
+                ctx.beginPath();
+                ctx.ellipse(mugX, mugY, 7, 2.5, 0, 0, Math.PI * 2);
+                ctx.stroke();
             }
 
             ctx.restore();
@@ -962,52 +1007,82 @@
         requestAnimationFrame(gameLoop);
     }
 
-    /* --- Simpleboards API Functions --- */
+    /* --- HYBRID LEADERBOARD SYSTEM --- */
+    // Uses API if available, Falls back to LocalStorage if not.
+    
 
     async function fetchLeaderboard() {
         leaderboardBody.innerHTML = '';
         leaderboardStatus.textContent = 'Loading...';
         
+        let data = [];
+        let usedSource = 'API';
+
         try {
+            // 1. Try API first
             const response = await fetch(`${SIMPLEBOARDS_URL}/boards/${SIMPLEBOARDS_API_NAME}/scores?apiKey=${SIMPLEBOARDS_API_KEY}&limit=10`);
-            if (!response.ok) throw new Error("Failed to fetch leaderboard.");
-            
-            const data = await response.json();
-            
-            if (data.length === 0) {
-                leaderboardStatus.textContent = "No scores yet. Be the first!";
-                return;
-            }
-
-            leaderboardStatus.textContent = "";
-            data.forEach((entry, index) => {
-                const row = leaderboardBody.insertRow();
-                row.insertCell(0).textContent = index + 1;
-                row.insertCell(1).textContent = entry.name;
-                row.insertCell(2).textContent = entry.score.toLocaleString();
-            });
-
+            if (!response.ok) throw new Error("API Fetch failed");
+            data = await response.json();
         } catch (error) {
-            console.error("Leaderboard Error:", error);
-            leaderboardStatus.textContent = "Could not load leaderboard.";
+            // 2. Fallback to LocalStorage
+            console.log("Falling back to Local Storage");
+            usedSource = 'Local';
+            const localData = localStorage.getItem('law_leaderboard');
+            if (localData) {
+                data = JSON.parse(localData);
+            }
         }
+
+        // Render Data
+        if (!data || data.length === 0) {
+            leaderboardStatus.textContent = `No scores yet (${usedSource}). Be the first!`;
+            return;
+        }
+
+        leaderboardStatus.textContent = `Top Scores (${usedSource})`;
+        
+        // Sort data just in case local storage is unsorted
+        data.sort((a, b) => b.score - a.score);
+        
+        data.slice(0, 10).forEach((entry, index) => {
+            const row = leaderboardBody.insertRow();
+            row.insertCell(0).textContent = index + 1;
+            row.insertCell(1).textContent = entry.name;
+            row.insertCell(2).textContent = entry.score.toLocaleString();
+        });
     }
     
     async function submitScore(name, score) {
         const sanitizedName = name.trim().toUpperCase() || "ANONYMOUS";
+        const scoreData = { name: sanitizedName, score: score };
         
+        // Update Button UI
+        submitNameBtn.textContent = "Submitting...";
+        submitNameBtn.disabled = true;
+
         try {
-            await fetch(`${SIMPLEBOARDS_URL}/boards/${SIMPLEBOARDS_API_NAME}/scores?apiKey=${SIMPLEBOARDS_API_KEY}`, {
+            // 1. Try API Submission
+            const response = await fetch(`${SIMPLEBOARDS_URL}/boards/${SIMPLEBOARDS_API_NAME}/scores?apiKey=${SIMPLEBOARDS_API_KEY}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: sanitizedName, score: score })
+                body: JSON.stringify(scoreData)
             });
-            console.log("Score submitted successfully!");
+            if (!response.ok) throw new Error("API Submit failed");
+            console.log("Score submitted to API successfully!");
         } catch (error) {
-            console.error("Score Submission Error:", error);
+            // 2. Fallback: Save to LocalStorage
+            console.log("API failed, saving to Local Storage.");
+            let localScores = JSON.parse(localStorage.getItem('law_leaderboard')) || [];
+            localScores.push(scoreData);
+            // Sort and keep top 10 locally
+            localScores.sort((a, b) => b.score - a.score);
+            localScores = localScores.slice(0, 10);
+            localStorage.setItem('law_leaderboard', JSON.stringify(localScores));
         }
         
-        // Always go to game over screen after attempt
+        // Reset UI and finish
+        submitNameBtn.textContent = "Submit Score";
+        submitNameBtn.disabled = false;
         showGameOverScreen();
     }
 
@@ -1018,7 +1093,6 @@
         startScreen.classList.remove('hidden');
         
         // Render tutorial icons once the start screen is potentially visible
-        // (Even if it's hidden behind landing, we can render now)
         requestAnimationFrame(renderTutorialIcons);
     });
     
@@ -1066,7 +1140,7 @@
             const beer = new Beer();
             beer.type = 'BAD';
             beer.x = swillCanvas.width / 2;
-            beer.y = swillCanvas.height / 2 + 10; // Offset slightly down
+            beer.y = swillCanvas.height / 2 + 10; 
             beer.rotation = 0;
             beer.draw(ctx);
         }
@@ -1090,7 +1164,7 @@
             const oldTimer = new PatronRaider();
             oldTimer.x = otCanvas.width / 2;
             oldTimer.y = otCanvas.height / 2 + 15;
-            oldTimer.side = 'left'; // Force side for consistent drawing
+            oldTimer.side = 'left'; 
             oldTimer.draw(ctx);
         }
 
@@ -1100,7 +1174,7 @@
             const ctx = vipCanvas.getContext('2d');
             const vip = new TableGuest(0);
             vip.isVipActive = true;
-            // Manually position for demo (TableGuest usually uses global playerGuestX)
+            // Manually position for demo
             vip.x = vipCanvas.width / 2;
             vip.y = vipCanvas.height / 2;
             vip.draw(ctx);
@@ -1173,7 +1247,7 @@
                 if (b.type === 'GOOD') {
                     score += 50;
                     scoreEl.innerText = score;
-                    createFloatingText(b.x, canvas.height - 50, "LAW BREW SERVED!", "lime");
+                    createFloatingText(b.x, canvas.height - 50, "LAW BREW SERVED", "lime");
                 } else {
                     lives--;
                     livesEl.innerText = lives;
