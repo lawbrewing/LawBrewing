@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1014,10 +1015,11 @@
             for (let j = beers.length - 1; j >= 0; j--) {
                 const b = beers[j];
                 if (b.type === 'BAD' && Math.hypot(t.x - b.x, t.y - b.y) < 50) {
-                     lives--;
-                    livesEl.innerText = lives;
-                    checkGameOver();
-                    createFloatingText(b.x, canvas.height - 50, "SWILL SERVED!", "orange");
+                    beers.splice(j, 1); 
+                    score += 50; 
+                    scoreEl.innerText = score;
+                    createFloatingText(t.x, t.y, "+50 (Swill Gone)", "lime");
+                    t.isHit = true; 
                 }
             }
         }
