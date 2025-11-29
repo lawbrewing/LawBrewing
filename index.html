@@ -768,79 +768,40 @@
            // --- Draw VIP Guest (only if active) ---
             if (this.isVipActive) {
                 const guestOffsetY = tableTopY - 10;
-
-                // 1. Purple Dress Body (Bottom Layer)
-                ctx.fillStyle = '#7B1FA2';
+                
+                // Body
+                ctx.fillStyle = '#9C27B0'; 
                 ctx.beginPath();
-                ctx.ellipse(0, guestOffsetY + 12, 22, 16, 0, Math.PI, 0, true);
+                ctx.ellipse(0, guestOffsetY + 10, 20, 15, 0, Math.PI, 0, true);
                 ctx.fill();
 
-                // 2. Dress Shoulders (Middle Layer)
-                ctx.fillStyle = '#9C27B0';
-                ctx.beginPath();
-                ctx.ellipse(0, guestOffsetY + 9, 18, 10, 0, Math.PI, 0, true);
-                ctx.fill();
-
-                // 3. Head Skin (Middle Layer)
-                ctx.fillStyle = '#FFE0B2';
+                // Head
+                ctx.fillStyle = '#FFE0B2'; 
                 ctx.beginPath();
                 ctx.arc(0, guestOffsetY - 10, 10, 0, Math.PI * 2);
                 ctx.fill();
 
-                // --- NEW HAIR LAYER (Top Layer - Draping over shoulders) ---
-                ctx.fillStyle = '#4E342E'; // Brunette color
+                // Hair
+                ctx.fillStyle = '#5a2720'; 
                 ctx.beginPath();
-                // Start at top hairline center
-                ctx.moveTo(0, guestOffsetY - 16);
-                
-                // Right side flow over shoulder and down
-                // Control points adjusted to widen over the shoulder area
-                ctx.bezierCurveTo(18, guestOffsetY - 16, 26, guestOffsetY, 20, guestOffsetY + 22);
-                
-                // Bottom edge across the back
-                ctx.quadraticCurveTo(0, guestOffsetY + 28, -20, guestOffsetY + 22);
-                
-                // Left side flow back up over shoulder
-                ctx.bezierCurveTo(-26, guestOffsetY, -18, guestOffsetY - 16, 0, guestOffsetY - 16);
-                
+                ctx.ellipse(0, guestOffsetY - 10, 12, 12, 0, 0, Math.PI, false); 
+                ctx.lineTo(12, guestOffsetY + 2); 
+                ctx.lineTo(-12, guestOffsetY + 2);
+                ctx.closePath();
                 ctx.fill();
 
-                // Optional: Add a slightly lighter crown area to define the top of the head
-                ctx.fillStyle = '#5D4037'; 
-                ctx.beginPath();
-                ctx.ellipse(0, guestOffsetY - 13, 10, 6, 0, Math.PI, 0, true);
-                ctx.fill();
-
-                // --- Object on Table: Empty Beer Mug ---
-                const mugX = -this.tableWidth/2 + 20;
-                const mugY = tableTopY + 5;
-
-                // Glass Style setup
-                ctx.fillStyle = 'rgba(176, 190, 197, 0.4)'; // Semi-transparent glass
-                ctx.strokeStyle = '#CFD8DC'; // Subtle glass outline
-                ctx.lineWidth = 1;
-
-                // Mug Handle
-                ctx.beginPath();
-                ctx.moveTo(mugX - 7, mugY + 4);
-                ctx.quadraticCurveTo(mugX - 14, mugY + 8, mugX - 7, mugY + 14);
-                ctx.stroke();
-
-                // Mug Body
-                ctx.beginPath();
-                ctx.rect(mugX - 7, mugY, 14, 18);
-                ctx.fill();
-                ctx.stroke();
-
-                // Thick Glass Bottom (Opaque)
-                ctx.fillStyle = 'rgba(120, 144, 156, 0.8)';
-                ctx.fillRect(mugX - 7, mugY + 15, 14, 4);
-
-                // Empty Rim (Thin white oval on top to show emptiness)
-                ctx.strokeStyle = '#ECEFF1';
-                ctx.beginPath();
-                ctx.ellipse(mugX, mugY, 7, 2.5, 0, 0, Math.PI * 2);
-                ctx.stroke();
+                // Empty Beer Glass
+                const glassX = -this.tableWidth/2 + 15;
+                const glassY = tableTopY + 5;
+                
+                ctx.fillStyle = '#fefefe';
+                ctx.fillRect(glassX - 5, glassY, 10, 2);
+                
+                ctx.fillStyle = 'rgba(200, 200, 255, 0.3)';
+                ctx.fillRect(glassX - 5, glassY + 2, 10, 15);
+                
+                ctx.fillStyle = '#4b5563';
+                ctx.fillRect(glassX - 6, glassY + 17, 12, 3);
             }
 
             ctx.restore();
@@ -1011,7 +972,6 @@
 
     /* --- HYBRID LEADERBOARD SYSTEM --- */
     // Uses API if available, Falls back to LocalStorage if not.
-    
 
     async function fetchLeaderboard() {
         leaderboardBody.innerHTML = '';
