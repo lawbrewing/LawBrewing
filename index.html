@@ -90,17 +90,6 @@
             pointer-events: none;
         }
 
-        /* Mute Button Style */
-        #mute-btn {
-            pointer-events: auto;
-            cursor: pointer;
-            font-size: 1.5rem;
-            background: rgba(0,0,0,0.5);
-            padding: 5px 10px;
-            border-radius: 5px;
-            border: 1px solid #fff;
-        }
-
         .btn {
             background: #fff;
             color: #000;
@@ -309,7 +298,6 @@
         <div>LEVEL: <span id="level">1</span></div>
         <div>SCORE: <span id="score">0</span></div>
         <div>LIVES: <span id="lives">3</span></div>
-        <div id="mute-btn">🔊</div>
     </div>
     
     <div id="level-transition">
@@ -376,7 +364,7 @@
     <div id="leaderboard-modal" class="ui-overlay hidden">
         <div class="modal-content">
             <h1>LEADERBOARD</h1>
-            <h2>The Sheriffs of Taps</h2>
+            <h2>The Swill Snipers</h2>
             <div id="leaderboard-status" style="color: #ffeb8a; margin-bottom: 15px;">Loading...</div>
             <table id="leaderboard-table">
                 <thead>
@@ -403,10 +391,9 @@
 <script>
     /* --- Sound System (Synthesized) --- */
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    let isMuted = false;
 
     function playSound(type) {
-        if (isMuted || !audioCtx) return;
+        if (!audioCtx) return;
         if (audioCtx.state === 'suspended') audioCtx.resume();
 
         const osc = audioCtx.createOscillator();
@@ -428,7 +415,6 @@
         } 
         else if (type === 'explosion') {
             // Noise Burst (Crunch)
-            // Need a noise buffer for real explosion sounds, simplified here with low square wave
             osc.type = 'sawtooth';
             osc.frequency.setValueAtTime(100, now);
             osc.frequency.exponentialRampToValueAtTime(10, now + 0.2);
@@ -468,12 +454,6 @@
             osc.stop(now + 1);
         }
     }
-
-    const muteBtn = document.getElementById('mute-btn');
-    muteBtn.addEventListener('click', () => {
-        isMuted = !isMuted;
-        muteBtn.innerText = isMuted ? "🔇" : "🔊";
-    });
 
     /* --- Simpleboards Configuration --- */
     const SIMPLEBOARDS_API_KEY = "78098c7b-fa9d-4ce1-9300-a56d081d53c4";
@@ -1082,314 +1062,4 @@
 
         try {
             // Updated Endpoint Logic for Fetching
-            const response = await fetch(`${SIMPLEBOARDS_BASE_URL}/leaderboards/${SIMPLEBOARDS_LEADERBOARD_ID}/entries`, {
-                headers: { 'x-api-key': SIMPLEBOARDS_API_KEY }
-            });
-            
-            if (!response.ok) throw new Error("API Fetch failed");
-            const jsonData = await response.json();
-            data = Array.isArray(jsonData) ? jsonData : (jsonData.entries || []);
-            
-        } catch (error) {
-            console.log("Falling back to Local Storage", error);
-            usedSource = 'Local';
-            const localData = localStorage.getItem('law_leaderboard');
-            if (localData) {
-                data = JSON.parse(localData);
-            }
-        }
-
-        // Render Data
-        if (!data || data.length === 0) {
-            leaderboardStatus.textContent = `No scores yet (${usedSource}). Be the first!`;
-            return;
-        }
-
-        leaderboardStatus.textContent = `Top Scores (${usedSource})`;
-        
-        // Map data to standardize fields
-        const standardizedData = data.map(entry => ({
-            name: entry.playerDisplayName || entry.name || "Anonymous",
-            score: entry.score || 0
-        }));
-
-        // Sort data 
-        standardizedData.sort((a, b) => b.score - a.score);
-        
-        standardizedData.slice(0, 10).forEach((entry, index) => {
-            const row = leaderboardBody.insertRow();
-            row.insertCell(0).textContent = index + 1;
-            row.insertCell(1).textContent = entry.name;
-            row.insertCell(2).textContent = entry.score.toLocaleString();
-        });
-    }
-    
-    async function submitScore(name, score) {
-        const sanitizedName = name.trim().toUpperCase() || "ANONYMOUS";
-        
-        // Update Button UI
-        submitNameBtn.textContent = "Submitting...";
-        submitNameBtn.disabled = true;
-
-        const payload = {
-            leaderboardId: SIMPLEBOARDS_LEADERBOARD_ID,
-            playerDisplayName: sanitizedName,
-            score: score
-        };
-
-        try {
-            const response = await fetch(`${SIMPLEBOARDS_BASE_URL}/entries`, {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'x-api-key': SIMPLEBOARDS_API_KEY
-                },
-                body: JSON.stringify(payload)
-            });
-            if (!response.ok) throw new Error("API Submit failed");
-            console.log("Score submitted to API successfully!");
-        } catch (error) {
-            console.log("API failed, saving to Local Storage.", error);
-            let localScores = JSON.parse(localStorage.getItem('law_leaderboard')) || [];
-            localScores.push({ name: sanitizedName, score: score }); 
-            localScores.sort((a, b) => b.score - a.score);
-            localScores = localScores.slice(0, 10);
-            localStorage.setItem('law_leaderboard', JSON.stringify(localScores));
-        }
-        
-        // Reset UI and finish
-        submitNameBtn.textContent = "Submit Score";
-        submitNameBtn.disabled = false;
-        showGameOverScreen();
-    }
-
-    /* --- Logic for Menu Flow --- */
-
-    enterBtn.addEventListener('click', () => {
-        landingPage.classList.add('hidden');
-        startScreen.classList.remove('hidden');
-        
-        // Render tutorial icons once the start screen is potentially visible
-        requestAnimationFrame(renderTutorialIcons);
-    });
-    
-    // Show Leaderboard
-    leaderboardBtn.addEventListener('click', () => {
-        startScreen.classList.add('hidden');
-        leaderboardModal.classList.remove('hidden');
-        fetchLeaderboard();
-    });
-    
-    // Close Leaderboard
-    closeLeaderboardBtn.addEventListener('click', () => {
-        leaderboardModal.classList.add('hidden');
-        startScreen.classList.remove('hidden');
-    });
-    
-    // Submit Name Button Handler
-    submitNameBtn.addEventListener('click', () => {
-        const name = nameInput.value;
-        submitScore(name, score);
-        nameInput.value = ''; 
-    });
-    
-    // Allow Enter key to submit name
-    nameInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            submitNameBtn.click();
-        }
-    });
-    
-    restartBtn.addEventListener('click', () => {
-        showGameOverScreen(); 
-        gameOverScreen.classList.add('hidden');
-        startScreen.classList.remove('hidden');
-    });
-    
-    // Back to Menu Button Handler
-    menuBtn.addEventListener('click', () => {
-        gameOverScreen.classList.add('hidden');
-        startScreen.classList.remove('hidden');
-    });
-
-    startBtn.addEventListener('click', startGame);
-
-    /* --- RENDER TUTORIAL ICONS FUNCTION --- */
-    function renderTutorialIcons() {
-        // 1. Render Swill (Bad Beer)
-        const swillCanvas = document.getElementById('demo-swill');
-        if (swillCanvas) {
-            const ctx = swillCanvas.getContext('2d');
-            const beer = new Beer();
-            beer.type = 'BAD';
-            beer.x = swillCanvas.width / 2;
-            beer.y = swillCanvas.height / 2 + 10; 
-            beer.rotation = 0;
-            beer.draw(ctx);
-        }
-
-        // 2. Render Law Brew (Good Beer)
-        const lawCanvas = document.getElementById('demo-law');
-        if (lawCanvas) {
-            const ctx = lawCanvas.getContext('2d');
-            const beer = new Beer();
-            beer.type = 'GOOD';
-            beer.x = lawCanvas.width / 2;
-            beer.y = lawCanvas.height / 2 + 10;
-            beer.rotation = 0;
-            beer.draw(ctx);
-        }
-
-        // 3. Render Old Timer
-        const otCanvas = document.getElementById('demo-oldtimer');
-        if (otCanvas) {
-            const ctx = otCanvas.getContext('2d');
-            const oldTimer = new PatronRaider();
-            oldTimer.x = otCanvas.width / 2;
-            oldTimer.y = otCanvas.height / 2 + 15;
-            oldTimer.side = 'left'; 
-            oldTimer.draw(ctx);
-        }
-
-        // 4. Render VIP
-        const vipCanvas = document.getElementById('demo-vip');
-        if (vipCanvas) {
-            const ctx = vipCanvas.getContext('2d');
-            const vip = new TableGuest(0);
-            vip.isVipActive = true;
-            // Manually position for demo
-            vip.x = vipCanvas.width / 2;
-            vip.y = vipCanvas.height / 2;
-            vip.draw(ctx);
-        }
-    }
-
-    /* --- Game Loop --- */
-
-    function gameLoop(timestamp) {
-        if (!isPlaying) return;
-
-        const dt = timestamp - lastTime;
-        lastTime = timestamp;
-
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // Spawning
-        if (!isTransitioning) {
-            spawnTimer += dt;
-            if (spawnTimer > spawnInterval) {
-                beers.push(new Beer());
-                spawnTimer = 0;
-            }
-            thiefSpawnTimer += dt;
-            if (thiefSpawnTimer > thiefSpawnInterval) {
-                thieves.push(new PatronRaider());
-                thiefSpawnTimer = 0;
-            }
-        }
-
-        // VIP Guest
-        if (vipInstance) {
-            vipInstance.update();
-            if (vipInstance.isVipActive) {
-                vipInstance.draw(ctx);
-                
-                // VIP Collision
-                for (let j = beers.length - 1; j >= 0; j--) {
-                    const b = beers[j];
-                    if (b.x > vipInstance.x - 40 && b.x < vipInstance.x + 40 && 
-                        b.y > vipInstance.y - 40 && b.y < vipInstance.y + 20) {
-                        
-                        beers.splice(j, 1);
-                        
-                        if (b.type === 'GOOD') {
-                            score += 500;
-                            scoreEl.innerText = score;
-                            createFloatingText(vipInstance.x, vipInstance.y - 60, "VIP LAW BONUS!", "#d946ef"); 
-                            playSound('score'); // AUDIO TRIGGER (Using Score sound for good catch)
-                            createExplosion(b.x, b.y, '#fff');
-                        } else {
-                            lives--;
-                            livesEl.innerText = lives;
-                            createFloatingText(vipInstance.x, vipInstance.y - 60, "VIP SWILL HIT!", "red");
-                            playSound('error'); // AUDIO TRIGGER
-                            createExplosion(b.x, b.y, '#ef4444'); 
-                            checkGameOver();
-                        }
-                    }
-                }
-            }
-        }
-
-        // Entities
-        for (let i = beers.length - 1; i >= 0; i--) {
-            const b = beers[i];
-            b.update(dt);
-            b.draw(ctx);
-            
-            if (b.y > canvas.height) {
-                beers.splice(i, 1);
-                if (b.type === 'GOOD') {
-                    score += 50;
-                    scoreEl.innerText = score;
-                    createFloatingText(b.x, canvas.height - 50, "LAW BREW SERVED", "lime");
-                    playSound('score'); // AUDIO TRIGGER
-                } else {
-                    lives--;
-                    livesEl.innerText = lives;
-                    checkGameOver();
-                    createFloatingText(b.x, canvas.height - 50, "SWILL SERVED!", "orange");
-                    playSound('error'); // AUDIO TRIGGER
-                }
-            }
-        }
-
-        for (let i = thieves.length - 1; i >= 0; i--) {
-            const t = thieves[i];
-            t.update(dt);
-            t.draw(ctx);
-
-            if (t.x < -t.size * 2 || t.x > canvas.width + t.size * 2 || t.life <= 0) {
-                thieves.splice(i, 1);
-            }
-            
-            for (let j = beers.length - 1; j >= 0; j--) {
-                const b = beers[j];
-                if (b.type === 'BAD' && Math.hypot(t.x - b.x, t.y - b.y) < 50) {
-                    beers.splice(j, 1); 
-                    lives--;
-                    livesEl.innerText = lives;
-                    checkGameOver();
-                    createFloatingText(t.x, t.y, "SWILL SERVED!", "orange");
-                    playSound('explosion'); // AUDIO TRIGGER (Thief Hit)
-                    t.isHit = true; 
-                }
-            }
-        }
-        
-        for (let i = particles.length - 1; i >= 0; i--) {
-            particles[i].update();
-            particles[i].draw(ctx);
-            if (particles[i].life <= 0) {
-                particles.splice(i, 1);
-            }
-        }
-
-        for (let i = clickEffects.length - 1; i >= 0; i--) {
-            const c = clickEffects[i];
-            c.age++;
-            ctx.fillStyle = `rgba(255, 255, 255, ${1 - c.age / 10})`;
-            ctx.beginPath();
-            ctx.arc(c.x, c.y, 10 * (c.age / 10), 0, Math.PI * 2);
-            ctx.fill();
-            if (c.age > 10) {
-                clickEffects.splice(i, 1);
-            }
-        }
-
-        checkLevelUp();
-        requestAnimationFrame(gameLoop);
-    }
-</script>
-</body>
-</html>
+            const response = await fetch(`${SIMPLEBOARDS_BASE_URL}/leaderboards/${SIMPLEBOARDS_LEADERBOARD
