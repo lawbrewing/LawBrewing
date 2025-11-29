@@ -60,8 +60,7 @@
         .ui-overlay {
             position: absolute;
             z-index: 20;
-            /* Changed to auto to ensure buttons are clickable */
-            pointer-events: auto; 
+            pointer-events: auto;
             width: 100%;
             height: 100%;
             display: flex;
@@ -88,7 +87,7 @@
             font-size: 1.5rem;
             text-shadow: 2px 2px 0 #000;
             z-index: 20;
-            pointer-events: none; /* HUD shouldn't block clicks */
+            pointer-events: none;
         }
 
         .btn {
@@ -365,7 +364,7 @@
     <div id="leaderboard-modal" class="ui-overlay hidden">
         <div class="modal-content">
             <h1>LEADERBOARD</h1>
-            <h2>The Swill Snipers</h2>
+            <h2>The Snipers of Swill</h2>
             <div id="leaderboard-status" style="color: #ffeb8a; margin-bottom: 15px;">Loading...</div>
             <table id="leaderboard-table">
                 <thead>
@@ -391,13 +390,9 @@
 
 <script>
     /* --- Sound System (Synthesized) --- */
-    // Initialized lazily on first interaction
-    let audioCtx = null;
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
     function initAudio() {
-        if (!audioCtx) {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
         if (audioCtx.state === 'suspended') {
             audioCtx.resume();
         }
@@ -414,7 +409,6 @@
         const now = audioCtx.currentTime;
 
         if (type === 'shoot') {
-            // Pew Pew
             osc.type = 'triangle';
             osc.frequency.setValueAtTime(600, now);
             osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
@@ -424,7 +418,6 @@
             osc.stop(now + 0.1);
         } 
         else if (type === 'explosion') {
-            // Noise Burst (Crunch)
             osc.type = 'sawtooth';
             osc.frequency.setValueAtTime(100, now);
             osc.frequency.exponentialRampToValueAtTime(10, now + 0.2);
@@ -434,7 +427,6 @@
             osc.stop(now + 0.2);
         } 
         else if (type === 'score') {
-            // High Ding
             osc.type = 'sine';
             osc.frequency.setValueAtTime(800, now);
             osc.frequency.exponentialRampToValueAtTime(1200, now + 0.1);
@@ -444,7 +436,6 @@
             osc.stop(now + 0.5);
         } 
         else if (type === 'error') {
-            // Low Buzz
             osc.type = 'sawtooth';
             osc.frequency.setValueAtTime(150, now);
             osc.frequency.linearRampToValueAtTime(100, now + 0.2);
@@ -454,7 +445,6 @@
             osc.stop(now + 0.2);
         }
         else if (type === 'gameover') {
-            // Sad Descending
             osc.type = 'triangle';
             osc.frequency.setValueAtTime(300, now);
             osc.frequency.linearRampToValueAtTime(50, now + 1);
@@ -1120,10 +1110,11 @@
         const payload = {
             leaderboardId: SIMPLEBOARDS_LEADERBOARD_ID,
             playerDisplayName: sanitizedName,
-            score: score
+            score: score.toString() // API expects string
         };
 
         try {
+            // 1. Try API Submission
             const response = await fetch(`${SIMPLEBOARDS_BASE_URL}/entries`, {
                 method: 'POST',
                 headers: { 
@@ -1135,6 +1126,7 @@
             if (!response.ok) throw new Error("API Submit failed");
             console.log("Score submitted to API successfully!");
         } catch (error) {
+            // 2. Fallback: Save to LocalStorage
             console.log("API failed, saving to Local Storage.", error);
             let localScores = JSON.parse(localStorage.getItem('law_leaderboard')) || [];
             localScores.push({ name: sanitizedName, score: score }); 
@@ -1292,13 +1284,13 @@
                             score += 500;
                             scoreEl.innerText = score;
                             createFloatingText(vipInstance.x, vipInstance.y - 60, "VIP LAW BONUS!", "#d946ef"); 
-                            playSound('score'); // AUDIO TRIGGER (Using Score sound for good catch)
+                            playSound('score'); 
                             createExplosion(b.x, b.y, '#fff');
                         } else {
                             lives--;
                             livesEl.innerText = lives;
                             createFloatingText(vipInstance.x, vipInstance.y - 60, "VIP SWILL HIT!", "red");
-                            playSound('error'); // AUDIO TRIGGER
+                            playSound('error'); 
                             createExplosion(b.x, b.y, '#ef4444'); 
                             checkGameOver();
                         }
@@ -1319,13 +1311,13 @@
                     score += 50;
                     scoreEl.innerText = score;
                     createFloatingText(b.x, canvas.height - 50, "LAW BREW SERVED", "lime");
-                    playSound('score'); // AUDIO TRIGGER
+                    playSound('score'); 
                 } else {
                     lives--;
                     livesEl.innerText = lives;
                     checkGameOver();
                     createFloatingText(b.x, canvas.height - 50, "SWILL SERVED!", "orange");
-                    playSound('error'); // AUDIO TRIGGER
+                    playSound('error'); 
                 }
             }
         }
@@ -1347,7 +1339,7 @@
                     livesEl.innerText = lives;
                     checkGameOver();
                     createFloatingText(t.x, t.y, "SWILL SERVED!", "orange");
-                    playSound('explosion'); // AUDIO TRIGGER (Thief Hit)
+                    playSound('explosion'); 
                     t.isHit = true; 
                 }
             }
