@@ -1016,9 +1016,10 @@
                 const b = beers[j];
                 if (b.type === 'BAD' && Math.hypot(t.x - b.x, t.y - b.y) < 50) {
                     beers.splice(j, 1); 
-                    score += 50; 
-                    scoreEl.innerText = score;
-                    createFloatingText(t.x, t.y, "+50 (Swill Gone)", "lime");
+                    lives--;
+                    livesEl.innerText = lives;
+                    checkGameOver();
+                    createFloatingText(t.x, t.y, "SWILL SERVED!", "orange");
                     t.isHit = true; 
                 }
             }
