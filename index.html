@@ -158,6 +158,14 @@
             text-align: center;
         }
         
+        /* Style for the mini canvases in the tutorial */
+        .tutorial-canvas {
+            position: relative !important; /* Override absolute from main canvas */
+            z-index: 1 !important;
+            background: transparent;
+            margin-bottom: 5px;
+        }
+        
         .icon-desc {
             font-size: 0.8rem;
             margin-top: 8px;
@@ -304,18 +312,11 @@
             
             <div class="icon-row">
                 <div class="icon-box">
-                    <svg width="40" height="60" viewBox="0 0 50 80">
-                        <rect x="10" y="10" width="30" height="60" rx="2" fill="#9ca3af" stroke="#4b5563" stroke-width="2"/>
-                        <rect x="10" y="20" width="30" height="40" fill="#ef4444" opacity="0.8"/>
-                        <text x="25" y="45" text-anchor="middle" font-family="sans-serif" font-size="10" fill="white">SWILL</text>
-                    </svg>
+                    <canvas id="demo-swill" width="60" height="80" class="tutorial-canvas"></canvas>
                     <span class="icon-desc">SHOOT THIS<br><strong style="color: #ef4444">(Bad Beer)</strong></span>
                 </div>
                 <div class="icon-box">
-                    <svg width="40" height="60" viewBox="0 0 50 80">
-                        <path d="M10 10 L15 70 L35 70 L40 10 Z" fill="#d97706" stroke="#fff" stroke-width="2" opacity="0.8"/>
-                        <path d="M10 10 Q25 0 40 10 L40 20 L10 20 Z" fill="#fff"/>
-                    </svg>
+                    <canvas id="demo-law" width="60" height="80" class="tutorial-canvas"></canvas>
                     <span class="icon-desc">SAVE THIS<br><strong style="color: #d97706">(Law Brew)</strong></span>
                 </div>
             </div>
@@ -324,12 +325,12 @@
                 <p style="color: #ffeb3b; font-size: 0.9rem; font-weight: bold; margin-bottom: 10px;">STRATEGY & THREATS</p>
                 <div class="icon-row">
                     <div class="icon-box">
-                        <span style="font-size:20px">🤠</span>
-                        <span class="icon-desc"><strong>Old Timer</strong><br>Blocks shots</span>
+                        <canvas id="demo-oldtimer" width="70" height="70" class="tutorial-canvas"></canvas>
+                        <span class="icon-desc"><strong>Old Timer</strong><br>Don't let him spend his last $1 on swill!</span>
                     </div>
                     <div class="icon-box">
-                        <span style="font-size:20px">👩‍💼</span>
-                        <span class="icon-desc"><strong>VIP</strong><br>Move table to catch!</span>
+                        <canvas id="demo-vip" width="100" height="60" class="tutorial-canvas"></canvas>
+                        <span class="icon-desc"><strong>VIP</strong><br>Move her table to serve Law Brew!</span>
                     </div>
                 </div>
                 <p style="font-size: 1.1rem; color: #fff;">
@@ -352,7 +353,7 @@
     <div id="leaderboard-modal" class="ui-overlay hidden">
         <div class="modal-content">
             <h1>LEADERBOARD</h1>
-            <h2>The Swill Snipers</h2>
+            <h2>The Sheriffs of Taps</h2>
             <div id="leaderboard-status" style="color: #ffeb8a; margin-bottom: 15px;">Loading...</div>
             <table id="leaderboard-table">
                 <thead>
@@ -630,6 +631,7 @@
                 ctx.beginPath();
                 ctx.moveTo(-13, -15);
                 ctx.lineTo(-9, 23);
+                ctx.lineTo(9, 23);
                 ctx.lineTo(9, 23);
                 ctx.lineTo(13, -15);
                 ctx.closePath();
@@ -1014,6 +1016,10 @@
     enterBtn.addEventListener('click', () => {
         landingPage.classList.add('hidden');
         startScreen.classList.remove('hidden');
+        
+        // Render tutorial icons once the start screen is potentially visible
+        // (Even if it's hidden behind landing, we can render now)
+        requestAnimationFrame(renderTutorialIcons);
     });
     
     // Show Leaderboard
@@ -1050,6 +1056,56 @@
     });
 
     startBtn.addEventListener('click', startGame);
+
+    /* --- RENDER TUTORIAL ICONS FUNCTION --- */
+    function renderTutorialIcons() {
+        // 1. Render Swill (Bad Beer)
+        const swillCanvas = document.getElementById('demo-swill');
+        if (swillCanvas) {
+            const ctx = swillCanvas.getContext('2d');
+            const beer = new Beer();
+            beer.type = 'BAD';
+            beer.x = swillCanvas.width / 2;
+            beer.y = swillCanvas.height / 2 + 10; // Offset slightly down
+            beer.rotation = 0;
+            beer.draw(ctx);
+        }
+
+        // 2. Render Law Brew (Good Beer)
+        const lawCanvas = document.getElementById('demo-law');
+        if (lawCanvas) {
+            const ctx = lawCanvas.getContext('2d');
+            const beer = new Beer();
+            beer.type = 'GOOD';
+            beer.x = lawCanvas.width / 2;
+            beer.y = lawCanvas.height / 2 + 10;
+            beer.rotation = 0;
+            beer.draw(ctx);
+        }
+
+        // 3. Render Old Timer
+        const otCanvas = document.getElementById('demo-oldtimer');
+        if (otCanvas) {
+            const ctx = otCanvas.getContext('2d');
+            const oldTimer = new PatronRaider();
+            oldTimer.x = otCanvas.width / 2;
+            oldTimer.y = otCanvas.height / 2 + 15;
+            oldTimer.side = 'left'; // Force side for consistent drawing
+            oldTimer.draw(ctx);
+        }
+
+        // 4. Render VIP
+        const vipCanvas = document.getElementById('demo-vip');
+        if (vipCanvas) {
+            const ctx = vipCanvas.getContext('2d');
+            const vip = new TableGuest(0);
+            vip.isVipActive = true;
+            // Manually position for demo (TableGuest usually uses global playerGuestX)
+            vip.x = vipCanvas.width / 2;
+            vip.y = vipCanvas.height / 2;
+            vip.draw(ctx);
+        }
+    }
 
     /* --- Game Loop --- */
 
@@ -1117,7 +1173,7 @@
                 if (b.type === 'GOOD') {
                     score += 50;
                     scoreEl.innerText = score;
-                    createFloatingText(b.x, canvas.height - 50, "LAW BREW SERVED", "lime");
+                    createFloatingText(b.x, canvas.height - 50, "LAW BREW SERVED!", "lime");
                 } else {
                     lives--;
                     livesEl.innerText = lives;
