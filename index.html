@@ -320,7 +320,7 @@
             <div class="icon-row">
                 <div class="icon-box">
                     <canvas id="demo-swill" width="60" height="80" class="tutorial-canvas"></canvas>
-                    <span class="icon-desc">SHOOT THIS<br><strong style="color: #ef4444">(Bad Beer)</strong></span>
+                    <span class="icon-desc">SHOOT THIS<br><strong style="color: #ef4444">(Swill Beer)</strong></span>
                 </div>
                 <div class="icon-box">
                     <canvas id="demo-law" width="60" height="80" class="tutorial-canvas"></canvas>
@@ -355,12 +355,13 @@
         <h2>Final Score: <span id="final-score">0</span></h2>
         <p id="game-over-msg" style="margin-bottom: 20px; font-size: 1.5rem; color: #aaa;">Last Call.</p>
         <button id="restart-btn" class="btn">Re-Open Tab</button>
+        <button id="menu-btn" class="btn" style="margin-top: 15px;">Back to Main Menu</button>
     </div>
     
     <div id="leaderboard-modal" class="ui-overlay hidden">
         <div class="modal-content">
             <h1>LEADERBOARD</h1>
-            <h2>The Swill Snipers</h2>
+            <h2>The Sheriffs of Taps</h2>
             <div id="leaderboard-status" style="color: #ffeb8a; margin-bottom: 15px;">Loading...</div>
             <table id="leaderboard-table">
                 <thead>
@@ -408,6 +409,7 @@
     
     const startBtn = document.getElementById('start-btn');
     const restartBtn = document.getElementById('restart-btn');
+    const menuBtn = document.getElementById('menu-btn');
     
     const levelTransitionEl = document.getElementById('level-transition'); 
     const levelTitleEl = document.getElementById('level-title');
@@ -1099,6 +1101,12 @@
     
     restartBtn.addEventListener('click', () => {
         showGameOverScreen(); 
+        gameOverScreen.classList.add('hidden');
+        startScreen.classList.remove('hidden');
+    });
+    
+    // Back to Menu Button Handler
+    menuBtn.addEventListener('click', () => {
         gameOverScreen.classList.add('hidden');
         startScreen.classList.remove('hidden');
     });
