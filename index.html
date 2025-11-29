@@ -333,11 +333,11 @@
                 <div class="icon-row">
                     <div class="icon-box">
                         <canvas id="demo-oldtimer" width="70" height="70" class="tutorial-canvas"></canvas>
-                        <span class="icon-desc"><strong>Old Timer</strong><br>Blocks shots</span>
+                        <span class="icon-desc"><strong>Old Timer</strong><br>Don't let him spend his last $1 on swill!</span>
                     </div>
                     <div class="icon-box">
                         <canvas id="demo-vip" width="100" height="70" class="tutorial-canvas"></canvas>
-                        <span class="icon-desc"><strong>VIP</strong><br>Move table to catch!</span>
+                        <span class="icon-desc"><strong>VIP</strong><br>Move table to serve her Law Brew!</span>
                     </div>
                 </div>
                 <p style="font-size: 1.1rem; color: #fff;">
@@ -387,9 +387,8 @@
 <script>
     /* --- Simpleboards Configuration --- */
     const SIMPLEBOARDS_API_KEY = "78098c7b-fa9d-4ce1-9300-a56d081d53c4";
-    const SIMPLEBOARDS_API_NAME = "LawLeaderboard";
-    const SIMPLEBOARDS_URL = "https://api.simpleboards.dev/api"; 
-    // Updated based on your snippet. If the live version is .net, you might need to change .dev to .net
+    const SIMPLEBOARDS_LEADERBOARD_ID = "9f649aa6-f553-4a57-57a6-08de2efe707f";
+    const SIMPLEBOARDS_URL = "https://api.simpleboards.dev/api/entries"; 
 
     /* --- Game Setup --- */
     const canvas = document.getElementById('gameCanvas');
@@ -970,6 +969,7 @@
     }
 
     /* --- HYBRID LEADERBOARD SYSTEM --- */
+    // Uses API if available, Falls back to LocalStorage if not.
     
 
     async function fetchLeaderboard() {
@@ -980,15 +980,13 @@
         let usedSource = 'API';
 
         try {
-            // 1. Try API first (Assuming specific GET structure for entries)
-            // If you get 404, verify the exact GET endpoint for simpleboards.dev
-            const response = await fetch(`${SIMPLEBOARDS_URL}/leaderboards/${SIMPLEBOARDS_API_NAME}/entries`, {
+            // 1. Try API first
+            const response = await fetch(`${SIMPLEBOARDS_URL}?leaderboardId=${SIMPLEBOARDS_LEADERBOARD_ID}`, {
                 headers: { 'x-api-key': SIMPLEBOARDS_API_KEY }
             });
             
             if (!response.ok) throw new Error("API Fetch failed");
             const jsonData = await response.json();
-            // simpleboards often returns { entries: [...] } or just [...]
             data = Array.isArray(jsonData) ? jsonData : (jsonData.entries || []);
             
         } catch (error) {
@@ -1034,14 +1032,14 @@
         submitNameBtn.disabled = true;
 
         const payload = {
-            leaderboardId: SIMPLEBOARDS_API_NAME,
+            leaderboardId: SIMPLEBOARDS_LEADERBOARD_ID,
             playerDisplayName: sanitizedName,
             score: score
         };
 
         try {
             // 1. Try API Submission
-            const response = await fetch(`${SIMPLEBOARDS_URL}/entries`, {
+            const response = await fetch(`${SIMPLEBOARDS_URL}`, {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
@@ -1054,7 +1052,6 @@
         } catch (error) {
             // 2. Fallback: Save to LocalStorage
             console.log("API failed, saving to Local Storage.");
-            // Store locally using same structure for easy retrieval
             let localScores = JSON.parse(localStorage.getItem('law_leaderboard')) || [];
             localScores.push({ name: sanitizedName, score: score }); // Simple structure for local
             // Sort and keep top 10 locally
