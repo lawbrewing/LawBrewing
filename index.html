@@ -71,6 +71,10 @@
             background: rgba(0,0,0,0.85);
             backdrop-filter: blur(5px);
             transition: opacity 0.5s;
+            /* Added overflow handling for small screens */
+            overflow-y: auto;
+            padding: 10px;
+            box-sizing: border-box;
         }
 
         .hud {
@@ -91,15 +95,15 @@
             background: #fff;
             color: #000;
             border: 4px solid #fff;
-            padding: 15px 40px;
-            font-size: 1.5rem;
+            padding: 10px 30px; /* Reduced padding */
+            font-size: 1.3rem; /* Slightly smaller font */
             font-family: 'Rye', serif;
             cursor: pointer;
             text-transform: uppercase;
             letter-spacing: 2px;
             transition: transform 0.1s, background 0.2s;
             pointer-events: auto;
-            margin-top: 20px;
+            margin-top: 15px; /* Reduced margin */
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
 
@@ -121,8 +125,8 @@
 
         h1 {
             font-family: 'Rye', serif;
-            font-size: 4rem;
-            margin-bottom: 0.5rem;
+            font-size: 3.5rem; /* Reduced from 4rem */
+            margin-bottom: 0.2rem;
             text-shadow: 0 4px 10px rgba(0,0,0,0.8);
             color: #fff;
             line-height: 1;
@@ -130,8 +134,8 @@
         
         h2 {
             font-family: 'Rye', serif;
-            font-size: 2rem;
-            margin-bottom: 2rem;
+            font-size: 1.5rem; /* Reduced from 2rem */
+            margin-bottom: 1rem; /* Reduced from 2rem */
             color: #ccc;
         }
 
@@ -141,10 +145,10 @@
         
         .tutorial {
             background: rgba(0,0,0,0.6);
-            padding: 25px;
+            padding: 15px; /* Reduced padding */
             border-radius: 10px;
             border: 1px solid #555;
-            max-width: 90%;
+            max-width: 95%;
             width: 550px;
             box-shadow: 0 0 20px rgba(0,0,0,0.8);
         }
@@ -152,9 +156,9 @@
         .icon-row {
             display: flex;
             justify-content: space-around;
-            margin: 20px 0;
+            margin: 10px 0; /* Reduced margin */
             flex-wrap: wrap;
-            gap: 15px;
+            gap: 10px;
         }
         
         .icon-box {
@@ -170,14 +174,14 @@
             position: relative !important; 
             z-index: 1 !important;
             background: transparent;
-            margin-bottom: 5px;
+            margin-bottom: 2px;
         }
         
         .icon-desc {
             font-size: 0.8rem;
-            margin-top: 8px;
+            margin-top: 4px;
             color: #aaa;
-            line-height: 1.2;
+            line-height: 1.1;
         }
         
         /* Level Transition Text Style */
@@ -213,17 +217,17 @@
         /* Title Page Specifics */
         .title-img {
             max-width: 80%;
-            max-height: 50vh;
+            max-height: 45vh; /* Reduced height to fit on smaller screens */
             border: 5px solid #fff;
             box-shadow: 0 0 30px rgba(0,0,0,0.8);
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             border-radius: 4px;
         }
         
         /* Leaderboard / Input Styles */
         .modal-content {
             background: #333;
-            padding: 30px;
+            padding: 20px; /* Reduced padding */
             border-radius: 10px;
             border: 5px solid gold;
             max-width: 500px;
@@ -235,11 +239,11 @@
         #leaderboard-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
-            font-size: 1.1rem;
+            margin-top: 10px;
+            font-size: 1rem;
         }
         #leaderboard-table th, #leaderboard-table td {
-            padding: 8px;
+            padding: 5px;
             border-bottom: 1px solid #555;
         }
         #leaderboard-table th {
@@ -315,32 +319,32 @@
         <h2>Quality Control</h2>
         
         <div class="tutorial">
-            <p style="margin-bottom: 15px; color: #fff; font-size: 1.1rem;">You are the Sheriff of Taps. Defend the quality of the brew!</p>
+            <p style="margin-bottom: 10px; color: #fff; font-size: 1.1rem;">You are the Sheriff of Taps. Defend the quality of the brew!</p>
             
             <div class="icon-row">
                 <div class="icon-box">
-                    <canvas id="demo-swill" width="60" height="80" class="tutorial-canvas"></canvas>
+                    <canvas id="demo-swill" width="60" height="70" class="tutorial-canvas"></canvas>
                     <span class="icon-desc">SHOOT THIS<br><strong style="color: #ef4444">(Swill Beer)</strong></span>
                 </div>
                 <div class="icon-box">
-                    <canvas id="demo-law" width="60" height="80" class="tutorial-canvas"></canvas>
+                    <canvas id="demo-law" width="60" height="70" class="tutorial-canvas"></canvas>
                     <span class="icon-desc">SAVE THIS<br><strong style="color: #d97706">(Law Brew)</strong></span>
                 </div>
             </div>
             
-            <div style="margin-top: 15px; border-top: 1px dashed #555; padding-top: 15px;">
-                <p style="color: #ffeb3b; font-size: 0.9rem; font-weight: bold; margin-bottom: 10px;">STRATEGY & THREATS</p>
+            <div style="margin-top: 10px; border-top: 1px dashed #555; padding-top: 10px;">
+                <p style="color: #ffeb3b; font-size: 0.9rem; font-weight: bold; margin-bottom: 5px;">STRATEGY & THREATS</p>
                 <div class="icon-row">
                     <div class="icon-box">
-                        <canvas id="demo-oldtimer" width="70" height="70" class="tutorial-canvas"></canvas>
+                        <canvas id="demo-oldtimer" width="70" height="60" class="tutorial-canvas"></canvas>
                         <span class="icon-desc"><strong>Old Timer</strong><br>Don't let him spend his last $1 on swill!</span>
                     </div>
                     <div class="icon-box">
-                        <canvas id="demo-vip" width="100" height="70" class="tutorial-canvas"></canvas>
-                        <span class="icon-desc"><strong>VIP</strong><br>Move table to serve her Law Brew!</span>
+                        <canvas id="demo-vip" width="100" height="60" class="tutorial-canvas"></canvas>
+                        <span class="icon-desc"><strong>VIP</strong><br>Move table to server her Law Brew!</span>
                     </div>
                 </div>
-                <p style="font-size: 1.1rem; color: #fff;">
+                <p style="font-size: 1.1rem; color: #fff; margin-top: 5px;">
                     Tap/Drag the <strong style="color: #ffeb3b;">bottom half</strong> of the screen to move the VIP.
                 </p>
             </div>
@@ -781,7 +785,7 @@
                 ctx.arc(0, guestOffsetY - 10, 10, 0, Math.PI * 2);
                 ctx.fill();
 
-                // Hair
+                // Hair (Original Bob)
                 ctx.fillStyle = '#5a2720'; 
                 ctx.beginPath();
                 ctx.ellipse(0, guestOffsetY - 10, 12, 12, 0, 0, Math.PI, false); 
