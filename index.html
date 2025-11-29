@@ -745,7 +745,7 @@
 
             const tableTopY = 0;
 
-            // --- Draw Table (Unchanged) ---
+            // --- Draw Table ---
             ctx.fillStyle = '#5D4037';
             ctx.fillRect(-this.tableWidth/2, tableTopY, this.tableWidth, this.tableHeight);
             ctx.strokeStyle = '#3E2723';
@@ -760,33 +760,44 @@
             if (this.isVipActive) {
                 const guestOffsetY = tableTopY - 10;
 
-                // 1. Purple Dress (Added slightly two-toned look for depth)
-                ctx.fillStyle = '#7B1FA2'; // Deeper purple body
+                // 1. Purple Dress (Body)
+                ctx.fillStyle = '#7B1FA2';
                 ctx.beginPath();
                 ctx.ellipse(0, guestOffsetY + 12, 22, 16, 0, Math.PI, 0, true);
                 ctx.fill();
 
-                ctx.fillStyle = '#9C27B0'; // Slightly lighter purple for shoulders
+                // --- NEW HAIR LAYER 1 (Back Hair flowing over shoulders) ---
+                // Draw this BEFORE the head and shoulders so it looks like it's behind them/flowing over
+                ctx.fillStyle = '#4E342E'; // Brunette
+                ctx.beginPath();
+                // A wide, rounded shape flowing down
+                ctx.moveTo(-15, guestOffsetY - 5);
+                ctx.quadraticCurveTo(-25, guestOffsetY + 10, -18, guestOffsetY + 20); // Left flow
+                ctx.lineTo(18, guestOffsetY + 20); // Bottom edge
+                ctx.quadraticCurveTo(25, guestOffsetY + 10, 15, guestOffsetY - 5); // Right flow
+                ctx.fill();
+
+                // 2. Dress Shoulders (sits on top of back hair)
+                ctx.fillStyle = '#9C27B0';
                 ctx.beginPath();
                 ctx.ellipse(0, guestOffsetY + 9, 18, 10, 0, Math.PI, 0, true);
                 ctx.fill();
 
-                // 2. Head (Skin tone)
+                // 3. Head (Skin tone)
                 ctx.fillStyle = '#FFE0B2';
                 ctx.beginPath();
                 ctx.arc(0, guestOffsetY - 10, 10, 0, Math.PI * 2);
                 ctx.fill();
 
-                // 3. Brunette Hair (Rich brown bun style)
-                ctx.fillStyle = '#4E342E'; // Brunette/Dark Brown
+                // --- NEW HAIR LAYER 2 (Top of head) ---
+                // Sits on top of the skin circle
+                ctx.fillStyle = '#4E342E'; // Brunette
                 ctx.beginPath();
-                // Main bun on top
-                ctx.arc(0, guestOffsetY - 13, 11, Math.PI * 0.8, Math.PI * 2.2);
-                ctx.fill();
-                // Side bits/texture
-                ctx.beginPath();
-                ctx.arc(-9, guestOffsetY - 10, 5, 0, Math.PI*2);
-                ctx.arc(9, guestOffsetY - 10, 5, 0, Math.PI*2);
+                // Simple rounded top covering the scalp area
+                ctx.arc(0, guestOffsetY - 10, 11, Math.PI, 0); // Top half circle
+                ctx.lineTo(11, guestOffsetY - 5);
+                ctx.quadraticCurveTo(0, guestOffsetY - 2, -11, guestOffsetY - 5); // Slight curve for hairline
+                ctx.closePath();
                 ctx.fill();
 
                 // --- Object on Table: Empty Beer Mug ---
