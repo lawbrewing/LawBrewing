@@ -388,9 +388,8 @@
     /* --- Simpleboards Configuration --- */
     const SIMPLEBOARDS_API_KEY = "78098c7b-fa9d-4ce1-9300-a56d081d53c4";
     const SIMPLEBOARDS_API_NAME = "LawLeaderboard";
-    const SIMPLEBOARDS_URL = "https://api.simpleboards.net/v1"; 
-    // NOTE: Because public/free APIs can be unstable, this code 
-    // automatically falls back to LocalStorage if the API fails.
+    const SIMPLEBOARDS_URL = "https://api.simpleboards.dev/api"; 
+    // Updated based on your snippet. If the live version is .net, you might need to change .dev to .net
 
     /* --- Game Setup --- */
     const canvas = document.getElementById('gameCanvas');
@@ -971,7 +970,7 @@
     }
 
     /* --- HYBRID LEADERBOARD SYSTEM --- */
-    // Uses API if available, Falls back to LocalStorage if not.
+    
 
     async function fetchLeaderboard() {
         leaderboardBody.innerHTML = '';
@@ -981,10 +980,17 @@
         let usedSource = 'API';
 
         try {
-            // 1. Try API first
-            const response = await fetch(`${SIMPLEBOARDS_URL}/boards/${SIMPLEBOARDS_API_NAME}/scores?apiKey=${SIMPLEBOARDS_API_KEY}&limit=10`);
+            // 1. Try API first (Assuming specific GET structure for entries)
+            // If you get 404, verify the exact GET endpoint for simpleboards.dev
+            const response = await fetch(`${SIMPLEBOARDS_URL}/leaderboards/${SIMPLEBOARDS_API_NAME}/entries`, {
+                headers: { 'x-api-key': SIMPLEBOARDS_API_KEY }
+            });
+            
             if (!response.ok) throw new Error("API Fetch failed");
-            data = await response.json();
+            const jsonData = await response.json();
+            // simpleboards often returns { entries: [...] } or just [...]
+            data = Array.isArray(jsonData) ? jsonData : (jsonData.entries || []);
+            
         } catch (error) {
             // 2. Fallback to LocalStorage
             console.log("Falling back to Local Storage");
@@ -1003,10 +1009,16 @@
 
         leaderboardStatus.textContent = `Top Scores (${usedSource})`;
         
-        // Sort data just in case local storage is unsorted
-        data.sort((a, b) => b.score - a.score);
+        // Map data to standardize fields (API might use 'playerDisplayName', local uses 'name')
+        const standardizedData = data.map(entry => ({
+            name: entry.playerDisplayName || entry.name || "Anonymous",
+            score: entry.score || 0
+        }));
+
+        // Sort data 
+        standardizedData.sort((a, b) => b.score - a.score);
         
-        data.slice(0, 10).forEach((entry, index) => {
+        standardizedData.slice(0, 10).forEach((entry, index) => {
             const row = leaderboardBody.insertRow();
             row.insertCell(0).textContent = index + 1;
             row.insertCell(1).textContent = entry.name;
@@ -1016,26 +1028,35 @@
     
     async function submitScore(name, score) {
         const sanitizedName = name.trim().toUpperCase() || "ANONYMOUS";
-        const scoreData = { name: sanitizedName, score: score };
         
         // Update Button UI
         submitNameBtn.textContent = "Submitting...";
         submitNameBtn.disabled = true;
 
+        const payload = {
+            leaderboardId: SIMPLEBOARDS_API_NAME,
+            playerDisplayName: sanitizedName,
+            score: score
+        };
+
         try {
             // 1. Try API Submission
-            const response = await fetch(`${SIMPLEBOARDS_URL}/boards/${SIMPLEBOARDS_API_NAME}/scores?apiKey=${SIMPLEBOARDS_API_KEY}`, {
+            const response = await fetch(`${SIMPLEBOARDS_URL}/entries`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(scoreData)
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'x-api-key': SIMPLEBOARDS_API_KEY
+                },
+                body: JSON.stringify(payload)
             });
             if (!response.ok) throw new Error("API Submit failed");
             console.log("Score submitted to API successfully!");
         } catch (error) {
             // 2. Fallback: Save to LocalStorage
             console.log("API failed, saving to Local Storage.");
+            // Store locally using same structure for easy retrieval
             let localScores = JSON.parse(localStorage.getItem('law_leaderboard')) || [];
-            localScores.push(scoreData);
+            localScores.push({ name: sanitizedName, score: score }); // Simple structure for local
             // Sort and keep top 10 locally
             localScores.sort((a, b) => b.score - a.score);
             localScores = localScores.slice(0, 10);
