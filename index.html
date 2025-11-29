@@ -71,7 +71,6 @@
             background: rgba(0,0,0,0.85);
             backdrop-filter: blur(5px);
             transition: opacity 0.5s;
-            /* Added overflow handling for small screens */
             overflow-y: auto;
             padding: 10px;
             box-sizing: border-box;
@@ -91,19 +90,30 @@
             pointer-events: none;
         }
 
+        /* Mute Button Style */
+        #mute-btn {
+            pointer-events: auto;
+            cursor: pointer;
+            font-size: 1.5rem;
+            background: rgba(0,0,0,0.5);
+            padding: 5px 10px;
+            border-radius: 5px;
+            border: 1px solid #fff;
+        }
+
         .btn {
             background: #fff;
             color: #000;
             border: 4px solid #fff;
-            padding: 10px 30px; /* Reduced padding */
-            font-size: 1.3rem; /* Slightly smaller font */
+            padding: 10px 30px; 
+            font-size: 1.3rem; 
             font-family: 'Rye', serif;
             cursor: pointer;
             text-transform: uppercase;
             letter-spacing: 2px;
             transition: transform 0.1s, background 0.2s;
             pointer-events: auto;
-            margin-top: 15px; /* Reduced margin */
+            margin-top: 15px; 
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
 
@@ -125,7 +135,7 @@
 
         h1 {
             font-family: 'Rye', serif;
-            font-size: 3.5rem; /* Reduced from 4rem */
+            font-size: 3.5rem; 
             margin-bottom: 0.2rem;
             text-shadow: 0 4px 10px rgba(0,0,0,0.8);
             color: #fff;
@@ -134,8 +144,8 @@
         
         h2 {
             font-family: 'Rye', serif;
-            font-size: 1.5rem; /* Reduced from 2rem */
-            margin-bottom: 1rem; /* Reduced from 2rem */
+            font-size: 1.5rem; 
+            margin-bottom: 1rem; 
             color: #ccc;
         }
 
@@ -145,7 +155,7 @@
         
         .tutorial {
             background: rgba(0,0,0,0.6);
-            padding: 15px; /* Reduced padding */
+            padding: 15px; 
             border-radius: 10px;
             border: 1px solid #555;
             max-width: 95%;
@@ -156,7 +166,7 @@
         .icon-row {
             display: flex;
             justify-content: space-around;
-            margin: 10px 0; /* Reduced margin */
+            margin: 10px 0; 
             flex-wrap: wrap;
             gap: 10px;
         }
@@ -217,7 +227,7 @@
         /* Title Page Specifics */
         .title-img {
             max-width: 80%;
-            max-height: 45vh; /* Reduced height to fit on smaller screens */
+            max-height: 45vh; 
             border: 5px solid #fff;
             box-shadow: 0 0 30px rgba(0,0,0,0.8);
             margin-bottom: 20px;
@@ -227,7 +237,7 @@
         /* Leaderboard / Input Styles */
         .modal-content {
             background: #333;
-            padding: 20px; /* Reduced padding */
+            padding: 20px; 
             border-radius: 10px;
             border: 5px solid gold;
             max-width: 500px;
@@ -299,6 +309,7 @@
         <div>LEVEL: <span id="level">1</span></div>
         <div>SCORE: <span id="score">0</span></div>
         <div>LIVES: <span id="lives">3</span></div>
+        <div id="mute-btn">🔊</div>
     </div>
     
     <div id="level-transition">
@@ -324,7 +335,7 @@
             <div class="icon-row">
                 <div class="icon-box">
                     <canvas id="demo-swill" width="60" height="70" class="tutorial-canvas"></canvas>
-                    <span class="icon-desc">SHOOT THIS<br><strong style="color: #ef4444">(Swill Beer)</strong></span>
+                    <span class="icon-desc">SHOOT THIS<br><strong style="color: #ef4444">(Bad Beer)</strong></span>
                 </div>
                 <div class="icon-box">
                     <canvas id="demo-law" width="60" height="70" class="tutorial-canvas"></canvas>
@@ -337,11 +348,11 @@
                 <div class="icon-row">
                     <div class="icon-box">
                         <canvas id="demo-oldtimer" width="70" height="60" class="tutorial-canvas"></canvas>
-                        <span class="icon-desc"><strong>Old Timer</strong><br>Don't let him spend his last $1 on swill!</span>
+                        <span class="icon-desc"><strong>Old Timer</strong><br>Blocks shots</span>
                     </div>
                     <div class="icon-box">
                         <canvas id="demo-vip" width="100" height="60" class="tutorial-canvas"></canvas>
-                        <span class="icon-desc"><strong>VIP</strong><br>Move table to server her Law Brew!</span>
+                        <span class="icon-desc"><strong>VIP</strong><br>Move table to catch!</span>
                     </div>
                 </div>
                 <p style="font-size: 1.1rem; color: #fff; margin-top: 5px;">
@@ -365,7 +376,7 @@
     <div id="leaderboard-modal" class="ui-overlay hidden">
         <div class="modal-content">
             <h1>LEADERBOARD</h1>
-            <h2>The Swill Snipers</h2>
+            <h2>The Sheriffs of Taps</h2>
             <div id="leaderboard-status" style="color: #ffeb8a; margin-bottom: 15px;">Loading...</div>
             <table id="leaderboard-table">
                 <thead>
@@ -390,6 +401,80 @@
 </div>
 
 <script>
+    /* --- Sound System (Synthesized) --- */
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    let isMuted = false;
+
+    function playSound(type) {
+        if (isMuted || !audioCtx) return;
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+
+        if (type === 'shoot') {
+            // Pew Pew
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(600, now);
+            osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+            osc.start(now);
+            osc.stop(now + 0.1);
+        } 
+        else if (type === 'explosion') {
+            // Noise Burst (Crunch)
+            // Need a noise buffer for real explosion sounds, simplified here with low square wave
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(100, now);
+            osc.frequency.exponentialRampToValueAtTime(10, now + 0.2);
+            gain.gain.setValueAtTime(0.5, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+            osc.start(now);
+            osc.stop(now + 0.2);
+        } 
+        else if (type === 'score') {
+            // High Ding
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(800, now);
+            osc.frequency.exponentialRampToValueAtTime(1200, now + 0.1);
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+            osc.start(now);
+            osc.stop(now + 0.5);
+        } 
+        else if (type === 'error') {
+            // Low Buzz
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, now);
+            osc.frequency.linearRampToValueAtTime(100, now + 0.2);
+            gain.gain.setValueAtTime(0.5, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+            osc.start(now);
+            osc.stop(now + 0.2);
+        }
+        else if (type === 'gameover') {
+            // Sad Descending
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(300, now);
+            osc.frequency.linearRampToValueAtTime(50, now + 1);
+            gain.gain.setValueAtTime(0.5, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 1);
+            osc.start(now);
+            osc.stop(now + 1);
+        }
+    }
+
+    const muteBtn = document.getElementById('mute-btn');
+    muteBtn.addEventListener('click', () => {
+        isMuted = !isMuted;
+        muteBtn.innerText = isMuted ? "🔇" : "🔊";
+    });
+
     /* --- Simpleboards Configuration --- */
     const SIMPLEBOARDS_API_KEY = "78098c7b-fa9d-4ce1-9300-a56d081d53c4";
     const SIMPLEBOARDS_LEADERBOARD_ID = "9f649aa6-f553-4a57-57a6-08de2efe707f";
@@ -490,6 +575,7 @@
             return;
         }
 
+        playSound('shoot'); // AUDIO TRIGGER
         clickEffects.push({x, y, age: 0});
 
         // 1. Thieves
@@ -501,6 +587,7 @@
                 t.isHit = true;
                 lives--;
                 livesEl.innerText = lives;
+                playSound('explosion'); // AUDIO TRIGGER
                 createFloatingText(t.x, t.y, "DEAD TIMER", "red");
                 createExplosion(t.x, t.y, '#fdbd9c');
                 checkGameOver();
@@ -516,6 +603,7 @@
             if (dist < 40) {
                 if (b.type === 'BAD') {
                     // CORRECT ACTION: Shoot the Swill
+                    playSound('explosion'); // AUDIO TRIGGER
                     createExplosion(b.x, b.y, '#9ca3af');
                     beers.splice(i, 1);
                     score += 100;
@@ -524,6 +612,7 @@
                     checkLevelUp();
                 } else {
                     // INCORRECT ACTION: Shot the Law Brew
+                    playSound('error'); // AUDIO TRIGGER
                     createExplosion(b.x, b.y, '#d97706');
                     beers.splice(i, 1);
                     lives--;
@@ -558,6 +647,9 @@
 
     // MOUSE EVENTS
     canvas.addEventListener('mousedown', (e) => {
+        // Initialize Audio Context on first interaction
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        
         if (e.clientY > canvas.height * 0.7) {
              handleGuestMoveStart(e.clientX, e.clientY);
         } else {
@@ -575,6 +667,9 @@
     // TOUCH EVENTS
     canvas.addEventListener('touchstart', (e) => {
         e.preventDefault();
+        // Initialize Audio Context on first interaction
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
         const x = e.touches[0].clientX;
         const y = e.touches[0].clientY;
         
@@ -644,6 +739,7 @@
                 ctx.beginPath();
                 ctx.moveTo(-13, -15);
                 ctx.lineTo(-9, 23);
+                ctx.lineTo(9, 23);
                 ctx.lineTo(9, 23);
                 ctx.lineTo(13, -15);
                 ctx.closePath();
@@ -785,7 +881,7 @@
                 ctx.arc(0, guestOffsetY - 10, 10, 0, Math.PI * 2);
                 ctx.fill();
 
-                // Hair (Original Bob)
+                // Hair
                 ctx.fillStyle = '#5a2720'; 
                 ctx.beginPath();
                 ctx.ellipse(0, guestOffsetY - 10, 12, 12, 0, 0, Math.PI, false); 
@@ -932,6 +1028,7 @@
     function endGame() {
         isPlaying = false;
         hud.classList.add('hidden');
+        playSound('gameover'); // AUDIO TRIGGER
         
         // Show Name Input Modal for Leaderboard
         inputFinalScoreEl.innerText = score;
@@ -1209,11 +1306,13 @@
                             score += 500;
                             scoreEl.innerText = score;
                             createFloatingText(vipInstance.x, vipInstance.y - 60, "VIP LAW BONUS!", "#d946ef"); 
+                            playSound('score'); // AUDIO TRIGGER (Using Score sound for good catch)
                             createExplosion(b.x, b.y, '#fff');
                         } else {
                             lives--;
                             livesEl.innerText = lives;
                             createFloatingText(vipInstance.x, vipInstance.y - 60, "VIP SWILL HIT!", "red");
+                            playSound('error'); // AUDIO TRIGGER
                             createExplosion(b.x, b.y, '#ef4444'); 
                             checkGameOver();
                         }
@@ -1234,11 +1333,13 @@
                     score += 50;
                     scoreEl.innerText = score;
                     createFloatingText(b.x, canvas.height - 50, "LAW BREW SERVED", "lime");
+                    playSound('score'); // AUDIO TRIGGER
                 } else {
                     lives--;
                     livesEl.innerText = lives;
                     checkGameOver();
                     createFloatingText(b.x, canvas.height - 50, "SWILL SERVED!", "orange");
+                    playSound('error'); // AUDIO TRIGGER
                 }
             }
         }
@@ -1260,6 +1361,7 @@
                     livesEl.innerText = lives;
                     checkGameOver();
                     createFloatingText(t.x, t.y, "SWILL SERVED!", "orange");
+                    playSound('explosion'); // AUDIO TRIGGER (Thief Hit)
                     t.isHit = true; 
                 }
             }
