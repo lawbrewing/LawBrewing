@@ -989,6 +989,8 @@
                 
                 if (b.type === 'GOOD') {
                     // CORRECT ACTION: Law Brew reaches the bar. No penalty.
+                    score += 50;
+                    scoreEl.innerText = score;
                     createFloatingText(b.x, canvas.height - 50, "LAW BREW SERVED", "lime");
                 } else {
                     // INCORRECT ACTION: Swill reaches the bar. Life penalty.
