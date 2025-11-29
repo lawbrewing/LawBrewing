@@ -160,7 +160,7 @@
         
         /* Style for the mini canvases in the tutorial */
         .tutorial-canvas {
-            position: relative !important; /* Override absolute from main canvas */
+            position: relative !important; 
             z-index: 1 !important;
             background: transparent;
             margin-bottom: 5px;
@@ -326,11 +326,11 @@
                 <div class="icon-row">
                     <div class="icon-box">
                         <canvas id="demo-oldtimer" width="70" height="70" class="tutorial-canvas"></canvas>
-                        <span class="icon-desc"><strong>Old Timer</strong><br>Don't let him spend his last $1 on swill!</span>
+                        <span class="icon-desc"><strong>Old Timer</strong><br>Blocks shots</span>
                     </div>
                     <div class="icon-box">
                         <canvas id="demo-vip" width="100" height="60" class="tutorial-canvas"></canvas>
-                        <span class="icon-desc"><strong>VIP</strong><br>Move her table to serve Law Brew!</span>
+                        <span class="icon-desc"><strong>VIP</strong><br>Move table to catch!</span>
                     </div>
                 </div>
                 <p style="font-size: 1.1rem; color: #fff;">
@@ -632,7 +632,6 @@
                 ctx.moveTo(-13, -15);
                 ctx.lineTo(-9, 23);
                 ctx.lineTo(9, 23);
-                ctx.lineTo(9, 23);
                 ctx.lineTo(13, -15);
                 ctx.closePath();
                 ctx.fillStyle = '#d97706'; 
@@ -746,8 +745,8 @@
 
             const tableTopY = 0;
 
-            // --- Draw Table ---
-            ctx.fillStyle = '#5D4037'; 
+            // --- Draw Table (Unchanged) ---
+            ctx.fillStyle = '#5D4037';
             ctx.fillRect(-this.tableWidth/2, tableTopY, this.tableWidth, this.tableHeight);
             ctx.strokeStyle = '#3E2723';
             ctx.lineWidth = 2;
@@ -757,43 +756,69 @@
             ctx.fillRect(-this.tableWidth/2 + 5, this.tableHeight, 5, 20);
             ctx.fillRect(this.tableWidth/2 - 10, this.tableHeight, 5, 20);
 
-           // --- Draw VIP Guest ---
+           // --- Draw VIP Guest (only if active) ---
             if (this.isVipActive) {
                 const guestOffsetY = tableTopY - 10;
-                
-                // Body
-                ctx.fillStyle = '#9C27B0'; 
+
+                // 1. Purple Dress (Added slightly two-toned look for depth)
+                ctx.fillStyle = '#7B1FA2'; // Deeper purple body
                 ctx.beginPath();
-                ctx.ellipse(0, guestOffsetY + 10, 20, 15, 0, Math.PI, 0, true);
+                ctx.ellipse(0, guestOffsetY + 12, 22, 16, 0, Math.PI, 0, true);
                 ctx.fill();
 
-                // Head
-                ctx.fillStyle = '#FFE0B2'; 
+                ctx.fillStyle = '#9C27B0'; // Slightly lighter purple for shoulders
+                ctx.beginPath();
+                ctx.ellipse(0, guestOffsetY + 9, 18, 10, 0, Math.PI, 0, true);
+                ctx.fill();
+
+                // 2. Head (Skin tone)
+                ctx.fillStyle = '#FFE0B2';
                 ctx.beginPath();
                 ctx.arc(0, guestOffsetY - 10, 10, 0, Math.PI * 2);
                 ctx.fill();
 
-                // Hair
-                ctx.fillStyle = '#5a2720'; 
+                // 3. Brunette Hair (Rich brown bun style)
+                ctx.fillStyle = '#4E342E'; // Brunette/Dark Brown
                 ctx.beginPath();
-                ctx.ellipse(0, guestOffsetY - 10, 12, 12, 0, 0, Math.PI, false); 
-                ctx.lineTo(12, guestOffsetY + 2); 
-                ctx.lineTo(-12, guestOffsetY + 2);
-                ctx.closePath();
+                // Main bun on top
+                ctx.arc(0, guestOffsetY - 13, 11, Math.PI * 0.8, Math.PI * 2.2);
+                ctx.fill();
+                // Side bits/texture
+                ctx.beginPath();
+                ctx.arc(-9, guestOffsetY - 10, 5, 0, Math.PI*2);
+                ctx.arc(9, guestOffsetY - 10, 5, 0, Math.PI*2);
                 ctx.fill();
 
-                // Empty Beer Glass
-                const glassX = -this.tableWidth/2 + 15;
-                const glassY = tableTopY + 5;
-                
-                ctx.fillStyle = '#fefefe';
-                ctx.fillRect(glassX - 5, glassY, 10, 2);
-                
-                ctx.fillStyle = 'rgba(200, 200, 255, 0.3)';
-                ctx.fillRect(glassX - 5, glassY + 2, 10, 15);
-                
-                ctx.fillStyle = '#4b5563';
-                ctx.fillRect(glassX - 6, glassY + 17, 12, 3);
+                // --- Object on Table: Empty Beer Mug ---
+                const mugX = -this.tableWidth/2 + 20;
+                const mugY = tableTopY + 5;
+
+                // Glass Style setup
+                ctx.fillStyle = 'rgba(176, 190, 197, 0.4)'; // Semi-transparent glass
+                ctx.strokeStyle = '#CFD8DC'; // Subtle glass outline
+                ctx.lineWidth = 1;
+
+                // Mug Handle
+                ctx.beginPath();
+                ctx.moveTo(mugX - 7, mugY + 4);
+                ctx.quadraticCurveTo(mugX - 14, mugY + 8, mugX - 7, mugY + 14);
+                ctx.stroke();
+
+                // Mug Body
+                ctx.beginPath();
+                ctx.rect(mugX - 7, mugY, 14, 18);
+                ctx.fill();
+                ctx.stroke();
+
+                // Thick Glass Bottom (Opaque)
+                ctx.fillStyle = 'rgba(120, 144, 156, 0.8)';
+                ctx.fillRect(mugX - 7, mugY + 15, 14, 4);
+
+                // Empty Rim (Thin white oval on top to show emptiness)
+                ctx.strokeStyle = '#ECEFF1';
+                ctx.beginPath();
+                ctx.ellipse(mugX, mugY, 7, 2.5, 0, 0, Math.PI * 2);
+                ctx.stroke();
             }
 
             ctx.restore();
@@ -1018,7 +1043,6 @@
         startScreen.classList.remove('hidden');
         
         // Render tutorial icons once the start screen is potentially visible
-        // (Even if it's hidden behind landing, we can render now)
         requestAnimationFrame(renderTutorialIcons);
     });
     
@@ -1173,7 +1197,7 @@
                 if (b.type === 'GOOD') {
                     score += 50;
                     scoreEl.innerText = score;
-                    createFloatingText(b.x, canvas.height - 50, "LAW BREW SERVED!", "lime");
+                    createFloatingText(b.x, canvas.height - 50, "LAW BREW SERVED", "lime");
                 } else {
                     lives--;
                     livesEl.innerText = lives;
