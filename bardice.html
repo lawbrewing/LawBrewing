@@ -39,6 +39,8 @@
         .cheat-sheet-container:hover .cheat-sheet { display: block; }
         /* High Z-index to ensure it shows over game board */
         .cheat-sheet { z-index: 9999; }
+
+        .message-box { white-space: pre-line; }
     </style>
 
     <!-- Error Handler -->
@@ -65,7 +67,7 @@
     <script type="text/babel">
         const { useState, useEffect, useRef, useMemo } = React;
 
-        // --- ICONS (SVG DEFINITIONS) ---
+        // --- ICONS ---
         const Icons = {
             Star: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 0L14.59 8.06L22.5 5.5L17.3 12L22.5 18.5L14.59 15.94L12 24L9.41 15.94L1.5 18.5L6.7 12L1.5 5.5L9.41 8.06L12 0Z"/></svg>,
             Beer: () => (
@@ -169,7 +171,6 @@
             { name: "James Roberts", type: "Calculator", Avatar: Avatars.James }
         ];
 
-        // Utility to find the correct Avatar function by name
         const getAvatarComponent = (name) => {
             const patronType = BASE_PATRON_TYPES.find(p => p.name === name);
             return patronType ? patronType.Avatar : Avatars.Pete; 
@@ -206,16 +207,11 @@
                     }
                 }
 
-                // Straight Logic (2-3-4-5-6)
+                // Straight Logic
                 const needed = [2, 3, 4, 5, 6];
-                let missingCount = 0;
-                needed.forEach(n => {
-                    if (!dice.includes(n)) missingCount++;
-                });
-                
-                if (missingCount <= wilds) {
-                    return { rank: HAND_RANKS.STRAIGHT, value: 6 };
-                }
+                let missing = 0;
+                needed.forEach(n => { if (!dice.includes(n)) missing++; });
+                if (missing <= wilds) return { rank: HAND_RANKS.STRAIGHT, value: 6 };
 
                 if (maxCount + wilds >= 3) return { rank: HAND_RANKS.THREE_OF_A_KIND, value: uniqueValues[0] };
 
@@ -256,12 +252,14 @@
         };
 
         const App = () => {
+            // --- STATE ---
             const [gameState, setGameState] = useState('START');
             const [funds, setFunds] = useState(HOUSE_START_MONEY);
             const [pot, setPot] = useState(0); 
             const [round, setRound] = useState(1);
             const [message, setMessage] = useState("Welcome to Law Brewing!");
             
+            // Dice/Turn State
             const [playerDice, setPlayerDice] = useState([0, 0, 0, 0, 0]);
             const [heldDice, setHeldDice] = useState([false, false, false, false, false]);
             const [rollsLeft, setRollsLeft] = useState(3);
@@ -276,9 +274,18 @@
 
             const [imgError, setImgError] = useState(false);
 
+            // --- REFS FOR LOGIC ---
+            // Using refs to prevent stale state issues in timeouts
+            const playerDiceRef = useRef(playerDice);
+            const opponentsRef = useRef(opponents);
+
+            // Keep refs synced with state
+            useEffect(() => { playerDiceRef.current = playerDice; }, [playerDice]);
+            useEffect(() => { opponentsRef.current = opponents; }, [opponents]);
+
+
             // --- AI & TURN MANAGEMENT ---
 
-            // Auto-play AI turns
             useEffect(() => {
                 if (gameState === 'ROLLING') {
                     const activeId = turnOrder[currentTurnIndex];
@@ -291,16 +298,10 @@
                 }
             }, [currentTurnIndex, gameState, turnOrder]);
 
-            // Auto-end Player Turn ONLY when rolls run out
-            useEffect(() => {
-                 if (gameState === 'ROLLING' && turnOrder[currentTurnIndex] === 'player' && rollsLeft === 0) {
-                      const timer = setTimeout(() => advanceTurn(), 1000);
-                      return () => clearTimeout(timer);
-                 }
-            }, [rollsLeft, currentTurnIndex, gameState, turnOrder]);
-
             const findReplacementPatron = (ignoreList = []) => {
-                const currentPatronNames = opponents.map(o => o.typeId).filter(Boolean);
+                // Use refs for latest state in case logic is running async
+                const currentOpps = opponentsRef.current;
+                const currentPatronNames = currentOpps.map(o => o.typeId).filter(Boolean);
                 const usedPatronNames = [...retiredPatronTypes, ...currentPatronNames, ...ignoreList];
                 
                 const replacementType = BASE_PATRON_TYPES.find(p => !usedPatronNames.includes(p.name));
@@ -309,7 +310,7 @@
 
                 return {
                     ...replacementType,
-                    id: Math.max(...opponents.map(o => o.id), 0) + 1, 
+                    id: Math.max(...currentOpps.map(o => o.id), 0) + 1, 
                     dice: [0,0,0,0,0],
                     hand: null,
                     money: PATRON_START_MONEY,
@@ -320,24 +321,27 @@
             };
 
             const playAITurn = (aiId) => {
-                setOpponents(prev => {
-                    return prev.map(opp => {
-                        if (opp.id === aiId) {
-                            let currentDice = [1,1,1,1,1].map(()=>Math.ceil(Math.random()*6));
-                            for(let r=0; r<2; r++) { 
-                                const keeps = getAIKeeps(currentDice, opp.type);
-                                currentDice = currentDice.map((d, i) => keeps.includes(i) ? d : Math.ceil(Math.random() * 6));
-                            }
-                            return { 
-                                ...opp, 
-                                dice: currentDice, 
-                                hand: evaluateHand(currentDice),
-                                status: 'Done' 
-                            };
+                // AI Turn Logic
+                const newOpps = opponentsRef.current.map(opp => {
+                    if (opp.id === aiId) {
+                        let currentDice = [1,1,1,1,1].map(()=>Math.ceil(Math.random()*6));
+                        for(let r=0; r<2; r++) { 
+                            const keeps = getAIKeeps(currentDice, opp.type);
+                            currentDice = currentDice.map((d, i) => keeps.includes(i) ? d : Math.ceil(Math.random() * 6));
                         }
-                        return opp;
-                    });
+                        return { 
+                            ...opp, 
+                            dice: currentDice, 
+                            hand: evaluateHand(currentDice),
+                            status: 'Done' 
+                        };
+                    }
+                    return opp;
                 });
+                
+                setOpponents(newOpps);
+                // Sync ref manually for safety before next step
+                opponentsRef.current = newOpps;
                 advanceTurn();
             };
 
@@ -349,12 +353,13 @@
                     setCurrentTurnIndex(nextIndex);
                     const nextId = turnOrder[nextIndex];
                     if (nextId === 'player') {
-                        setPlayerDice([0,0,0,0,0]); 
+                        const resetDice = [0,0,0,0,0];
+                        setPlayerDice(resetDice); 
                         setHeldDice([false,false,false,false,false]);
                         setRollsLeft(3);
                         setMessage("It's your turn! Roll for the pot.");
                     } else {
-                        const oppName = opponents.find(o => o.id === nextId)?.name || "Opponent";
+                        const oppName = opponentsRef.current.find(o => o.id === nextId)?.name || "Opponent";
                         setMessage(`Waiting for ${oppName}...`);
                     }
                 }
@@ -382,85 +387,175 @@
                 }));
                 
                 setOpponents(newOpponents);
+                opponentsRef.current = newOpponents; // Sync Ref
 
                 const order = [...newOpponents.map(o => o.id), 'player'];
                 setupRound(order, newOpponents);
             };
 
-            const startRound = () => {
-                setRound(r => r + 1);
+            const processEliminations = (currentOpponents) => {
+                 const survivingOpponents = [];
+                 const newRetired = [];
+                 let eliminationMsg = "";
 
+                 currentOpponents.forEach(opp => {
+                     if (opp.money < CONTRIBUTION) {
+                         newRetired.push(opp.typeId);
+                         eliminationMsg += `\n🚨 ${opp.name} couldn't pay the ante and left.`;
+                     } else {
+                         survivingOpponents.push(opp);
+                     }
+                 });
+
+                 // Use local var for logic, not state
+                 let finalOpponents = [...survivingOpponents];
+                 const allRetired = [...retiredPatronTypes, ...newRetired];
+                 
+                 if (newRetired.length > 0) {
+                     const seatsNeeded = 3 - survivingOpponents.length;
+                     
+                     // We need to find replacements that are NOT in allRetired AND not currently sitting
+                     // Current sitting types:
+                     const sittingTypes = finalOpponents.map(o => o.typeId);
+                     
+                     for(let i=0; i<seatsNeeded; i++) {
+                         const availableTypes = BASE_PATRON_TYPES.filter(p => !allRetired.includes(p.name) && !sittingTypes.includes(p.name));
+                         
+                         if (availableTypes.length > 0) {
+                             const replacementType = availableTypes[0]; 
+                             // Add to sittingTypes so we don't pick same one twice in this loop if we had >4 types
+                             sittingTypes.push(replacementType.name);
+                             
+                             finalOpponents.push({
+                                ...replacementType,
+                                id: Math.max(...currentOpponents.map(o => o.id), 0) + 1 + i, 
+                                dice: [0,0,0,0,0],
+                                hand: null,
+                                money: PATRON_START_MONEY,
+                                status: 'Waiting',
+                                typeId: replacementType.name,
+                                Avatar: getAvatarComponent(replacementType.name)
+                             });
+                             eliminationMsg += ` ${replacementType.name} sat down.`;
+                         } else {
+                             eliminationMsg += ` No one else to take the seat!`;
+                         }
+                     }
+                 }
+
+                 return { opponents: finalOpponents, newRetiredList: allRetired, msg: eliminationMsg };
+            };
+
+            const startRound = () => {
+                // 1. Check logic BEFORE round starts using REF for latest data
+                const { opponents: nextOpponents, newRetiredList, msg } = processEliminations(opponentsRef.current);
+                
+                if (newRetiredList.length > retiredPatronTypes.length) {
+                     setRetiredPatronTypes(newRetiredList);
+                }
+
+                // Win Condition: If everyone is gone (no opponents left or we cycled all types)
+                if (nextOpponents.length === 0 && newRetiredList.length >= BASE_PATRON_TYPES.length) {
+                    setGameState(GAME_STATE_BAR_VICTORY);
+                    return;
+                }
+                
+                setRound(r => r + 1);
+                
+                // Sorting Logic
                 let order = [];
                 if (lastRoundRankings.length > 0) {
                     const worstToBest = [...lastRoundRankings].reverse();
-                    order = worstToBest.map(p => p.id);
+                    const currentIds = nextOpponents.map(o => o.id);
+                    currentIds.push('player');
+                    order = worstToBest.map(p => p.id).filter(id => currentIds.includes(id));
+                    
+                    // Add any new players to front
+                    currentIds.forEach(id => {
+                        if (!order.includes(id)) order.unshift(id);
+                    });
                 } else {
-                    order = [...opponents.map(o => o.id), 'player'];
+                    order = [...nextOpponents.map(o => o.id), 'player'];
                 }
-                setupRound(order, opponents);
+                
+                if (msg) {
+                     setMessage(msg);
+                     setTimeout(() => setupRound(order, nextOpponents), 2500);
+                } else {
+                     setupRound(order, nextOpponents);
+                }
             };
 
             const setupRound = (order, currentOpponents) => {
                 let currentFunds = funds;
-                let newOpponents = [...currentOpponents];
                 
-                // Contributions
+                if (currentFunds < CONTRIBUTION) {
+                    setMessage("Womp. Womp. The House cannot afford the ante. GAME OVER.");
+                    setTimeout(() => setGameState('GAME_OVER'), 2000);
+                    return;
+                }
+
+                let newOpponents = [...currentOpponents];
                 currentFunds -= CONTRIBUTION;
                 newOpponents = newOpponents.map(opp => ({ ...opp, money: opp.money - CONTRIBUTION }));
-
-                const totalPot = (currentOpponents.length + 1) * CONTRIBUTION;
+                const totalPot = (newOpponents.length + 1) * CONTRIBUTION;
                 
                 setFunds(currentFunds);
                 setPot(totalPot);
-                setPlayerDice([0,0,0,0,0]);
+                
+                const pDice = [0,0,0,0,0];
+                setPlayerDice(pDice);
                 setPlayerHand(null);
                 setHeldDice([false, false, false, false, false]);
                 setRollsLeft(3);
 
-                const resetOpponents = newOpponents.map(opp => ({
-                    ...opp,
-                    dice: [0,0,0,0,0], 
-                    hand: null, 
-                    status: 'Waiting'
-                }));
+                const resetOpponents = newOpponents.map(opp => ({ ...opp, dice: [0,0,0,0,0], hand: null, status: 'Waiting' }));
                 setOpponents(resetOpponents);
-
                 setTurnOrder(order);
                 setCurrentTurnIndex(0);
                 setGameState('ROLLING');
                 
                 const firstId = order[0];
-                if (firstId === 'player') setMessage(`Your $${CONTRIBUTION} is in. Pot is $${totalPot}. You go first!`);
+                if (firstId === 'player') setMessage(`Ante up! Pot is $${totalPot}. You go first!`);
                 else {
-                    const name = resetOpponents.find(o => o.id === firstId)?.name;
-                    setMessage(`${name} starts. Pot: $${totalPot}.`);
+                    const opp = resetOpponents.find(o => o.id === firstId);
+                    const name = opp ? opp.name : "Opponent";
+                    setMessage(`Ante up! Pot is $${totalPot}. ${name} starts.`);
                 }
-
-                 if (currentFunds <= 0) {
-                     setMessage("Womp. Womp. The House is immediately out of funds after contributing to the pot.");
-                     setTimeout(() => setGameState('GAME_OVER'), 500);
-                 }
             };
 
             const rollDice = () => {
                 if (rollsLeft <= 0 || turnOrder[currentTurnIndex] !== 'player') return;
                 
                 const newDice = playerDice.map((val, idx) => {
-                    if (heldDice[idx] && val !== 0) { 
-                        return val;
-                    }
+                    if (heldDice[idx] && val !== 0) return val;
                     return Math.ceil(Math.random() * 6);
                 });
+                
                 setPlayerDice(newDice);
                 
                 const newRolls = rollsLeft - 1;
                 setRollsLeft(newRolls);
-                // NOTE: Advance turn logic is handled by useEffect watching rollsLeft
+                
+                // We do NOT auto-advance here. We wait for the useEffect on [rollsLeft] to handle it
+                // ensuring state is updated.
             };
+
+            // UseEffect to handle player turn end
+            useEffect(() => {
+                 if (gameState === 'ROLLING' && turnOrder[currentTurnIndex] === 'player' && rollsLeft === 0) {
+                      // Small delay to show dice results before moving on
+                      const timer = setTimeout(() => {
+                          advanceTurn();
+                      }, 1000);
+                      return () => clearTimeout(timer);
+                 }
+            }, [rollsLeft, currentTurnIndex, gameState]);
+
 
             const forceFinish = () => {
                 if (turnOrder[currentTurnIndex] !== 'player') return;
-                setRollsLeft(0); // This triggers the useEffect to advance turn
+                setRollsLeft(0); // Triggers useEffect
             };
 
             const getAIKeeps = (dice, type) => {
@@ -479,84 +574,72 @@
 
             const finishRound = () => {
                 setGameState('EVALUATION');
-                const finalPHand = evaluateHand(playerDice);
+                // Use REF for player dice to ensure we have the latest values
+                // (State might lag slightly behind in callback chains)
+                const finalPHand = evaluateHand(playerDiceRef.current);
                 setPlayerHand(finalPHand);
-                const finalOpponents = opponents.map(opp => ({ ...opp, hand: evaluateHand(opp.dice) }));
+                
+                const finalOpponents = opponentsRef.current.map(opp => ({ ...opp, hand: evaluateHand(opp.dice) }));
                 setOpponents(finalOpponents);
+                
                 setTimeout(() => determineWinner(finalPHand, finalOpponents), 1000);
             };
 
             const determineWinner = (pHand, opps) => {
                 const safePHand = pHand || { rank: 1, value: 0 };
                 const safeOpps = opps.map(o => ({...o, hand: o.hand || {rank:1, value:0}}));
-
+                
                 const allPlayers = [
                     { id: 'player', name: 'You', hand: safePHand },
                     ...safeOpps.map(o => ({ id: o.id, name: o.name, hand: o.hand, money: o.money, typeId: o.typeId }))
                 ];
-
+                
+                // Sort descending by hand rank
                 allPlayers.sort((a, b) => {
                     if (b.hand.rank !== a.hand.rank) return b.hand.rank - a.hand.rank;
                     return b.hand.value - a.hand.value;
                 });
                 
                 setLastRoundRankings(allPlayers);
-
+                
                 const loser = allPlayers[allPlayers.length - 1];
                 const winner = allPlayers[0];
                 const losingDrink = ROUND_DRINKS[Math.floor(Math.random() * ROUND_DRINKS.length)];
                 
                 let msg = "";
                 let newFunds = funds; 
-                let loserPatron = null; 
+                let loserPatron = null;
 
-                // --- 1. Pot Distribution ---
+                // --- 1. Winner takes Pot ---
                 if (winner.id === 'player') {
                     newFunds += pot; 
                     msg += `WINNER: You won the $${pot} Pot!`;
                 } else {
                     const winnerPatron = opps.find(o => o.id === winner.id);
+                    // Note: modifying state inside logic for next render
                     setOpponents(prev => prev.map(o => o.id === winner.id ? { ...o, money: o.money + pot } : o));
                     msg += `WINNER: ${winnerPatron.name} won the $${pot} Pot.`;
                 }
-                
                 msg += `\n`;
 
-                // --- 2. Loser Pays $20 Penalty ---
+                // --- 2. Loser Pays Penalty ---
                 if (loser.id === 'player') {
                     newFunds -= BUY_A_ROUND_COST;
                     msg += `LOSER: You had the lowest hand (${HAND_NAMES[loser.hand.rank].split('(')[0]}) and bought a round of ${losingDrink} (-$${BUY_A_ROUND_COST}).`;
                 } else {
                     loserPatron = opps.find(o => o.id === loser.id);
-                    const newPatronMoney = loserPatron.money - BUY_A_ROUND_COST;
+                    // Penalty simply deducts from patron money. No House gain.
+                    const newPatronMoney = Math.max(0, loserPatron.money - BUY_A_ROUND_COST);
                     
-                    if (newPatronMoney <= 0) {
-                        // BANKRUPTCY & REPLACEMENT
-                        setRetiredPatronTypes(prev => [...prev, loserPatron.typeId]);
-                        const replacement = findReplacementPatron([loserPatron.typeId]);
-                        
-                        if (replacement) {
-                            setOpponents(prev => prev.map(opp => opp.id === loser.id ? replacement : opp));
-                            newFunds += loserPatron.money; 
-                            msg += `LOSER: ${loserPatron.name} went BUST buying a round of ${losingDrink}! Replaced by ${replacement.name}.`;
-                        } else {
-                            newFunds += loserPatron.money;
-                            msg += `LOSER: ${loserPatron.name} bought a round of ${losingDrink}! \n\n ALL PATRONS HAVE BEEN BANKRUPTED!`;
-                            setFunds(newFunds);
-                            setPot(0);
-                            setGameState(GAME_STATE_BAR_VICTORY);
-                            setMessage(msg); 
-                            return; 
-                        }
-                    } else {
-                        setOpponents(prev => prev.map(o => o.id === loser.id ? { ...o, money: newPatronMoney } : o));
-                        newFunds += BUY_A_ROUND_COST;
-                        msg += `LOSER: ${loserPatron.name} lost and bought a round of ${losingDrink} ($${BUY_A_ROUND_COST}).`;
-                    }
+                    setOpponents(prev => prev.map(o => o.id === loser.id ? { ...o, money: newPatronMoney } : o));
+                    msg += `LOSER: ${loserPatron.name} lost and bought a round of ${losingDrink} ($${BUY_A_ROUND_COST}).`;
+                    
+                    // Elimination check will happen at START of NEXT round
                 }
                 
                 setPot(0);
                 
+                // Check Game Over (House only)
                 if (newFunds <= 0) {
                     setMessage(`FINAL: ${msg} \n\n Womp. Womp. The House is out of money.`);
                     setFunds(0); 
@@ -571,7 +654,6 @@
             const toggleDie = (idx) => {
                 if (gameState !== 'ROLLING' || rollsLeft === 3 || turnOrder[currentTurnIndex] !== 'player') return;
                 if (playerDice[idx] === 0) return;
-                
                 const newHeld = [...heldDice];
                 newHeld[idx] = !newHeld[idx];
                 setHeldDice(newHeld);
@@ -584,7 +666,6 @@
                 <div className="wood-texture flex flex-col items-center">
                     <div className="absolute inset-0 bg-black/40 pointer-events-none"></div>
                     
-                    {/* Header */}
                     <div className="w-full max-w-4xl p-3 z-10 flex justify-between items-center glass-panel mt-4 rounded-lg shadow-2xl mx-2 relative z-[50]">
                         <div className="flex items-center gap-3">
                             <div className="w-16 h-16 bg-black rounded-full border-2 border-yellow-600 flex items-center justify-center overflow-hidden shrink-0 relative">
@@ -628,14 +709,11 @@
                         </div>
                     </div>
 
-                    {/* Game Board */}
                     <div className="w-full max-w-4xl mt-4 z-10 flex flex-col gap-4 px-3 pb-8">
-                        {/* Message Bar */}
                         <div className="bg-slate-900/90 border-l-4 border-yellow-500 p-3 rounded text-center shadow-lg min-h-[3.5rem] flex items-center justify-center transition-all z-[10]">
                             <span className="text-sm md:text-base font-medium animate-pulse message-box">{message}</span>
                         </div>
 
-                        {/* Opponents Grid */}
                         <div className="grid grid-cols-3 gap-2">
                             {opponents.map((opp) => {
                                 const isMyTurn = gameState === 'ROLLING' && turnOrder[currentTurnIndex] === opp.id;
@@ -667,7 +745,6 @@
                             })}
                         </div>
 
-                        {/* Player Area */}
                         {gameState === 'START' || gameState === 'GAME_OVER' || gameState === GAME_STATE_BAR_VICTORY ? (
                             <div className="glass-panel p-6 rounded-xl flex flex-col items-center justify-center text-center gap-4 mt-2">
                                 {gameState === GAME_STATE_BAR_VICTORY ? (
@@ -706,7 +783,6 @@
                             </div>
                         ) : (
                             <div className={`glass-panel p-4 rounded-xl mt-2 border-t-4 transition-all duration-500 ${isPlayerTurn ? 'border-yellow-500 shadow-[0_0_20px_rgba(234,179,8,0.2)]' : 'border-slate-700 opacity-80 grayscale-[0.5]'}`}>
-                                {/* Player Info */}
                                 <div className="flex justify-between items-end mb-4">
                                     <div>
                                         <h2 className="text-lg font-bold text-white flex items-center gap-2">
@@ -717,24 +793,12 @@
                                             Result: <span className="text-yellow-400">{currentHandDisplay ? HAND_NAMES[currentHandDisplay.rank] : 'Roll to Reveal'}</span>
                                         </div>
                                     </div>
-                                    <div className="flex gap-1">
-                                        <button title="House Perks are disabled." disabled className="p-1.5 rounded bg-slate-800 border border-slate-600 opacity-30 w-12 flex flex-col items-center">
-                                            <span className="text-blue-400"><Icon name="RefreshCw" size={12} /></span>
-                                            <span className="text-[9px] text-yellow-500">--</span>
-                                        </button>
-                                        <button title="House Perks are disabled." disabled className="p-1.5 rounded bg-slate-800 border border-slate-600 opacity-30 w-12 flex flex-col items-center">
-                                            <span className="text-yellow-400"><Icon name="Star" size={12} /></span>
-                                            <span className="text-[9px] text-yellow-500">--</span>
-                                        </button>
-                                    </div>
                                 </div>
 
-                                {/* Main Dice */}
                                 <div className="flex justify-center gap-2 mb-6">
                                     {playerDice.map((val, idx) => <Die key={idx} value={val} held={heldDice[idx]} onClick={() => toggleDie(idx)} />)}
                                 </div>
 
-                                {/* Controls */}
                                 <div className="flex justify-center gap-3">
                                     {gameState === 'ROLLING' && (
                                         <>
