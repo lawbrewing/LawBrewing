@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Law Brewing: Taproom Chaos</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Bangers&family=Roboto+Mono:wght@400;700&display=swap');
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #3e2723;
+            color: white;
+            font-family: 'Roboto Mono', monospace;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+        }
+
+        #game-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+
+        #ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            display: flex; flex-direction: column; justify-content: space-between;
+            z-index: 10;
+        }
+
+        .hud-top {
+            display: flex; justify-content: space-between; padding: 20px;
+            font-family: 'Bangers', cursive; font-size: 24px;
+            text-shadow: 2px 2px 0 #000;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+            pointer-events: auto;
+        }
+
+        #meter-container {
+            width: 250px; height: 25px;
+            background: #333; border: 3px solid #fff;
+            margin-top: 5px; position: relative;
+        }
+        #meter-fill {
+            width: 0%; height: 100%; background: #ff4444;
+            transition: width 0.1s;
+        }
+        #meter-label {
+            position: absolute; top: 0; left: 0; width: 100%; text-align: center;
+            font-size: 16px; line-height: 25px; color: white;
+            text-shadow: 1px 1px 0 #000;
+        }
+
+        #patron-counter { color: #fbc02d; font-size: 28px; }
+        #timer-display { color: #fff; font-size: 32px; }
+        .timer-low { color: #ff4444 !important; animation: pulse 0.5s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+        #controls-layer {
+            position: absolute; bottom: 20px; width: 100%; height: 180px;
+            pointer-events: none;
+            display: flex; justify-content: space-between; padding: 0 40px; box-sizing: border-box;
+            z-index: 20;
+        }
+
+        .control-zone { pointer-events: auto; position: relative; }
+
+        #joystick-zone {
+            width: 150px; height: 150px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%; border: 4px solid rgba(255,255,255,0.3);
+            position: relative;
+        }
+        #joystick-knob {
+            width: 60px; height: 60px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%; position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            box-shadow: 0 0 10px black;
+        }
+
+        #action-zone { display: flex; gap: 30px; align-items: flex-end; padding-bottom: 10px; }
+        
+        .action-btn {
+            width: 100px; height: 100px;
+            border-radius: 50%; font-family: 'Bangers', cursive; font-size: 24px;
+            display: flex; justify-content: center; align-items: center;
+            border: 4px solid #fff; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            transition: transform 0.1s;
+            cursor: pointer;
+            pointer-events: auto;
+        }
+        .action-btn:active { transform: scale(0.95); opacity: 0.8; }
+        #btn-slap { background: #d32f2f; color: white; }
+        #btn-pour { background: #fbc02d; color: black; }
+
+        /* Screens - High Z-Index to sit on top */
+        .screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 1000; text-align: center;
+            pointer-events: auto; 
+        }
+        .hidden { display: none !important; }
+        h1 { font-family: 'Bangers', cursive; font-size: 4em; color: #fbc02d; margin: 0; text-shadow: 4px 4px 0 #000; }
+        p { color: #eee; font-size: 1.4em; max-width: 600px; line-height: 1.5; margin-bottom: 20px; text-shadow: 2px 2px 0 black;}
+        
+        button.main-btn {
+            padding: 20px 50px; font-size: 30px; font-family: 'Bangers', cursive;
+            background: #fbc02d; border: 4px solid #fff; color: black; cursor: pointer; border-radius: 10px;
+            box-shadow: 0 5px 0 #b38f00;
+            margin-top: 20px;
+            pointer-events: auto;
+        }
+        button.main-btn:active { transform: translateY(5px); box-shadow: 0 0 0; }
+
+        #flight-ui {
+            background: #333; padding: 20px; border: 4px solid #fbc02d; border-radius: 10px;
+            max-width: 90%; pointer-events: auto; z-index: 1002;
+        }
+        .beer-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 15px 0; justify-content: center; }
+        .slot {
+            width: 70px; height: 90px; border: 2px dashed #777;
+            background: #222; display: flex; align-items: center; justify-content: center; font-size: 11px;
+            text-align: center; padding: 2px;
+        }
+        .slot.filled { background: #fbc02d; color: black; border: 2px solid #fff; font-weight: bold; }
+        
+        #beer-choices {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px;
+        }
+        .choice-btn { 
+            padding: 10px; background: #555; border: 1px solid #777; color: white; 
+            cursor: pointer; margin: 0; font-size: 12px; border-radius: 4px;
+        }
+        .choice-btn:hover { background: #777; }
+
+        #error-log {
+            position: absolute; top: 0; left: 0; width: 100%; background: rgba(200, 0, 0, 0.8);
+            color: white; padding: 10px; z-index: 9999; display: none; font-family: monospace; pointer-events: none;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.150.1/three.min.js"></script>
+</head>
+<body>
+    <div id="error-log"></div>
+    <div id="game-container"></div>
+
+    <div id="ui-layer">
+        <div class="hud-top">
+            <div>
+                <div id="timer-display">00:00</div>
+                <div id="level-indicator" style="font-size:18px; color:#aaa;">LEVEL 1</div>
+            </div>
+            <div>
+                <div id="meter-container">
+                    <div id="meter-fill"></div>
+                    <div id="meter-label">ANNOYANCE: 0%</div>
+                </div>
+                <div id="patron-counter">SERVED: 0/6</div>
+            </div>
+        </div>
+
+        <div id="msg-area" style="position:absolute; top:20%; width:100%; text-align:center; font-family:'Bangers'; font-size:60px; color:#ff4444; text-shadow:3px 3px 0 #000; pointer-events:none;"></div>
+
+        <div id="controls-layer">
+            <div id="joystick-zone" class="control-zone"><div id="joystick-knob"></div></div>
+            <div id="action-zone" class="control-zone">
+                <div id="btn-pour" class="action-btn">POUR</div>
+                <div id="btn-slap" class="action-btn">SLAP</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Start Screen -->
+    <div id="start-screen" class="screen">
+        <h1>LAW BREWING<br>TAPROOM</h1>
+        <p><b>Third-Person Service Sim</b></p>
+        <p>1. Navigate the busy taproom floor.<br>
+           2. <b>POUR</b> beer for sitting patrons.<br>
+           3. <b>SLAP</b> aggressive villains (3 hits to KO!).<br>
+           4. Avoid <b>Spills</b> & <b>Plants</b>!<br>
+           5. Beat the <b>Timer</b>.</p>
+        <button id="btn-start" class="main-btn">OPEN TAB (Sound On)</button>
+    </div>
+
+    <!-- Level Complete -->
+    <div id="level-screen" class="screen hidden">
+        <h1 style="color:#4caf50">ROUND CLEAR</h1>
+        <p>Tables served in time. The taproom is buzzing.</p>
+        <button id="btn-next-level" class="main-btn">NEXT ROUND</button>
+    </div>
+
+    <!-- Game Over -->
+    <div id="game-over-screen" class="screen hidden">
+        <h1 style="color:#d32f2f" id="game-over-title">MAX ANNOYANCE!</h1>
+        <p id="game-over-msg">You flipped a table and quit.</p>
+        <button id="btn-restart" class="main-btn">RE-APPLY</button>
+    </div>
+
+    <!-- Final Flight Puzzle -->
+    <div id="flight-screen" class="screen hidden">
+        <h1>THE FINAL FLIGHT</h1>
+        <p>Create the Perfect Flight.</p>
+        <div id="flight-ui">
+            <div class="beer-grid" id="beer-slots"></div>
+            <div id="beer-choices"></div>
+            <div style="margin-top:15px; display:flex; justify-content:center; gap:10px;">
+                <button id="btn-clear-flight" class="choice-btn" style="background:#d32f2f;">Reset</button>
+                <button id="btn-submit-flight" class="choice-btn" style="background:#fbc02d; color:black; font-weight:bold;">SERVE</button>
+            </div>
+            <p id="flight-msg" style="color:#ff4444; height:20px; font-size: 24px; margin-top: 10px; font-family:'Bangers'"></p>
+        </div>
+    </div>
+
+    <!-- Win Screen -->
+    <div id="win-screen" class="screen hidden">
+        <h1 style="color:#4caf50">Good Job!</h1>
+        <p>You're slick with the spoon and a maestro on the menu.<br>Keep Going...</p>
+        <button id="btn-play-again" class="main-btn">PLAY AGAIN</button>
+    </div>
+
+    <script>
+        const LEVELS = 5;
+        const ROOM_SIZE = 30;
+        const PLAYER_START = { x: 0, z: 12 };
+        const MIN_SPACING = 4.0; 
+
+        // RESTRICTED ZONES
+        const RESTRICTED_ZONES = [
+            { minX: 6, maxX: 14, minZ: 4, maxZ: 12 },   // Dance Floor 
+            { minX: -16, maxX: -6, minZ: 3, maxZ: 14 }, // Pool Area 
+            { minX: -16, maxX: 16, minZ: -16, maxZ: -9 }, // Bar Area
+            { minX: -4, maxX: 4, minZ: 10, maxZ: 16 }, // Player Start Buffer
+            // HIGHWAYS
+            { minX: -3, maxX: 3, minZ: -12, maxZ: 12 }, // Center Vertical Aisle
+            { minX: -16, maxX: 16, minZ: -1, maxZ: 2 }   // Center Horizontal Aisle
+        ];
+
+        const BEERS = [
+            'Hazy IPA', 'Double IPA', 
+            'Imperial Stout', 'Milk Stout', 
+            'Blueberry Sour', 'Gose', 
+            'German Pilsner', 'Peach Cider', 
+            'Lime Lager', 
+            'Wheat Beer', 'Chocolate Porter', 
+            'Cream Ale'
+        ];
+
+        const BEER_MAP = {
+            'Hazy IPA': 'IPA', 'Double IPA': 'IPA',
+            'Imperial Stout': 'Stout', 'Milk Stout': 'Stout',
+            'Blueberry Sour': 'Sour', 'Gose': 'Sour',
+            'German Pilsner': 'Pilsner', 
+            'Peach Cider': 'Cider', 
+            'Lime Lager': 'Lager', 
+            'Wheat Beer': 'Other',
+            'Chocolate Porter': 'Stout', 
+            'Cream Ale': 'Other'
+        };
+
+        const PEOPLE_EMOJIS = ['👨', '👩', '🧑', '👱', '🧔', '👵', '🧓', '👱‍♀️', '🕴️'];
+        const DANCE_EMOJIS = ['💃🏼', '🕺🏼'];
+
+        let state = {
+            level: 1, isPlaying: false, annoyance: 0,
+            patronsTotal: 6, patronsServed: 0, timeLeft: 60,
+            maxTime: 60, enemies: [], patrons: [], npcs: [], notes: [], 
+            obstacles: [], spills: [], flight: [null, null, null, null],
+            enemySpawnTimer: 0, animState: { slap: 0, pour: 0 },
+            safeSpawnGrid: [], spawnedPositions: []
+        };
+
+        let scene, camera, renderer, clock;
+        let playerGroup, playerSprite, beerSprite, spoonSprite, bartenderSprite;
+        let joystick = { x: 0, y: 0, active: false, id: null };
+        const textures = {};
+
+        // --- AUDIO SYSTEM ---
+        const AudioSys = {
+            ctx: null, isPlaying: false,
+            init: function() {
+                try {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if(AudioContext) this.ctx = new AudioContext();
+                } catch(e) { console.log("Audio not supported"); }
+            },
+            playBGM: function() { /* Disabled */ },
+            playSFX: function(type) {
+                if(!this.ctx) return;
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.connect(gain); gain.connect(this.ctx.destination);
+                    const now = this.ctx.currentTime;
+                    if (type === 'slap') {
+                        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(200, now);
+                        gain.gain.setValueAtTime(0.5, now); osc.start(now); osc.stop(now + 0.1);
+                    } else if (type === 'pour') {
+                        osc.type = 'sine'; osc.frequency.setValueAtTime(400, now);
+                        gain.gain.setValueAtTime(0.2, now); osc.start(now); osc.stop(now + 0.3);
+                    } else if (type === 'win') {
+                        osc.type = 'triangle'; osc.frequency.setValueAtTime(440, now);
+                        gain.gain.setValueAtTime(0.3, now); osc.start(now); osc.stop(now + 0.5);
+                    } else if (type === 'lose') {
+                        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(100, now);
+                        gain.gain.setValueAtTime(0.5, now); osc.start(now); osc.stop(now + 0.5);
+                    }
+                } catch(e) {}
+            }
+        };
+
+        // --- INIT ---
+        function init() {
+            try {
+                const container = document.getElementById('game-container');
+                scene = new THREE.Scene();
+                scene.background = new THREE.Color(0x5d4037); 
+                scene.fog = new THREE.Fog(0x5d4037, 15, 60);
+
+                camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 100);
+                camera.position.set(0, 32, 26);
+                camera.lookAt(0, 0, 4);
+
+                renderer = new THREE.WebGLRenderer({ antialias: true });
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                container.appendChild(renderer.domElement);
+
+                const ambient = new THREE.AmbientLight(0xffffff, 0.9);
+                scene.add(ambient);
+                const spotLight = new THREE.SpotLight(0xffaa00, 0.5);
+                spotLight.position.set(0, 40, 0);
+                spotLight.angle = Math.PI / 2.5;
+                spotLight.castShadow = true;
+                scene.add(spotLight);
+
+                clock = new THREE.Clock();
+                generateTextures();
+                setupControls();
+                setupButtons();
+
+                window.addEventListener('resize', () => {
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                });
+
+                renderer.setAnimationLoop(animate);
+            } catch (e) {
+                console.error("Init failed:", e);
+            }
+        }
+
+        function setupButtons() {
+            const bind = (id, fn) => {
+                const el = document.getElementById(id);
+                if(el) {
+                    el.onclick = null; 
+                    el.addEventListener('click', fn);
+                    el.addEventListener('touchend', (e) => { e.preventDefault(); fn(); });
+                }
+            };
+            bind('btn-start', startGame);
+            bind('btn-next-level', nextLevel);
+            bind('btn-restart', () => location.reload());
+            bind('btn-play-again', () => location.reload());
+            bind('btn-clear-flight', clearFlight);
+            bind('btn-submit-flight', submitFlight);
+        }
+
+        function startGame() {
+            AudioSys.init();
+            if(AudioSys.ctx && AudioSys.ctx.state === 'suspended') AudioSys.ctx.resume();
+            document.getElementById('start-screen').classList.add('hidden');
+            state.level = 1;
+            state.isPlaying = true;
+            loadLevel(1);
+        }
+
+        function nextLevel() {
+            document.getElementById('level-screen').classList.add('hidden');
+            if (state.level >= LEVELS) {
+                document.getElementById('flight-screen').classList.remove('hidden');
+                setupFlightUI();
+                state.isPlaying = false;
+            } else {
+                state.level++;
+                state.isPlaying = true;
+                loadLevel(state.level);
+            }
+        }
+
+        function generateTextures() {
+            function createEmojiTexture(emoji, text, fontSize='150px', color='#fff', extraEmoji) {
+                const c = document.createElement('canvas'); c.width=256; c.height=256;
+                const ctx = c.getContext('2d');
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                if (text) {
+                    ctx.font = '100px Arial'; ctx.fillText(emoji, 128, 100);
+                    ctx.font = 'bold 50px Arial'; ctx.fillStyle = color;
+                    ctx.strokeStyle = 'black'; ctx.lineWidth = 6;
+                    ctx.strokeText(text, 128, 180); ctx.fillText(text, 128, 180);
+                } else if (extraEmoji) {
+                    ctx.font = fontSize; ctx.fillText(emoji, 128, 110);
+                    ctx.font = '100px Arial'; ctx.fillText(extraEmoji, 128, 180);
+                } else {
+                    ctx.font = `${fontSize} Arial`; ctx.fillText(emoji, 128, 128);
+                }
+                return new THREE.CanvasTexture(c);
+            }
+
+            textures.poop = createEmojiTexture('💩');
+            textures.beer = createEmojiTexture('🍺');
+            textures.spoon = createEmojiTexture('🥄');
+            textures.patron = createEmojiTexture('😐');
+            textures.patronServed = createEmojiTexture('😋');
+            
+            textures.dancer = createEmojiTexture('💃', 'Spritzer?', '150px', '#ff4081');
+            textures.oldman = createEmojiTexture('👴', 'Swill?', '150px', '#90caf9');
+            textures.police = createEmojiTexture('👮', 'Noise!', '150px', '#ffeb3b');
+            
+            textures.plant = createEmojiTexture('🪴');
+            textures.dj = createEmojiTexture('🎧');
+            textures.dog = createEmojiTexture('🐶');
+            textures.alien = createEmojiTexture('👽');
+            textures.bartender = createEmojiTexture('🧔🏼‍♂️');
+            textures.musicNote = createEmojiTexture('🎶');
+
+            textures.people = PEOPLE_EMOJIS.map(e => createEmojiTexture(e));
+            textures.dancers = DANCE_EMOJIS.map(e => createEmojiTexture(e));
+
+            const sc = document.createElement('canvas'); sc.width=128; sc.height=128;
+            const sctx = sc.getContext('2d');
+            sctx.fillStyle = "#ffeb3b"; sctx.beginPath(); sctx.arc(64, 64, 60, 0, Math.PI*2); sctx.fill();
+            textures.spill = new THREE.CanvasTexture(sc);
+
+            const nc = document.createElement('canvas'); nc.width=1024; nc.height=128; 
+            const nctx = nc.getContext('2d');
+            nctx.shadowColor = "#ffeb3b"; nctx.shadowBlur = 40;
+            nctx.fillStyle = "#ffeb3b"; nctx.font = "bold 80px Courier New";
+            nctx.textAlign = "center"; nctx.textBaseline = "middle";
+            nctx.fillText("LAW BREWING TAPROOM", 512, 64);
+            textures.neon = new THREE.CanvasTexture(nc);
+
+            const dc = document.createElement('canvas'); dc.width=256; dc.height=256;
+            const dctx = dc.getContext('2d');
+            dctx.fillStyle = '#4a148c'; dctx.fillRect(0,0,256,256);
+            dctx.fillStyle = '#7b1fa2'; dctx.fillRect(0,0,128,128); dctx.fillRect(128,128,128,128);
+            textures.danceFloor = new THREE.CanvasTexture(dc);
+            textures.danceFloor.wrapS = THREE.RepeatWrapping;
+            textures.danceFloor.wrapT = THREE.RepeatWrapping;
+            textures.danceFloor.repeat.set(4, 4);
+        }
+
+        function createPlayer(pos) {
+            playerGroup = new THREE.Group();
+            playerGroup.position.copy(pos);
+            scene.add(playerGroup);
+            const pl = new THREE.PointLight(0xffffff, 0.5, 15); pl.position.set(0, 5, 0); playerGroup.add(pl);
+            const mat = new THREE.SpriteMaterial({ map: textures.poop });
+            playerSprite = new THREE.Sprite(mat); playerSprite.position.set(0, 1.5, 0); playerSprite.scale.set(3, 3, 1);
+            playerGroup.add(playerSprite);
+            const bMat = new THREE.SpriteMaterial({ map: textures.beer });
+            beerSprite = new THREE.Sprite(bMat); beerSprite.position.set(-1.2, 1.2, 0.5); beerSprite.scale.set(1.5,1.5,1);
+            playerGroup.add(beerSprite);
+            const sMat = new THREE.SpriteMaterial({ map: textures.spoon });
+            spoonSprite = new THREE.Sprite(sMat); spoonSprite.position.set(1.2, 1.2, 0.5); spoonSprite.scale.set(1.5,1.5,1);
+            playerGroup.add(spoonSprite);
+        }
+
+        function createDecorations() {
+            const barMat = new THREE.MeshStandardMaterial({ color: 0x5d4037 });
+            const bar = new THREE.Mesh(new THREE.BoxGeometry(24, 2, 2), barMat); bar.position.set(0, 1, -12); scene.add(bar); state.obstacles.push(bar);
+            const backBar = new THREE.Mesh(new THREE.BoxGeometry(24, 4, 1), barMat); backBar.position.set(0, 2, -15.5); scene.add(backBar);
+            const neon = new THREE.Sprite(new THREE.SpriteMaterial({ map: textures.neon, blending: THREE.AdditiveBlending })); neon.position.set(0, 6, -15.2); neon.scale.set(16, 2, 1); scene.add(neon);
+            // Taps
+            const tapGeo = new THREE.CylinderGeometry(0.1, 0.1, 0.5); const tapMat = new THREE.MeshStandardMaterial({ color: 0xc0c0c0 });
+            for(let i=0; i<12; i++) {
+                const tap = new THREE.Mesh(tapGeo, tapMat); tap.rotation.x = Math.PI/2; tap.position.set(-10 + (i*1.8), 2.5, -15); scene.add(tap);
+            }
+            bartenderSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: textures.bartender }));
+            bartenderSprite.scale.set(2.5, 2.5, 1); bartenderSprite.position.set(0, 3.5, -13.5); scene.add(bartenderSprite);
+
+            for(let i=0; i<6; i++) {
+                const p = new THREE.Sprite(new THREE.SpriteMaterial({ map: textures.people[i%textures.people.length] }));
+                p.scale.set(2, 2, 1); p.position.set(-9 + (i*3.5), 1.8, -10.5); scene.add(p);
+            }
+
+            const poolGeo = new THREE.BoxGeometry(5, 2, 8);
+            const poolMat = new THREE.MeshStandardMaterial({ color: 0x1b5e20 }); 
+            const poolTable = new THREE.Mesh(poolGeo, [barMat, barMat, poolMat, barMat, barMat, barMat]);
+            poolTable.position.set(-12, 1, 8); scene.add(poolTable); state.obstacles.push(poolTable);
+            // Pool details
+            const pocketGeo = new THREE.CylinderGeometry(0.25, 0.25, 2.1); const pocketMat = new THREE.MeshBasicMaterial({color:0x000000});
+            const pX = [-14.3, -9.7]; const pZ = [4.2, 8, 11.8];
+            for(let x of pX) for(let z of pZ) { const p = new THREE.Mesh(pocketGeo, pocketMat); p.position.set(x, 1, z); scene.add(p); }
+            const ballGeo = new THREE.SphereGeometry(0.15, 8, 8);
+            for(let i=0; i<10; i++) {
+                const b = new THREE.Mesh(ballGeo, new THREE.MeshStandardMaterial({color:Math.random()*0xffffff}));
+                b.position.set(-12+(Math.random()-0.5)*4, 2.15, 8+(Math.random()-0.5)*7); scene.add(b);
+            }
+            const poolPos = [ {x: -15, z: 8}, {x: -9, z: 8}, {x: -12, z: 3.5}, {x: -12, z: 12.5} ];
+            poolPos.forEach(pos => {
+                const p = new THREE.Sprite(new THREE.SpriteMaterial({ map: textures.people[Math.floor(Math.random()*textures.people.length)] }));
+                p.scale.set(2.2, 2.2, 1); p.position.set(pos.x, 2.0, pos.z); 
+                p.userData={type:'npc'}; scene.add(p); state.npcs.push(p);
+            });
+
+            const djBox = new THREE.Mesh(new THREE.BoxGeometry(4, 2, 2), new THREE.MeshStandardMaterial({color:0x111})); djBox.position.set(10, 1, 4); scene.add(djBox); state.obstacles.push(djBox);
+            const dj = new THREE.Sprite(new THREE.SpriteMaterial({map: textures.dj})); dj.position.set(10, 2.5, 3.5); dj.scale.set(2.5,2.5,1); scene.add(dj);
+
+            const df = new THREE.Mesh(new THREE.PlaneGeometry(8, 8), new THREE.MeshBasicMaterial({ map: textures.danceFloor }));
+            df.rotation.x = -Math.PI/2; df.position.set(10, 0.02, 8); scene.add(df);
+
+            const dSpots = [ {x: 8, z: 6}, {x: 12, z: 6}, {x: 8, z: 10}, {x: 12, z: 10} ];
+            dSpots.forEach(pos => {
+                const d = new THREE.Sprite(new THREE.SpriteMaterial({map: textures.dancers[Math.floor(Math.random()*2)]}));
+                d.scale.set(2.5, 2.5, 1); d.position.set(pos.x, 2, pos.z);
+                d.userData = { type: 'dancer', isTransformed: false }; 
+                scene.add(d); state.npcs.push(d);
+            });
+
+            state.notes = [];
+            for(let i=0; i<6; i++) {
+                const n = new THREE.Sprite(new THREE.SpriteMaterial({map: textures.musicNote}));
+                n.scale.set(1.5, 1.5, 1); n.position.set(6 + Math.random()*8, 3, 4 + Math.random()*8);
+                scene.add(n); state.notes.push(n);
+            }
+
+            const plantSpots = [ {x: -14, z: -12}, {x: 14, z: -12}, {x: 6, z: 4}, {x: 14, z: 4} ];
+            plantSpots.forEach(pos => {
+                const p = new THREE.Sprite(new THREE.SpriteMaterial({map:textures.plant}));
+                p.position.set(pos.x, 2.5, pos.z); p.scale.set(4,4,1); scene.add(p);
+                const obs = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), new THREE.MeshBasicMaterial({visible:false}));
+                obs.position.set(pos.x, 0, pos.z); state.obstacles.push(obs);
+            });
+        }
+
+        function calculateSafeGrid() {
+            let points = [];
+            const step = 2.5; 
+            for(let x = -16; x <= 16; x += step) {
+                for(let z = -12; z <= 14; z += step) {
+                    let pos = new THREE.Vector3(x, 0, z);
+                    let safe = true;
+                    for(let zone of RESTRICTED_ZONES) {
+                        if(x > zone.minX && x < zone.maxX && z > zone.minZ && z < zone.maxZ) safe = false;
+                    }
+                    if(safe) {
+                        for(let obs of state.obstacles) {
+                            if(pos.distanceTo(obs.position) < 3.5) safe = false;
+                        }
+                    }
+                    if(safe) points.push(pos);
+                }
+            }
+            return points.sort(() => Math.random() - 0.5); 
+        }
+
+        function getSafeSpot(currentSpacing) {
+            for(let i=state.safeSpawnGrid.length-1; i>=0; i--) {
+                let pos = state.safeSpawnGrid[i];
+                let clear = true;
+                if(pos.distanceTo(new THREE.Vector3(PLAYER_START.x,0,PLAYER_START.z)) < 8.0) clear = false;
+                if(clear) {
+                    for(let spawned of state.spawnedPositions) {
+                        if(pos.distanceTo(spawned) < currentSpacing) { clear = false; break; } 
+                    }
+                }
+                if(clear) {
+                    state.safeSpawnGrid.splice(i, 1); 
+                    state.spawnedPositions.push(pos);
+                    return pos;
+                }
+            }
+            return null;
+        }
+
+        function loadLevel(lvl) {
+            while(scene.children.length > 0){ scene.remove(scene.children[0]); }
+            const ambient = new THREE.AmbientLight(0xffffff, 0.9); scene.add(ambient);
+            const spotLight = new THREE.SpotLight(0xffaa00, 0.5); spotLight.position.set(0, 40, 0); spotLight.castShadow = true; scene.add(spotLight);
+            const floor = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_SIZE+10, ROOM_SIZE+10), new THREE.MeshStandardMaterial({color:0x3e2723, roughness:0.9}));
+            floor.rotation.x = -Math.PI/2; scene.add(floor);
+
+            state.obstacles = []; state.spills = []; state.npcs = []; state.notes = []; state.spawnedPositions = [];
+            createPlayer(new THREE.Vector3(PLAYER_START.x, 0, PLAYER_START.z));
+            createDecorations();
+            camera.position.set(0, 32, 26); camera.lookAt(0, 0, 4);
+            state.timeLeft = 60; state.maxTime = 60;
+
+            state.safeSpawnGrid = calculateSafeGrid();
+
+            for(let i=0; i<3+lvl; i++) {
+                let pos = getSafeSpot(4.0);
+                if(pos) {
+                    const s = new THREE.Mesh(new THREE.PlaneGeometry(4,4), new THREE.MeshBasicMaterial({map:textures.spill, transparent:true}));
+                    s.rotation.x = -Math.PI/2; s.position.copy(pos); s.position.y = 0.15; scene.add(s); state.spills.push(s);
+                }
+            }
+
+            state.patrons = []; state.enemies = []; state.annoyance = 0; state.patronsServed = 0; state.patronsTotal = 6; updateUI();
+
+            let tablesSpawned = 0;
+            let spacing = 4.5;
+            let loop = 0;
+            while(tablesSpawned < 6 && loop < 500) {
+                let pos = getSafeSpot(spacing);
+                if(pos) {
+                    const t = new THREE.Mesh(new THREE.CylinderGeometry(1.5,1.5,1,16), new THREE.MeshLambertMaterial({color:0x5d4037}));
+                    t.position.set(pos.x, 0.5, pos.z); scene.add(t); state.obstacles.push(t);
+                    const p = new THREE.Sprite(new THREE.SpriteMaterial({map:textures.patron}));
+                    p.position.set(pos.x, 2, pos.z); p.scale.set(2.5,2.5,1);
+                    p.userData = { isServed: false, type: 'patron', tablePos: t.position.clone() };
+                    scene.add(p); state.patrons.push(p);
+                    tablesSpawned++;
+                } else {
+                    spacing -= 0.5; if(spacing < 2.0) spacing = 2.0;
+                    state.safeSpawnGrid = calculateSafeGrid();
+                }
+                loop++;
+            }
+
+            for(let i=0; i<2+lvl; i++) {
+                let pos = getSafeSpot(3.0);
+                if(pos) {
+                    const p = new THREE.Sprite(new THREE.SpriteMaterial({map:textures.plant}));
+                    p.position.set(pos.x, 2.5, pos.z); p.scale.set(4,4,1); scene.add(p);
+                    const obs = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), new THREE.MeshBasicMaterial({visible:false}));
+                    obs.position.set(pos.x, 0, pos.z); state.obstacles.push(obs);
+                }
+            }
+
+            state.enemySpawnTimer = 3.0;
+            document.getElementById('level-indicator').innerText = `LEVEL ${lvl}`;
+            showMessage(`TAPROOM OPEN!`);
+        }
+
+        function checkCollision(pos) {
+            const radius = 0.4;
+            for(let obs of state.obstacles) {
+                if (!obs) continue;
+                let colRad = 1.5; if(obs.geometry.type === 'BoxGeometry') colRad = 2.5;
+                const dist = new THREE.Vector2(pos.x, pos.z).distanceTo(new THREE.Vector2(obs.position.x, obs.position.z));
+                if(dist < radius + colRad) return true;
+            }
+            if(Math.abs(pos.x)>15 || Math.abs(pos.z)>15 || pos.z>14) return true;
+            return false;
+        }
+        
+        function spawnEnemy() {
+            const types = [textures.dancer, textures.oldman, textures.police];
+            const t = types[Math.floor(Math.random()*3)];
+            let pos;
+            if(state.safeSpawnGrid.length > 0) {
+                for(let i=0; i<20; i++) {
+                    pos = state.safeSpawnGrid[Math.floor(Math.random()*state.safeSpawnGrid.length)].clone();
+                    if(pos.distanceTo(playerGroup.position) > 10) break;
+                }
+            } else pos = new THREE.Vector3(0,0,0);
+            const e = new THREE.Sprite(new THREE.SpriteMaterial({map:t}));
+            e.position.set(pos.x, 2, pos.z); e.scale.set(3,3,1);
+            e.userData = { hp: 3, speed: 6.0 + state.level*0.5 };
+            scene.add(e); state.enemies.push(e);
+        }
+
+        function animate() {
+            if(!state.isPlaying) { renderer.render(scene, camera); return; }
+            const dt = clock.getDelta();
+            const time = clock.getElapsedTime();
+
+            state.timeLeft -= dt;
+            document.getElementById('timer-display').innerText = `TIME: ${Math.max(0, Math.ceil(state.timeLeft))}`;
+            if(state.timeLeft <= 0) {
+                state.isPlaying = false; AudioSys.playSFX('lose');
+                document.getElementById('game-over-title').innerText = "TIME'S UP!";
+                document.getElementById('game-over-screen').classList.remove('hidden');
+            }
+
+            // Updates
+            if(bartenderSprite) bartenderSprite.position.x = Math.sin(time)*8;
+            state.npcs.forEach((d,i) => { 
+                if(!d.userData.isTransformed) d.position.y = (d.userData.type==='dancer' ? 2 + Math.abs(Math.sin(time*5+i))*0.5 : 2 + Math.sin(time*2+i)*0.1);
+            });
+            state.notes.forEach((n,i) => { 
+                n.position.y = 4 + Math.sin(time*3+i)*0.5; 
+                n.position.x += Math.sin(time+i)*0.02; n.position.z += Math.cos(time+i)*0.02;
+            });
+
+            let moveSpeed = 7.0;
+            for(let s of state.spills) if(playerGroup.position.distanceTo(s.position) < 2.5) moveSpeed = 2.0;
+
+            if(joystick.active) {
+                let newPos = playerGroup.position.clone();
+                newPos.x += joystick.x * moveSpeed * dt;
+                newPos.z += joystick.y * moveSpeed * dt;
+                if(!checkCollision(newPos)) playerGroup.position.copy(newPos);
+                else {
+                    let slideX = playerGroup.position.clone(); slideX.x = newPos.x;
+                    if(!checkCollision(slideX)) playerGroup.position.x = newPos.x;
+                    else {
+                        let slideZ = playerGroup.position.clone(); slideZ.z = newPos.z;
+                        if(!checkCollision(slideZ)) playerGroup.position.z = newPos.z;
+                    }
+                }
+            }
+            camera.position.x = playerGroup.position.x * 0.3;
+            camera.position.z = playerGroup.position.z + 10;
+
+            if(state.animState.slap > 0) {
+                state.animState.slap -= dt*5;
+                spoonSprite.material.rotation = Math.sin(state.animState.slap*10)*1.5;
+            } else spoonSprite.material.rotation = 0;
+
+            if(state.animState.pour > 0) {
+                state.animState.pour -= dt*3;
+                beerSprite.material.rotation = -0.5;
+            } else beerSprite.material.rotation = 0;
+
+            state.enemySpawnTimer -= dt;
+            if(state.enemySpawnTimer <= 0 && state.enemies.length < 2) { spawnEnemy(); state.enemySpawnTimer = 3.0; }
+
+            for(let i=state.enemies.length-1; i>=0; i--) {
+                const e = state.enemies[i];
+                if(!e) continue;
+                
+                let dir = new THREE.Vector3().subVectors(playerGroup.position, e.position).normalize();
+                
+                // Bloodhound
+                state.obstacles.forEach(obs => {
+                    let diff = new THREE.Vector3().subVectors(e.position, obs.position);
+                    let dist = diff.length();
+                    if(dist < 2.5) { diff.normalize().multiplyScalar(1.5/dist); dir.add(diff); }
+                });
+
+                let projected = e.position.clone().addScaledVector(dir, e.userData.speed*dt);
+                dir.normalize();
+                let nextPos = e.position.clone().addScaledVector(dir, e.userData.speed*dt);
+                if(!checkCollision(nextPos)) e.position.copy(nextPos);
+                
+                e.position.y = 2 + Math.sin(time*10+i)*0.2;
+
+                if(playerGroup.position.distanceTo(e.position) < 3.0) {
+                    state.annoyance += 80 * dt;
+                    updateUI();
+                }
+            }
+
+            if(state.annoyance >= 100) {
+                state.isPlaying = false; AudioSys.playSFX('lose');
+                document.getElementById('game-over-screen').classList.remove('hidden');
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        function setupControls() {
+            const joy = document.getElementById('joystick-zone');
+            const knob = document.getElementById('joystick-knob');
+            const move = (x, y) => {
+                const rect = joy.getBoundingClientRect();
+                const cx = rect.left + rect.width/2; const cy = rect.top + rect.height/2;
+                let dx = x - cx; let dy = y - cy;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                if(dist > 50) { dx = (dx/dist)*50; dy = (dy/dist)*50; }
+                knob.style.transform = `translate(-50%, -50%) translate(${dx}px, ${dy}px)`;
+                joystick.x = dx/50; joystick.y = dy/50;
+            };
+            const end = () => { joystick.active=false; joystick.x=0; joystick.y=0; knob.style.transform=`translate(-50%, -50%)`; };
+
+            joy.addEventListener('mousedown', e => { joystick.active=true; move(e.clientX, e.clientY); });
+            window.addEventListener('mousemove', e => { if(joystick.active) move(e.clientX, e.clientY); });
+            window.addEventListener('mouseup', end);
+            
+            joy.addEventListener('touchstart', e => { e.preventDefault(); joystick.active=true; move(e.touches[0].clientX, e.touches[0].clientY); });
+            joy.addEventListener('touchmove', e => { e.preventDefault(); if(joystick.active) move(e.touches[0].clientX, e.touches[0].clientY); });
+            joy.addEventListener('touchend', end);
+
+            document.getElementById('btn-slap').addEventListener('mousedown', ()=>performAction('slap'));
+            document.getElementById('btn-pour').addEventListener('mousedown', ()=>performAction('pour'));
+            document.getElementById('btn-slap').addEventListener('touchstart', (e)=>{ e.preventDefault(); performAction('slap'); });
+            document.getElementById('btn-pour').addEventListener('touchstart', (e)=>{ e.preventDefault(); performAction('pour'); });
+
+            window.addEventListener('keydown', e => {
+                if(['w','a','s','d'].includes(e.key)) {
+                    joystick.active=true;
+                    if(e.key==='w') joystick.y=-1; if(e.key==='s') joystick.y=1;
+                    if(e.key==='a') joystick.x=-1; if(e.key==='d') joystick.x=1;
+                }
+                if(e.key===' ') performAction('slap');
+                if(e.key==='e') performAction('pour');
+            });
+            window.addEventListener('keyup', () => { joystick.active=false; joystick.x=0; joystick.y=0; });
+        }
+
+        function performAction(type) {
+            if(!state.isPlaying) return;
+            if(type==='slap') {
+                state.animState.slap = 1.0; AudioSys.playSFX('slap'); createEffect(playerGroup.position, '💥');
+                // Check NPCs
+                state.npcs.forEach(d => {
+                    if(playerGroup.position.distanceTo(d.position) < 6.0 && !d.userData.isTransformed) {
+                        d.material.map = textures.dog; d.userData.isTransformed=true; createEffect(d.position, '🐶');
+                    }
+                });
+                // Check Enemies
+                for(let i=state.enemies.length-1; i>=0; i--) {
+                    if(playerGroup.position.distanceTo(state.enemies[i].position) < 6.0) {
+                        state.enemies[i].userData.hp--;
+                        createEffect(state.enemies[i].position, '💢');
+                        if(state.enemies[i].userData.hp <= 0) {
+                            scene.remove(state.enemies[i]); state.enemies.splice(i, 1);
+                            state.annoyance = Math.max(0, state.annoyance - 10);
+                            createEffect(state.enemies[i].position, '💀');
+                            updateUI();
+                        }
+                    }
+                }
+            } else if(type==='pour') {
+                state.animState.pour = 1.0; AudioSys.playSFX('pour');
+                state.npcs.forEach(d => {
+                    if(playerGroup.position.distanceTo(d.position) < 5.0 && !d.userData.isTransformed) {
+                        d.material.map = textures.alien; d.userData.isTransformed=true; createEffect(d.position, '👽');
+                    }
+                });
+                state.patrons.forEach(p => {
+                    if(!p.userData.isServed && playerGroup.position.distanceTo(p.userData.tablePos) < 5.0) {
+                        p.userData.isServed = true; p.material.map = textures.patronServed;
+                        state.patronsServed++; createEffect(p.position, '🍻'); updateUI();
+                        if(state.patronsServed >= state.patronsTotal) {
+                            state.isPlaying = false; AudioSys.playSFX('win');
+                            setTimeout(() => document.getElementById('level-screen').classList.remove('hidden'), 1000);
+                        }
+                    }
+                });
+            }
+        }
+
+        function createEffect(pos, emoji) {
+            const d = document.createElement('div'); d.innerText=emoji;
+            d.style.position='absolute'; d.style.left='50%'; d.style.top='50%';
+            d.style.fontSize='40px'; d.style.color='white';
+            document.getElementById('ui-layer').appendChild(d);
+            let start = Date.now();
+            let t = setInterval(() => {
+                let p = (Date.now()-start)/500;
+                if(p>=1) { clearInterval(t); d.remove(); }
+                d.style.top = (50-p*10)+'%'; d.style.opacity = 1-p;
+            }, 16);
+        }
+
+        function updateUI() {
+            document.getElementById('patron-counter').innerText = `SERVED: ${state.patronsServed}/${state.patronsTotal}`;
+            document.getElementById('meter-fill').style.width = Math.min(100, state.annoyance) + '%';
+            document.getElementById('meter-label').innerText = `ANNOYANCE: ${Math.floor(state.annoyance)}%`;
+        }
+
+        function showMessage(txt) {
+            const el = document.getElementById('msg-area'); el.innerText = txt; el.style.opacity = 1;
+            setTimeout(()=>el.innerText='', 1500);
+        }
+
+        function clearFlight() { state.flight=[null,null,null,null]; setupFlightUI(); document.getElementById('flight-msg').innerText=''; }
+        
+        function setupFlightUI() {
+            const grid = document.getElementById('beer-slots'); grid.innerHTML = '';
+            state.flight.forEach(b => {
+                const d = document.createElement('div'); d.className = b ? 'slot filled' : 'slot';
+                d.innerText = b || 'Empty'; grid.appendChild(d);
+            });
+            const opts = document.getElementById('beer-choices'); opts.innerHTML='';
+            BEERS.forEach(b => {
+                const btn = document.createElement('button'); btn.className = 'choice-btn'; btn.innerText = b;
+                btn.onclick = () => {
+                    const idx = state.flight.indexOf(null);
+                    if (idx!==-1) { state.flight[idx]=b; setupFlightUI(); }
+                };
+                opts.appendChild(btn);
+            });
+        }
+
+        function submitFlight() {
+            if(state.flight.includes(null)) { document.getElementById('flight-msg').innerText="Fill all slots!"; return; }
+            let hasIPA=false, hasSour=false, hasStout=false, hasForbidden=false;
+            state.flight.forEach(b => {
+                const t = BEER_MAP[b];
+                if(t==='IPA') hasIPA=true; if(t==='Sour') hasSour=true; if(t==='Stout') hasStout=true;
+                if(t==='Pilsner'||t==='Cider'||t==='Lager') hasForbidden=true;
+            });
+            if(hasIPA && hasSour && hasStout && !hasForbidden) {
+                AudioSys.playSFX('win');
+                document.getElementById('flight-screen').classList.add('hidden');
+                document.getElementById('win-screen').classList.remove('hidden');
+            } else {
+                AudioSys.playSFX('lose');
+                document.getElementById('flight-msg').style.color = "#d32f2f";
+                document.getElementById('flight-msg').innerText = "Trash! Loser!";
+                setTimeout(() => { document.getElementById('flight-msg').innerText=""; clearFlight(); }, 1500);
+            }
+        }
+
+        // GLOBAL
+        window.startGame = startGame;
+        window.nextLevel = nextLevel;
+        window.clearFlight = clearFlight;
+        window.submitFlight = submitFlight;
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
