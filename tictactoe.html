@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Law Brewing: Tactical Tic Tac Toe</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rye&display=swap" rel="stylesheet">
+    <style>
+        /* --- LAW BREWING THEME VARIABLES --- */
+        :root {
+            --law-gold: #cba95d;
+            --law-gold-dim: #8c7335;
+            --law-bg: #0f0f0f;
+            --cell-bg: #141414;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            background-color: var(--law-bg);
+            color: var(--law-gold);
+            font-family: 'Rye', serif;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* --- GAME CONTAINER --- */
+        #game-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        /* --- UI PANEL --- */
+        #scoreboard-panel {
+            background-color: #1a1a1a;
+            border: 2px solid var(--law-gold);
+            padding: 20px 40px;
+            text-align: center;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 25px rgba(0,0,0,0.5);
+            min-width: 300px;
+        }
+
+        h1 {
+            margin: 0 0 10px 0;
+            font-size: 2.2rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--law-gold);
+            text-shadow: 2px 2px 0 #000;
+        }
+
+        #status-text {
+            font-family: 'Georgia', serif;
+            font-size: 1.3rem;
+            color: #ddd;
+            min-height: 1.5em;
+            font-weight: bold;
+        }
+
+        /* The flashing alert for the special rule */
+        #special-rule {
+            color: #ff4444;
+            font-size: 1rem;
+            visibility: hidden;
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+            text-shadow: 0 0 5px #000;
+            animation: pulse 1.2s infinite;
+        }
+
+        @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+
+        .scores {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 15px;
+            font-size: 1.2rem;
+            border-top: 1px solid #444;
+            padding-top: 10px;
+        }
+
+        /* --- THE GRID --- */
+        #board {
+            display: grid;
+            grid-template-columns: repeat(3, 110px);
+            grid-template-rows: repeat(3, 110px);
+            gap: 10px;
+            padding: 10px;
+            background-color: #1a1a1a;
+            border: 2px solid var(--law-gold-dim);
+            border-radius: 4px;
+        }
+
+        .cell {
+            width: 110px;
+            height: 110px;
+            background-color: var(--cell-bg);
+            border: 2px solid #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 4.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .cell:hover {
+            background-color: #252525;
+            border-color: var(--law-gold);
+        }
+
+        .cell.x { color: var(--law-gold); text-shadow: 0 0 10px rgba(203, 169, 93, 0.3); }
+        .cell.o { color: #a0a0a0; text-shadow: 0 0 10px rgba(160, 160, 160, 0.3); }
+
+        /* Styles for when "Stealing" is active */
+        .stealing-active .cell {
+            border-style: dashed;
+            border-color: #ff4444;
+        }
+        
+        .stealing-active .cell[data-occupied="true"]:hover {
+            background-color: rgba(180, 40, 40, 0.8) !important;
+            cursor: crosshair;
+        }
+
+        #restart-btn {
+            margin-top: 30px;
+            padding: 12px 30px;
+            font-family: 'Rye', serif;
+            font-size: 1.1rem;
+            color: var(--law-gold);
+            background: #000;
+            border: 2px solid var(--law-gold);
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: 0.3s;
+        }
+
+        #restart-btn:hover {
+            background: var(--law-gold);
+            color: #000;
+            box-shadow: 0 0 20px var(--law-gold);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-wrapper">
+        <div id="scoreboard-panel">
+            <h1>Law Brewing</h1>
+            <div id="special-rule">⚠ STEALING ENABLED ⚠</div>
+            <div id="status-text">Initializing...</div>
+            <div class="scores">
+                <span>YOU: <b id="score-x">0</b></span>
+                <span>CPU: <b id="score-o">0</b></span>
+            </div>
+        </div>
+
+        <div id="board">
+            <div class="cell" data-idx="0"></div>
+            <div class="cell" data-idx="1"></div>
+            <div class="cell" data-idx="2"></div>
+            <div class="cell" data-idx="3"></div>
+            <div class="cell" data-idx="4"></div>
+            <div class="cell" data-idx="5"></div>
+            <div class="cell" data-idx="6"></div>
+            <div class="cell" data-idx="7"></div>
+            <div class="cell" data-idx="8"></div>
+        </div>
+
+        <button id="restart-btn">New Game</button>
+    </div>
+
+<script>
+    /* LAW BREWING: TACTICAL TIC TAC TOE
+       Logic: Standard rules until 5 moves are made. 
+       Then, "Stealing Mode" activates allowing overwrites.
+    */
+
+    const HUMAN = 'X';
+    const CPU = 'O';
+    const STEAL_THRESHOLD = 5;
+
+    let board = ["", "", "", "", "", "", "", "", ""];
+    let gameActive = true;
+    let currentPlayer = HUMAN;
+    let moves = 0;
+    let scores = { human: 0, cpu: 0 };
+
+    // DOM Elements
+    const cells = document.querySelectorAll('.cell');
+    const statusTxt = document.getElementById('status-text');
+    const ruleTxt = document.getElementById('special-rule');
+    const boardEl = document.getElementById('board');
+    const restartBtn = document.getElementById('restart-btn');
+    const scoreXEl = document.getElementById('score-x');
+    const scoreOEl = document.getElementById('score-o');
+
+    const wins = [
+        [0,1,2], [3,4,5], [6,7,8],
+        [0,3,6], [1,4,7], [2,5,8],
+        [0,4,8], [2,4,6]
+    ];
+
+    function init() {
+        board.fill("");
+        gameActive = true;
+        moves = 0;
+        ruleTxt.style.visibility = 'hidden';
+        boardEl.classList.remove('stealing-active');
+        
+        cells.forEach(c => {
+            c.innerText = "";
+            c.classList.remove('x', 'o');
+            c.removeAttribute('data-occupied');
+        });
+
+        // Random Start
+        if (Math.random() < 0.5) {
+            currentPlayer = HUMAN;
+            statusTxt.innerText = "Your Turn";
+        } else {
+            currentPlayer = CPU;
+            statusTxt.innerText = "CPU Thinking...";
+            setTimeout(cpuTurn, 800);
+        }
+    }
+
+    function handleClick(e) {
+        if (!gameActive || currentPlayer !== HUMAN) return;
+
+        const i = e.target.getAttribute('data-idx');
+        const occupied = board[i] !== "";
+        const canSteal = moves >= STEAL_THRESHOLD;
+
+        // Human can move if spot is empty OR we are in stealing mode
+        if (!occupied || canSteal) {
+            move(i, HUMAN);
+        }
+    }
+
+    function move(i, player) {
+        board[i] = player;
+        cells[i].innerText = player;
+        cells[i].className = `cell ${player.toLowerCase()}`;
+        cells[i].setAttribute('data-occupied', 'true');
+        moves++;
+
+        // 1. Win Check
+        if (checkWin(board, player)) {
+            end(player);
+            return;
+        }
+
+        // 2. Activate Stealing UI
+        if (moves >= STEAL_THRESHOLD) {
+            ruleTxt.style.visibility = 'visible';
+            boardEl.classList.add('stealing-active');
+        }
+
+        // 3. Draw Check (Only if stealing hasn't started)
+        if (moves < STEAL_THRESHOLD && !board.includes("")) {
+            end('draw');
+            return;
+        }
+
+        // 4. Switch Player
+        currentPlayer = (player === HUMAN) ? CPU : HUMAN;
+        
+        if (currentPlayer === HUMAN) {
+            statusTxt.innerText = (moves >= STEAL_THRESHOLD) ? "Steal Any Square!" : "Your Turn";
+        } else {
+            statusTxt.innerText = "CPU Thinking...";
+            setTimeout(cpuTurn, 700);
+        }
+    }
+
+    function checkWin(bd, p) {
+        return wins.some(c => bd[c[0]] === p && bd[c[1]] === p && bd[c[2]] === p);
+    }
+
+    function end(winner) {
+        gameActive = false;
+        if (winner === 'draw') {
+            statusTxt.innerText = "Draw!";
+        } else {
+            statusTxt.innerText = (winner === HUMAN) ? "You Win!" : "Law Brewing CPU Wins!";
+            if (winner === HUMAN) {
+                scores.human++;
+                scoreXEl.innerText = scores.human;
+            } else {
+                scores.cpu++;
+                scoreOEl.innerText = scores.cpu;
+            }
+        }
+    }
+
+    // --- AI LOGIC ---
+
+    function cpuTurn() {
+        if (!gameActive) return;
+        let idx;
+        // Early game: use Minimax (Perfect play)
+        if (moves < STEAL_THRESHOLD) idx = minimax(board, CPU).index;
+        // Late game: use Tactical (Aggressive stealing)
+        else idx = tacticalMove(CPU);
+        
+        move(idx, CPU);
+    }
+
+    function minimax(newBd, player) {
+        let avail = newBd.map((v, i) => v === "" ? i : null).filter(v => v !== null);
+
+        if (checkWin(newBd, HUMAN)) return { score: -10 };
+        if (checkWin(newBd, CPU)) return { score: 10 };
+        if (avail.length === 0) return { score: 0 };
+
+        let movesList = [];
+        for (let i = 0; i < avail.length; i++) {
+            let m = {};
+            m.index = avail[i];
+            newBd[avail[i]] = player;
+            if (player === CPU) m.score = minimax(newBd, HUMAN).score;
+            else m.score = minimax(newBd, CPU).score;
+            newBd[avail[i]] = "";
+            movesList.push(m);
+        }
+
+        let bestMove;
+        if (player === CPU) {
+            let bestScore = -10000;
+            for (let i=0; i<movesList.length; i++) {
+                if (movesList[i].score > bestScore) { bestScore = movesList[i].score; bestMove = i; }
+            }
+        } else {
+            let bestScore = 10000;
+            for (let i=0; i<movesList.length; i++) {
+                if (movesList[i].score < bestScore) { bestScore = movesList[i].score; bestMove = i; }
+            }
+        }
+        return movesList[bestMove];
+    }
+
+    function tacticalMove(player) {
+        let opp = (player === CPU) ? HUMAN : CPU;
+        
+        // 1. Can I Win NOW?
+        for (let i=0; i<9; i++) {
+            if (board[i] !== player) {
+                let tmp = board[i];
+                board[i] = player;
+                if (checkWin(board, player)) { board[i] = tmp; return i; }
+                board[i] = tmp;
+            }
+        }
+        // 2. Must I Block NOW?
+        for (let i=0; i<9; i++) {
+            if (board[i] !== opp) {
+                let tmp = board[i];
+                board[i] = opp;
+                if (checkWin(board, opp)) { board[i] = tmp; return i; }
+                board[i] = tmp;
+            }
+        }
+        // 3. Take Center or Corners
+        if (board[4] !== player) return 4;
+        let corners = [0,2,6,8].filter(c => board[c] !== player);
+        if (corners.length) return corners[Math.floor(Math.random()*corners.length)];
+        
+        // 4. Random valid move
+        let valid = [];
+        for(let i=0; i<9; i++) if(board[i] !== player) valid.push(i);
+        return valid[Math.floor(Math.random()*valid.length)];
+    }
+
+    // Events
+    cells.forEach(c => c.addEventListener('click', handleClick));
+    restartBtn.addEventListener('click', init);
+    
+    // Start
+    init();
+
+</script>
+</body>
+</html>
