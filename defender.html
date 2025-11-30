@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Law Brewing Defender: The Sheriff of Taps</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Rye&family=Roboto+Slab:wght@400;700&display=swap');
+
+        body {
+            background-color: #1a1a1a;
+            color: white;
+            font-family: 'Roboto Slab', serif;
+            overflow: hidden;
+            touch-action: none; 
+            user-select: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle at center, #2a2a2a 0%, #000000 100%);
+            overflow: hidden;
+        }
+
+        /* --- Background Logo --- */
+        #bg-logo {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80vmin;
+            height: 80vmin;
+            opacity: 0.3;
+            pointer-events: none;
+            z-index: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #bg-logo svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 10;
+            display: block;
+        }
+
+        /* --- UI Overlays --- */
+        .ui-overlay {
+            position: absolute;
+            z-index: 20;
+            pointer-events: auto;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(5px);
+            transition: opacity 0.5s;
+            overflow-y: auto;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.5rem;
+            text-shadow: 2px 2px 0 #000;
+            z-index: 20;
+            pointer-events: none;
+        }
+
+        .btn {
+            background: #fff;
+            color: #000;
+            border: 4px solid #fff;
+            padding: 10px 30px; 
+            font-size: 1.3rem; 
+            font-family: 'Rye', serif;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: transform 0.1s, background 0.2s;
+            pointer-events: auto;
+            margin-top: 15px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+            background: #eee;
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+        
+        .btn:disabled {
+            background: #888;
+            border-color: #888;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        h1 {
+            font-family: 'Rye', serif;
+            font-size: 3.5rem; 
+            margin-bottom: 0.2rem;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.8);
+            color: #fff;
+            line-height: 1;
+        }
+        
+        h2 {
+            font-family: 'Rye', serif;
+            font-size: 1.5rem; 
+            margin-bottom: 1rem; 
+            color: #ccc;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+        
+        .tutorial {
+            background: rgba(0,0,0,0.6);
+            padding: 15px; 
+            border-radius: 10px;
+            border: 1px solid #555;
+            max-width: 95%;
+            width: 550px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+        }
+
+        .icon-row {
+            display: flex;
+            justify-content: space-around;
+            margin: 10px 0; 
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .icon-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100px;
+            text-align: center;
+        }
+        
+        /* Style for the mini canvases in the tutorial */
+        .tutorial-canvas {
+            position: relative !important; 
+            z-index: 1 !important;
+            background: transparent;
+            margin-bottom: 2px;
+        }
+        
+        .icon-desc {
+            font-size: 0.8rem;
+            margin-top: 4px;
+            color: #aaa;
+            line-height: 1.1;
+        }
+        
+        /* Level Transition Text Style */
+        #level-transition {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Rye', serif;
+            font-size: 5rem;
+            color: gold;
+            text-shadow: 0 0 10px rgba(255, 255, 0, 0.8), 0 0 20px black;
+            z-index: 30;
+            opacity: 0;
+            transition: opacity 0.5s;
+            pointer-events: none;
+            text-align: center;
+            width: 100%;
+        }
+
+        #level-subtext {
+            display: block;
+            font-size: 2rem;
+            color: white;
+            font-family: 'Roboto Slab', serif;
+            margin-top: 10px;
+        }
+
+        .show-transition {
+            opacity: 1 !important;
+        }
+        
+        /* Title Page Specifics */
+        .title-img {
+            max-width: 80%;
+            max-height: 45vh; 
+            border: 5px solid #fff;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        
+        /* Leaderboard / Input Styles */
+        .modal-content {
+            background: #333;
+            padding: 20px; 
+            border-radius: 10px;
+            border: 5px solid gold;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.5);
+            pointer-events: auto;
+        }
+        
+        #leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 1rem;
+        }
+        #leaderboard-table th, #leaderboard-table td {
+            padding: 5px;
+            border-bottom: 1px solid #555;
+        }
+        #leaderboard-table th {
+            font-family: 'Rye', serif;
+            color: gold;
+            background: #444;
+        }
+        #leaderboard-table td {
+            text-align: left;
+        }
+        #leaderboard-table tr:nth-child(1) td { color: gold; font-weight: bold; }
+        #leaderboard-table tr:nth-child(2) td { color: silver; }
+        #leaderboard-table tr:nth-child(3) td { color: #cd7f32; }
+        
+        #name-input {
+            padding: 10px;
+            font-size: 1.2rem;
+            width: 80%;
+            max-width: 300px;
+            border: 3px solid #ccc;
+            border-radius: 5px;
+            color: #000;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div id="bg-logo">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" preserveAspectRatio="xMidYMid meet">
+            <defs>
+                <linearGradient id="metal" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#d9d9d9"/>
+                    <stop offset="100%" stop-color="#7a7a7a"/>
+                </linearGradient>
+                <linearGradient id="gold" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#ffeb8a"/>
+                    <stop offset="100%" stop-color="#c59a00"/>
+                </linearGradient>
+            </defs>
+            <circle cx="300" cy="300" r="260" fill="url(#metal)" stroke="#000" stroke-width="6"/>
+            <polygon points="300,70 355,240 535,240 390,345 445,515 300,410 155,515 210,345 65,240 245,240" fill="url(#metal)" stroke="#000" stroke-width="5"/>
+            <text x="300" y="285" font-family="Rye, serif" font-size="150" text-anchor="middle" fill="url(#gold)" stroke="#000" stroke-width="4">LAW</text>
+            <text x="300" y="380" font-family="Rye, serif" font-size="70" text-anchor="middle" fill="url(#gold)" stroke="#000" stroke-width="3">BREWING</text>
+        </svg>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="hud" class="hud hidden">
+        <div>LEVEL: <span id="level">1</span></div>
+        <div>SCORE: <span id="score">0</span></div>
+        <div>LIVES: <span id="lives">3</span></div>
+    </div>
+    
+    <div id="level-transition">
+        <span id="level-title">LEVEL 1</span>
+        <span id="level-subtext"></span>
+    </div>
+
+    <div id="landing-page" class="ui-overlay">
+        <img src="https://github.com/lawbrewing/LawBrewing/blob/main/Gemini_Generated_Image_f46i9af46i9af46i.png?raw=true" 
+             alt="Law Brewing Co." 
+             class="title-img">
+        
+        <button id="enter-btn" class="btn">ENTER TAPROOM</button>
+    </div>
+
+    <div id="start-screen" class="ui-overlay hidden">
+        <h1>LAW<br>BREWING</h1>
+        <h2>Quality Control</h2>
+        
+        <div class="tutorial">
+            <p style="margin-bottom: 10px; color: #fff; font-size: 1.1rem;">You are the Sheriff of Taps. Defend the quality of the brew!</p>
+            
+            <div class="icon-row">
+                <div class="icon-box">
+                    <canvas id="demo-swill" width="60" height="70" class="tutorial-canvas"></canvas>
+                    <span class="icon-desc">SHOOT THIS<br><strong style="color: #ef4444">(Swill Beer)</strong></span>
+                </div>
+                <div class="icon-box">
+                    <canvas id="demo-law" width="60" height="70" class="tutorial-canvas"></canvas>
+                    <span class="icon-desc">SAVE THIS<br><strong style="color: #d97706">(Law Brew)</strong></span>
+                </div>
+            </div>
+            
+            <div style="margin-top: 10px; border-top: 1px dashed #555; padding-top: 10px;">
+                <p style="color: #ffeb3b; font-size: 0.9rem; font-weight: bold; margin-bottom: 5px;">STRATEGY & THREATS</p>
+                <div class="icon-row">
+                    <div class="icon-box">
+                        <canvas id="demo-oldtimer" width="70" height="60" class="tutorial-canvas"></canvas>
+                        <span class="icon-desc"><strong>Old Timer</strong><br>Don't let him spend his last $1 on swill!</span>
+                    </div>
+                    <div class="icon-box">
+                        <canvas id="demo-vip" width="100" height="60" class="tutorial-canvas"></canvas>
+                        <span class="icon-desc"><strong>VIP</strong><br>Move table to serve her Law Brew!</span>
+                    </div>
+                </div>
+                <p style="font-size: 1.1rem; color: #fff; margin-top: 5px;">
+                    Tap/Drag the <strong style="color: #ffeb3b;">bottom half</strong> of the screen to move the VIP.
+                </p>
+            </div>
+        </div>
+
+        <button id="start-btn" class="btn">Start Shift</button>
+        <button id="leaderboard-btn" class="btn" style="margin-top: 10px; background: gold; color: black; border-color: gold;">High Scores</button>
+    </div>
+
+    <div id="game-over-screen" class="ui-overlay hidden">
+        <h1>SHIFT OVER</h1>
+        <h2>Final Score: <span id="final-score">0</span></h2>
+        <p id="game-over-msg" style="margin-bottom: 20px; font-size: 1.5rem; color: #aaa;">Last Call.</p>
+        <button id="restart-btn" class="btn">Re-Open Tab</button>
+        <button id="menu-btn" class="btn" style="margin-top: 15px;">Back to Main Menu</button>
+    </div>
+    
+    <div id="leaderboard-modal" class="ui-overlay hidden">
+        <div class="modal-content">
+            <h1>LEADERBOARD</h1>
+            <h2>The Snipers of Swill</h2>
+            <div id="leaderboard-status" style="color: #ffeb8a; margin-bottom: 15px;">Loading...</div>
+            <table id="leaderboard-table">
+                <thead>
+                    <tr><th>Rank</th><th>Name</th><th>Score</th></tr>
+                </thead>
+                <tbody id="leaderboard-body">
+                </tbody>
+            </table>
+            <button id="close-leaderboard-btn" class="btn" style="margin-top: 30px;">Back to Menu</button>
+        </div>
+    </div>
+    
+    <div id="name-input-modal" class="ui-overlay hidden">
+        <div class="modal-content">
+            <h1>HIGH SCORE!</h1>
+            <h2>You Scored: <span id="input-final-score">0</span></h2>
+            <p style="margin-bottom: 20px;">Enter your name to join the leaderboard!</p>
+            <input type="text" id="name-input" placeholder="Enter Name (Max 10 Chars)" maxlength="10">
+            <button id="submit-name-btn" class="btn">Submit Score</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    /* --- Sound System (Synthesized) --- */
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function initAudio() {
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+    }
+
+    function playSound(type) {
+        if (!audioCtx || audioCtx.state === 'suspended') return;
+
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+
+        if (type === 'shoot') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(600, now);
+            osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+            osc.start(now);
+            osc.stop(now + 0.1);
+        } 
+        else if (type === 'explosion') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(100, now);
+            osc.frequency.exponentialRampToValueAtTime(10, now + 0.2);
+            gain.gain.setValueAtTime(0.5, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+            osc.start(now);
+            osc.stop(now + 0.2);
+        } 
+        else if (type === 'score') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(800, now);
+            osc.frequency.exponentialRampToValueAtTime(1200, now + 0.1);
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+            osc.start(now);
+            osc.stop(now + 0.5);
+        } 
+        else if (type === 'error') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, now);
+            osc.frequency.linearRampToValueAtTime(100, now + 0.2);
+            gain.gain.setValueAtTime(0.5, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+            osc.start(now);
+            osc.stop(now + 0.2);
+        }
+        else if (type === 'gameover') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(300, now);
+            osc.frequency.linearRampToValueAtTime(50, now + 1);
+            gain.gain.setValueAtTime(0.5, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 1);
+            osc.start(now);
+            osc.stop(now + 1);
+        }
+    }
+
+    /* --- Simpleboards Configuration --- */
+    const SIMPLEBOARDS_API_KEY = "78098c7b-fa9d-4ce1-9300-a56d081d53c4";
+    const SIMPLEBOARDS_LEADERBOARD_ID = "9f649aa6-f553-4a57-57a6-08de2efe707f";
+    const SIMPLEBOARDS_BASE_URL = "https://api.simpleboards.dev/api"; 
+
+    /* --- Game Setup --- */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // UI Elements
+    const landingPage = document.getElementById('landing-page');
+    const enterBtn = document.getElementById('enter-btn');
+    const startScreen = document.getElementById('start-screen');
+    const gameOverScreen = document.getElementById('game-over-screen');
+    const hud = document.getElementById('hud');
+    
+    const scoreEl = document.getElementById('score');
+    const livesEl = document.getElementById('lives');
+    const levelEl = document.getElementById('level'); 
+    const finalScoreEl = document.getElementById('final-score');
+    
+    const startBtn = document.getElementById('start-btn');
+    const restartBtn = document.getElementById('restart-btn');
+    const menuBtn = document.getElementById('menu-btn');
+    
+    const levelTransitionEl = document.getElementById('level-transition'); 
+    const levelTitleEl = document.getElementById('level-title');
+    const levelSubtextEl = document.getElementById('level-subtext');
+    
+    // Leaderboard Elements
+    const leaderboardBtn = document.getElementById('leaderboard-btn');
+    const leaderboardModal = document.getElementById('leaderboard-modal');
+    const leaderboardBody = document.getElementById('leaderboard-body');
+    const leaderboardStatus = document.getElementById('leaderboard-status');
+    const closeLeaderboardBtn = document.getElementById('close-leaderboard-btn');
+    
+    // Name Input Elements
+    const nameInputModal = document.getElementById('name-input-modal');
+    const inputFinalScoreEl = document.getElementById('input-final-score');
+    const nameInput = document.getElementById('name-input');
+    const submitNameBtn = document.getElementById('submit-name-btn');
+
+    /* --- Level Configuration --- */
+    const levelsConfig = [
+        { scoreToClear: 1000, spawnIntervalMs: 1500, speedMultiplier: 1.0, thiefSpawnMs: 999999, vipActive: false }, 
+        { scoreToClear: 2500, spawnIntervalMs: 1200, speedMultiplier: 1.3, thiefSpawnMs: 7000, vipActive: false }, 
+        { scoreToClear: 4500, spawnIntervalMs: 1000, speedMultiplier: 1.6, thiefSpawnMs: 6000, vipActive: true },
+        { scoreToClear: 7000, spawnIntervalMs: 800, speedMultiplier: 2.0, thiefSpawnMs: 5000, vipActive: true }, 
+        { scoreToClear: 11000, spawnIntervalMs: 700, speedMultiplier: 2.3, thiefSpawnMs: 4000, vipActive: true } 
+    ];
+
+    // Game State
+    let isPlaying = false;
+    let score = 0;
+    let lives = 3;
+    let currentLevel = 1;
+    let lastTime = 0;
+    
+    // Player/VIP State
+    let playerGuestX = window.innerWidth / 2;
+    let vipInstance;  
+    let isMovingGuest = false;
+
+    // Spawning/Difficulty variables
+    let spawnTimer = 0;
+    let spawnInterval = levelsConfig[0].spawnIntervalMs; 
+    let speedMultiplier = levelsConfig[0].speedMultiplier;
+    
+    let thiefSpawnTimer = 0;
+    let thiefSpawnInterval = levelsConfig[0].thiefSpawnMs; 
+
+    let isTransitioning = false;
+    
+    // Arrays for entities
+    let beers = [];
+    let particles = [];
+    let clickEffects = [];
+    let thieves = []; 
+
+    /* --- Resize Handling --- */
+    function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        playerGuestX = canvas.width / 2;
+        if (vipInstance) {
+            vipInstance.y = canvas.height - 100;
+        }
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    /* --- Input Handling --- */
+    const handleShootInput = (x, y) => {
+        if (!isPlaying || isTransitioning) return;
+
+        // If the tap/click is in the VIP control zone (bottom 1/3), don't shoot!
+        if (y > canvas.height * 0.7) { 
+            return;
+        }
+
+        playSound('shoot'); 
+        clickEffects.push({x, y, age: 0});
+
+        // 1. Thieves
+        for (let i = thieves.length - 1; i >= 0; i--) {
+            const t = thieves[i];
+            const dist = Math.hypot(t.x - x, t.y - y);
+            
+            if (dist < t.size / 2) { 
+                t.isHit = true;
+                lives--;
+                livesEl.innerText = lives;
+                playSound('explosion'); 
+                createFloatingText(t.x, t.y, "DEAD TIMER", "red");
+                createExplosion(t.x, t.y, '#fdbd9c');
+                checkGameOver();
+                return;
+            }
+        }
+
+        // 2. Beers
+        for (let i = beers.length - 1; i >= 0; i--) {
+            const b = beers[i];
+            const dist = Math.hypot(b.x - x, b.y - y);
+            
+            if (dist < 40) {
+                if (b.type === 'BAD') {
+                    // CORRECT ACTION: Shoot the Swill
+                    playSound('explosion'); 
+                    createExplosion(b.x, b.y, '#9ca3af');
+                    beers.splice(i, 1);
+                    score += 100;
+                    scoreEl.innerText = score;
+                    createFloatingText(b.x, b.y, "+100", "white");
+                    checkLevelUp();
+                } else {
+                    // INCORRECT ACTION: Shot the Law Brew
+                    playSound('error'); 
+                    createExplosion(b.x, b.y, '#d97706');
+                    beers.splice(i, 1);
+                    lives--;
+                    livesEl.innerText = lives;
+                    createFloatingText(b.x, b.y, "WASTED BREW!", "red");
+                    checkGameOver();
+                }
+                return; 
+            }
+        }
+    };
+
+    /* --- Input Handlers for VIP Movement --- */
+
+    const handleGuestMoveStart = (x, y) => {
+        if (y > canvas.height * 0.7) {
+            isMovingGuest = true;
+        }
+    };
+
+    const handleGuestMove = (x) => {
+        if (isMovingGuest && isPlaying && !isTransitioning) {
+            const minX = 60;
+            const maxX = canvas.width - 60;
+            playerGuestX = Math.min(Math.max(x, minX), maxX);
+        }
+    };
+
+    const handleGuestMoveEnd = () => {
+        isMovingGuest = false;
+    };
+
+    // MOUSE EVENTS
+    canvas.addEventListener('mousedown', (e) => {
+        initAudio();
+        if (e.clientY > canvas.height * 0.7) {
+             handleGuestMoveStart(e.clientX, e.clientY);
+        } else {
+            handleShootInput(e.clientX, e.clientY);
+        }
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+        handleGuestMove(e.clientX);
+    });
+
+    canvas.addEventListener('mouseup', handleGuestMoveEnd);
+    canvas.addEventListener('mouseleave', handleGuestMoveEnd);
+
+    // TOUCH EVENTS
+    canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        initAudio();
+        const x = e.touches[0].clientX;
+        const y = e.touches[0].clientY;
+        
+        if (y > canvas.height * 0.7) {
+            handleGuestMoveStart(x, y); 
+        } else {
+            handleShootInput(x, y);
+        }
+    }, {passive: false});
+
+    canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        handleGuestMove(e.touches[0].clientX);
+    }, {passive: false});
+
+    canvas.addEventListener('touchend', handleGuestMoveEnd);
+
+    /* --- Classes --- */
+
+    class Beer {
+        constructor() {
+            this.radius = 30;
+            this.x = Math.random() * (canvas.width - 60) + 30;
+            this.y = -50;
+            this.type = Math.random() > 0.35 ? 'BAD' : 'GOOD'; 
+            const baseSpeed = canvas.height / 500; 
+            this.speed = (baseSpeed * speedMultiplier) * (1 + Math.random() * 0.4); 
+            this.rotation = 0;
+            this.rotSpeed = (Math.random() - 0.5) * 0.1;
+        }
+
+        update(dt) {
+            this.y += this.speed;
+            this.rotation += this.rotSpeed;
+        }
+
+        draw(ctx) {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.rotate(this.rotation);
+
+            if (this.type === 'BAD') {
+                ctx.fillStyle = '#9ca3af'; 
+                ctx.fillRect(-15, -25, 30, 50);
+                ctx.fillStyle = '#d1d5db';
+                ctx.fillRect(-15, -25, 30, 5);
+                ctx.fillRect(-15, 20, 30, 5);
+                ctx.fillStyle = '#ef4444';
+                ctx.fillRect(-15, -10, 30, 20);
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 10px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText("SWILL", 0, 5);
+            } else {
+                ctx.beginPath();
+                ctx.moveTo(-15, -25);
+                ctx.lineTo(-10, 25);
+                ctx.lineTo(10, 25);
+                ctx.lineTo(15, -25);
+                ctx.closePath();
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#fff';
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(-13, -15);
+                ctx.lineTo(-9, 23);
+                ctx.lineTo(9, 23);
+                ctx.lineTo(9, 23);
+                ctx.lineTo(13, -15);
+                ctx.closePath();
+                ctx.fillStyle = '#d97706'; 
+                ctx.fill();
+
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.ellipse(0, -15, 13, 5, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = 'black';
+                ctx.beginPath();
+                ctx.arc(0, 0, 5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+    }
+
+    class PatronRaider { 
+        constructor() {
+            this.size = 50;
+            this.y = Math.random() * (canvas.height * 0.3) + 100;
+            if (Math.random() < 0.5) {
+                this.x = -this.size;
+                this.vx = 0.5 + Math.random() * 0.5 * speedMultiplier;
+                this.side = 'left';
+            } else {
+                this.x = canvas.width + this.size;
+                this.vx = -(0.5 + Math.random() * 0.5 * speedMultiplier);
+                this.side = 'right';
+            }
+            this.vy = 0.1 + Math.random() * 0.1 * speedMultiplier; 
+            this.isHit = false;
+            this.life = 100;
+        }
+
+        update() {
+            this.x += this.vx;
+            this.y += this.vy;
+            if (this.isHit) this.life -= 3;
+        }
+
+        draw(ctx) {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.globalAlpha = this.life / 100;
+            let scaleX = 1;
+            if (this.side === 'right') scaleX = -1;
+            ctx.scale(scaleX, 1);
+
+            // Old Timer Hat
+            ctx.fillStyle = '#f0f0f0';
+            ctx.beginPath();
+            ctx.ellipse(0, -25, 20, 10, 0, Math.PI, 0, true);
+            ctx.fill();
+            ctx.fillRect(-15, -25, 30, 5);
+
+            // Head
+            ctx.fillStyle = '#fdbd9c'; 
+            ctx.beginPath();
+            ctx.arc(0, -15, 10, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Body
+            ctx.fillStyle = '#4b5563'; 
+            ctx.fillRect(-15, -10, 30, 30);
+            
+            // Arm
+            ctx.fillStyle = '#4b5563'; 
+            ctx.fillRect(10, 0, 10, 20);
+
+            // Hand
+            ctx.fillStyle = '#fdbd9c';
+            ctx.beginPath();
+            ctx.arc(15, 20, 5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Dollar Bill
+            ctx.fillStyle = '#8bc34a'; 
+            ctx.strokeStyle = '#4c8c2a';
+            ctx.lineWidth = 1;
+            ctx.fillRect(18, 15, 20, 10);
+            ctx.strokeRect(18, 15, 20, 10);
+            ctx.fillStyle = '#4c8c2a';
+            ctx.font = '6px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('$1', 28, 22);
+
+            ctx.globalAlpha = 1.0;
+            ctx.restore();
+        }
+    }
+
+    class TableGuest { 
+        constructor(initialY) {
+            this.x = playerGuestX; 
+            this.y = initialY; 
+            this.isVipActive = false; 
+            this.tableWidth = 70;
+            this.tableHeight = 20;
+        }
+
+        update() {
+             this.x = playerGuestX;
+        }
+
+        draw(ctx) {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+
+            const tableTopY = 0;
+
+            // --- Draw Table ---
+            ctx.fillStyle = '#5D4037';
+            ctx.fillRect(-this.tableWidth/2, tableTopY, this.tableWidth, this.tableHeight);
+            ctx.strokeStyle = '#3E2723';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(-this.tableWidth/2, tableTopY, this.tableWidth, this.tableHeight);
+
+            // Legs
+            ctx.fillRect(-this.tableWidth/2 + 5, this.tableHeight, 5, 20);
+            ctx.fillRect(this.tableWidth/2 - 10, this.tableHeight, 5, 20);
+
+           // --- Draw VIP Guest (only if active) ---
+            if (this.isVipActive) {
+                const guestOffsetY = tableTopY - 10;
+                
+                // Body
+                ctx.fillStyle = '#9C27B0'; 
+                ctx.beginPath();
+                ctx.ellipse(0, guestOffsetY + 10, 20, 15, 0, Math.PI, 0, true);
+                ctx.fill();
+
+                // Head
+                ctx.fillStyle = '#FFE0B2'; 
+                ctx.beginPath();
+                ctx.arc(0, guestOffsetY - 10, 10, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Hair
+                ctx.fillStyle = '#5a2720'; 
+                ctx.beginPath();
+                ctx.ellipse(0, guestOffsetY - 10, 12, 12, 0, 0, Math.PI, false); 
+                ctx.lineTo(12, guestOffsetY + 2); 
+                ctx.lineTo(-12, guestOffsetY + 2);
+                ctx.closePath();
+                ctx.fill();
+
+                // Empty Beer Glass
+                const glassX = -this.tableWidth/2 + 15;
+                const glassY = tableTopY + 5;
+                
+                ctx.fillStyle = '#fefefe';
+                ctx.fillRect(glassX - 5, glassY, 10, 2);
+                
+                ctx.fillStyle = 'rgba(200, 200, 255, 0.3)';
+                ctx.fillRect(glassX - 5, glassY + 2, 10, 15);
+                
+                ctx.fillStyle = '#4b5563';
+                ctx.fillRect(glassX - 6, glassY + 17, 12, 3);
+            }
+
+            ctx.restore();
+        }
+    }
+
+    class Particle {
+        constructor(x, y, color) {
+            this.x = x; this.y = y; this.color = color;
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.random() * 5 + 2;
+            this.vx = Math.cos(angle) * speed;
+            this.vy = Math.sin(angle) * speed;
+            this.life = 1.0;
+            this.decay = Math.random() * 0.03 + 0.02;
+            this.size = Math.random() * 4 + 2;
+        }
+        update() {
+            this.x += this.vx; this.y += this.vy; this.vy += 0.2;
+            this.life -= this.decay;
+        }
+        draw(ctx) {
+            ctx.globalAlpha = Math.max(0, this.life);
+            ctx.fillStyle = this.color;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
+            ctx.fill();
+            ctx.globalAlpha = 1.0;
+        }
+    }
+
+    class FloatingText {
+        constructor(x, y, text, color) {
+            this.x = x; this.y = y; this.text = text; this.color = color;
+            this.life = 1.0; this.vy = -2;
+        }
+        update() { this.y += this.vy; this.life -= 0.02; }
+        draw(ctx) {
+            ctx.globalAlpha = Math.max(0, this.life);
+            ctx.fillStyle = this.color;
+            ctx.font = "bold 20px 'Roboto Slab'";
+            ctx.textAlign = 'center';
+            ctx.fillText(this.text, this.x, this.y);
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 2;
+            ctx.strokeText(this.text, this.x, this.y);
+            ctx.globalAlpha = 1.0;
+        }
+    }
+
+    /* --- Helper Functions --- */
+
+    function createExplosion(x, y, color) {
+        for(let i=0; i<15; i++) particles.push(new Particle(x, y, color));
+    }
+
+    function createFloatingText(x, y, text, color) {
+        particles.push(new FloatingText(x, y, text, color));
+    }
+
+    function checkGameOver() {
+        if (lives <= 0) endGame();
+    }
+
+    function checkLevelUp() {
+        if (currentLevel <= levelsConfig.length) {
+            const currentLevelIndex = currentLevel - 1;
+            const requiredScore = levelsConfig[currentLevelIndex].scoreToClear;
+
+            if (score >= requiredScore) {
+                currentLevel++;
+                transitionToLevel(currentLevel);
+            }
+        }
+    }
+
+    function transitionToLevel(newLevel) {
+        isTransitioning = true;
+        beers = []; thieves = []; 
+        spawnTimer = 0; thiefSpawnTimer = 0; 
+
+        let titleText, subText;
+        
+        if (newLevel <= levelsConfig.length) {
+            const cfg = levelsConfig[newLevel - 1];
+            titleText = `LEVEL ${newLevel}`;
+            
+            if (cfg.vipActive) {
+                subText = "VIP IS NOW ACTIVE! CATCH LAW BREWS!";
+                vipInstance.isVipActive = true;
+            } else if (newLevel === 2) {
+                subText = "HERE COMES THE OLD TIMER!";
+                vipInstance.isVipActive = false;
+            } else {
+                subText = "FASTER!";
+                vipInstance.isVipActive = false;
+            }
+
+            spawnInterval = cfg.spawnIntervalMs;
+            speedMultiplier = cfg.speedMultiplier;
+            thiefSpawnInterval = cfg.thiefSpawnMs;
+            levelEl.textContent = newLevel;
+        } else {
+            // Expert Mode
+            titleText = `EXPERT MODE`;
+            subText = "SURVIVE";
+            spawnInterval = 500;
+            speedMultiplier = 3.0;
+            thiefSpawnInterval = 3000;
+            vipInstance.isVipActive = true; 
+            levelEl.textContent = 'E';
+        }
+        
+        levelTitleEl.textContent = titleText;
+        levelSubtextEl.textContent = subText;
+        levelTransitionEl.classList.add('show-transition');
+
+        setTimeout(() => {
+            levelTransitionEl.classList.remove('show-transition');
+            isTransitioning = false;
+        }, 2500);
+    }
+
+    function endGame() {
+        isPlaying = false;
+        hud.classList.add('hidden');
+        playSound('gameover'); 
+        
+        // Show Name Input Modal for Leaderboard
+        inputFinalScoreEl.innerText = score;
+        nameInputModal.classList.remove('hidden');
+        nameInput.focus();
+    }
+
+    function showGameOverScreen() {
+        nameInputModal.classList.add('hidden');
+        gameOverScreen.classList.remove('hidden');
+        finalScoreEl.innerText = score;
+    }
+
+    function startGame() {
+        score = 0; lives = 3; currentLevel = 1;
+        
+        spawnInterval = levelsConfig[0].spawnIntervalMs;
+        speedMultiplier = levelsConfig[0].speedMultiplier;
+        thiefSpawnInterval = levelsConfig[0].thiefSpawnMs;
+
+        scoreEl.innerText = score;
+        livesEl.innerText = lives;
+        levelEl.innerText = currentLevel;
+        
+        beers = []; particles = []; clickEffects = []; thieves = [];
+        spawnTimer = 0; thiefSpawnTimer = 0;
+        isTransitioning = false;
+
+        if (!vipInstance) {
+            vipInstance = new TableGuest(canvas.height - 100);
+        }
+        vipInstance.isVipActive = false; 
+        
+        isPlaying = true;
+        startScreen.classList.add('hidden');
+        gameOverScreen.classList.add('hidden');
+        hud.classList.remove('hidden');
+        
+        lastTime = performance.now();
+        requestAnimationFrame(gameLoop);
+    }
+
+    /* --- HYBRID LEADERBOARD SYSTEM --- */
+    
+    async function fetchLeaderboard() {
+        leaderboardBody.innerHTML = '';
+        leaderboardStatus.textContent = 'Loading...';
+        
+        let data = [];
+        let usedSource = 'API';
+
+        try {
+            // Updated Endpoint Logic for Fetching
+            const response = await fetch(`${SIMPLEBOARDS_BASE_URL}/leaderboards/${SIMPLEBOARDS_LEADERBOARD_ID}/entries`, {
+                headers: { 'x-api-key': SIMPLEBOARDS_API_KEY }
+            });
+            
+            if (!response.ok) throw new Error("API Fetch failed");
+            const jsonData = await response.json();
+            data = Array.isArray(jsonData) ? jsonData : (jsonData.entries || []);
+            
+        } catch (error) {
+            console.log("Falling back to Local Storage", error);
+            usedSource = 'Local';
+            const localData = localStorage.getItem('law_leaderboard');
+            if (localData) {
+                data = JSON.parse(localData);
+            }
+        }
+
+        // Render Data
+        if (!data || data.length === 0) {
+            leaderboardStatus.textContent = `No scores yet (${usedSource}). Be the first!`;
+            return;
+        }
+
+        leaderboardStatus.textContent = `Top Scores (${usedSource})`;
+        
+        // Map data to standardize fields
+        const standardizedData = data.map(entry => ({
+            name: entry.playerDisplayName || entry.name || "Anonymous",
+            score: entry.score || 0
+        }));
+
+        // Sort data 
+        standardizedData.sort((a, b) => b.score - a.score);
+        
+        standardizedData.slice(0, 10).forEach((entry, index) => {
+            const row = leaderboardBody.insertRow();
+            row.insertCell(0).textContent = index + 1;
+            row.insertCell(1).textContent = entry.name;
+            row.insertCell(2).textContent = entry.score.toLocaleString();
+        });
+    }
+    
+    async function submitScore(name, score) {
+        const sanitizedName = name.trim().toUpperCase() || "ANONYMOUS";
+        
+        // Update Button UI
+        submitNameBtn.textContent = "Submitting...";
+        submitNameBtn.disabled = true;
+
+        const payload = {
+            leaderboardId: SIMPLEBOARDS_LEADERBOARD_ID,
+            playerDisplayName: sanitizedName,
+            score: score.toString() // API expects string
+        };
+
+        try {
+            // 1. Try API Submission
+            const response = await fetch(`${SIMPLEBOARDS_BASE_URL}/entries`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'x-api-key': SIMPLEBOARDS_API_KEY
+                },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) throw new Error("API Submit failed");
+            console.log("Score submitted to API successfully!");
+        } catch (error) {
+            // 2. Fallback: Save to LocalStorage
+            console.log("API failed, saving to Local Storage.", error);
+            let localScores = JSON.parse(localStorage.getItem('law_leaderboard')) || [];
+            localScores.push({ name: sanitizedName, score: score }); 
+            localScores.sort((a, b) => b.score - a.score);
+            localScores = localScores.slice(0, 10);
+            localStorage.setItem('law_leaderboard', JSON.stringify(localScores));
+        }
+        
+        // Reset UI and finish
+        submitNameBtn.textContent = "Submit Score";
+        submitNameBtn.disabled = false;
+        showGameOverScreen();
+    }
+
+    /* --- Logic for Menu Flow --- */
+
+    enterBtn.addEventListener('click', () => {
+        landingPage.classList.add('hidden');
+        startScreen.classList.remove('hidden');
+        initAudio();
+        // Render tutorial icons once the start screen is potentially visible
+        requestAnimationFrame(renderTutorialIcons);
+    });
+    
+    // Show Leaderboard
+    leaderboardBtn.addEventListener('click', () => {
+        startScreen.classList.add('hidden');
+        leaderboardModal.classList.remove('hidden');
+        fetchLeaderboard();
+    });
+    
+    // Close Leaderboard
+    closeLeaderboardBtn.addEventListener('click', () => {
+        leaderboardModal.classList.add('hidden');
+        startScreen.classList.remove('hidden');
+    });
+    
+    // Submit Name Button Handler
+    submitNameBtn.addEventListener('click', () => {
+        const name = nameInput.value;
+        submitScore(name, score);
+        nameInput.value = ''; 
+    });
+    
+    // Allow Enter key to submit name
+    nameInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            submitNameBtn.click();
+        }
+    });
+    
+    restartBtn.addEventListener('click', () => {
+        showGameOverScreen(); 
+        gameOverScreen.classList.add('hidden');
+        startScreen.classList.remove('hidden');
+    });
+    
+    // Back to Menu Button Handler
+    menuBtn.addEventListener('click', () => {
+        gameOverScreen.classList.add('hidden');
+        startScreen.classList.remove('hidden');
+    });
+
+    startBtn.addEventListener('click', startGame);
+
+    /* --- RENDER TUTORIAL ICONS FUNCTION --- */
+    function renderTutorialIcons() {
+        // 1. Render Swill (Bad Beer)
+        const swillCanvas = document.getElementById('demo-swill');
+        if (swillCanvas) {
+            const ctx = swillCanvas.getContext('2d');
+            const beer = new Beer();
+            beer.type = 'BAD';
+            beer.x = swillCanvas.width / 2;
+            beer.y = swillCanvas.height / 2 + 10; 
+            beer.rotation = 0;
+            beer.draw(ctx);
+        }
+
+        // 2. Render Law Brew (Good Beer)
+        const lawCanvas = document.getElementById('demo-law');
+        if (lawCanvas) {
+            const ctx = lawCanvas.getContext('2d');
+            const beer = new Beer();
+            beer.type = 'GOOD';
+            beer.x = lawCanvas.width / 2;
+            beer.y = lawCanvas.height / 2 + 10;
+            beer.rotation = 0;
+            beer.draw(ctx);
+        }
+
+        // 3. Render Old Timer
+        const otCanvas = document.getElementById('demo-oldtimer');
+        if (otCanvas) {
+            const ctx = otCanvas.getContext('2d');
+            const oldTimer = new PatronRaider();
+            oldTimer.x = otCanvas.width / 2;
+            oldTimer.y = otCanvas.height / 2 + 15;
+            oldTimer.side = 'left'; 
+            oldTimer.draw(ctx);
+        }
+
+        // 4. Render VIP
+        const vipCanvas = document.getElementById('demo-vip');
+        if (vipCanvas) {
+            const ctx = vipCanvas.getContext('2d');
+            const vip = new TableGuest(0);
+            vip.isVipActive = true;
+            // Manually position for demo
+            vip.x = vipCanvas.width / 2;
+            vip.y = vipCanvas.height / 2;
+            vip.draw(ctx);
+        }
+    }
+
+    /* --- Game Loop --- */
+
+    function gameLoop(timestamp) {
+        if (!isPlaying) return;
+
+        const dt = timestamp - lastTime;
+        lastTime = timestamp;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Spawning
+        if (!isTransitioning) {
+            spawnTimer += dt;
+            if (spawnTimer > spawnInterval) {
+                beers.push(new Beer());
+                spawnTimer = 0;
+            }
+            thiefSpawnTimer += dt;
+            if (thiefSpawnTimer > thiefSpawnInterval) {
+                thieves.push(new PatronRaider());
+                thiefSpawnTimer = 0;
+            }
+        }
+
+        // VIP Guest
+        if (vipInstance) {
+            vipInstance.update();
+            if (vipInstance.isVipActive) {
+                vipInstance.draw(ctx);
+                
+                // VIP Collision
+                for (let j = beers.length - 1; j >= 0; j--) {
+                    const b = beers[j];
+                    if (b.x > vipInstance.x - 40 && b.x < vipInstance.x + 40 && 
+                        b.y > vipInstance.y - 40 && b.y < vipInstance.y + 20) {
+                        
+                        beers.splice(j, 1);
+                        
+                        if (b.type === 'GOOD') {
+                            score += 500;
+                            scoreEl.innerText = score;
+                            createFloatingText(vipInstance.x, vipInstance.y - 60, "VIP LAW BONUS!", "#d946ef"); 
+                            playSound('score'); 
+                            createExplosion(b.x, b.y, '#fff');
+                        } else {
+                            lives--;
+                            livesEl.innerText = lives;
+                            createFloatingText(vipInstance.x, vipInstance.y - 60, "VIP SWILL HIT!", "red");
+                            playSound('error'); 
+                            createExplosion(b.x, b.y, '#ef4444'); 
+                            checkGameOver();
+                        }
+                    }
+                }
+            }
+        }
+
+        // Entities
+        for (let i = beers.length - 1; i >= 0; i--) {
+            const b = beers[i];
+            b.update(dt);
+            b.draw(ctx);
+            
+            if (b.y > canvas.height) {
+                beers.splice(i, 1);
+                if (b.type === 'GOOD') {
+                    score += 50;
+                    scoreEl.innerText = score;
+                    createFloatingText(b.x, canvas.height - 50, "LAW BREW SERVED", "lime");
+                    playSound('score'); 
+                } else {
+                    lives--;
+                    livesEl.innerText = lives;
+                    checkGameOver();
+                    createFloatingText(b.x, canvas.height - 50, "SWILL SERVED!", "orange");
+                    playSound('error'); 
+                }
+            }
+        }
+
+        for (let i = thieves.length - 1; i >= 0; i--) {
+            const t = thieves[i];
+            t.update(dt);
+            t.draw(ctx);
+
+            if (t.x < -t.size * 2 || t.x > canvas.width + t.size * 2 || t.life <= 0) {
+                thieves.splice(i, 1);
+            }
+            
+            for (let j = beers.length - 1; j >= 0; j--) {
+                const b = beers[j];
+                if (b.type === 'BAD' && Math.hypot(t.x - b.x, t.y - b.y) < 50) {
+                    beers.splice(j, 1); 
+                    lives--;
+                    livesEl.innerText = lives;
+                    checkGameOver();
+                    createFloatingText(t.x, t.y, "SWILL SERVED!", "orange");
+                    playSound('explosion'); 
+                    t.isHit = true; 
+                }
+            }
+        }
+        
+        for (let i = particles.length - 1; i >= 0; i--) {
+            particles[i].update();
+            particles[i].draw(ctx);
+            if (particles[i].life <= 0) {
+                particles.splice(i, 1);
+            }
+        }
+
+        for (let i = clickEffects.length - 1; i >= 0; i--) {
+            const c = clickEffects[i];
+            c.age++;
+            ctx.fillStyle = `rgba(255, 255, 255, ${1 - c.age / 10})`;
+            ctx.beginPath();
+            ctx.arc(c.x, c.y, 10 * (c.age / 10), 0, Math.PI * 2);
+            ctx.fill();
+            if (c.age > 10) {
+                clickEffects.splice(i, 1);
+            }
+        }
+
+        checkLevelUp();
+        requestAnimationFrame(gameLoop);
+    }
+</script>
+</body>
+</html>
