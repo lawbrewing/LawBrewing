@@ -12,8 +12,8 @@
         /* General Styling */
         body {
             font-family: 'Roboto', sans-serif;
-            background-color: #0d0d0d; /* Very Dark Background */
-            color: #f0f0f0; /* Off-White Text */
+            background-color: #0d0d0d;
+            color: #f0f0f0;
             margin: 0;
             padding: 0;
             line-height: 1.6;
@@ -22,9 +22,12 @@
         /* Header/Hero Section */
         .hero {
             position: relative;
-            height: 400px; /* Tall header for impact */
+            /* UPDATED: Removed fixed height, added min-height and padding */
+            min-height: 350px; 
+            padding-top: 50px; 
+            padding-bottom: 50px; 
+            /* END UPDATED */
             background-color: #2a2a2a;
-            /* Placeholder: Use a dark, textured image for a premium look */
             background-image: url('rustic-wood-planks.jpg'); 
             background-size: cover;
             background-position: center;
@@ -44,26 +47,26 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.6); /* Dark overlay for better text contrast */
+            background: rgba(0, 0, 0, 0.6);
         }
         
         .logo {
             position: relative;
             z-index: 10;
-            max-width: 150px; /* Larger logo */
+            max-width: 150px;
             height: auto;
             margin-bottom: 20px;
-            filter: drop-shadow(0 0 10px #ffcc00); /* Gold glow effect */
+            filter: drop-shadow(0 0 10px #ffcc00);
         }
 
         .site-title {
             position: relative;
             z-index: 10;
-            font-family: 'Bebas Neue', sans-serif; /* Tall, narrow industrial font */
+            font-family: 'Bebas Neue', sans-serif;
             font-size: 5em;
             letter-spacing: 15px;
             margin: 0;
-            color: #ffcc00; /* Gold/Amber primary color */
+            color: #ffcc00;
             text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.8);
         }
 
@@ -125,7 +128,6 @@
             width: 100%;
             height: 100%;
             border-radius: 8px;
-            /* Ensures the whole image is visible without cropping */
             object-fit: contain; 
             background-color: #000;
         }
@@ -176,9 +178,9 @@
         .untappd-section {
             text-align: center;
             padding: 50px 20px;
-            background-color: #121212; /* Slightly different dark background */
+            background-color: #121212;
             box-shadow: inset 0 5px 15px rgba(0, 0, 0, 0.4);
-            margin-top: 50px; /* Space from games section */
+            margin-top: 50px;
             border-top: 3px solid #ffcc00;
         }
 
@@ -193,7 +195,7 @@
         }
 
         .untappd-image {
-            max-width: 600px; /* Max width for the Untappd image */
+            max-width: 600px;
             width: 100%;
             height: auto;
             border-radius: 10px;
@@ -207,7 +209,10 @@
                 letter-spacing: 10px;
             }
             .hero {
-                height: 300px;
+                /* Reduced min-height for small screens */
+                min-height: 250px; 
+                padding-top: 40px; 
+                padding-bottom: 40px;
             }
             .games-container {
                 padding: 0 20px;
