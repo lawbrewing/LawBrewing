@@ -11,17 +11,15 @@
         .loading-text { margin-top: 20px; color: #888; text-align: center; }
     </style>
 
-    <!-- Error Handler -->
     <script>
         window.onerror = function(message, source, lineno, colno, error) {
             console.error(error);
             if (message.includes("React") || message.includes("Minified")) {
-                 document.body.innerHTML = "<div style='color:white;padding:20px;text-align:center'><h2>Game Error</h2><p>Please refresh the page.</p><small>" + message + "</small></div>";
+                 document.body.innerHTML = "<div style='color:white;padding:20px;text-align:center'><h2>Game Error</h2><p>Please check the console for details and refresh the page.</p><small>" + message + "</small></div>";
             }
         };
     </script>
 
-    <!-- React & Babel -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -63,6 +61,585 @@
 
         // --- ICONS ---
         const Icons = {
+            Star: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 0L14.59 8.06L22.5 5.5L17.3 12L22.5 18.5L14.59 15.94L12 24L9.41 15.94L1.5 18.5L6.7 12L1.5 5.5L9.41 8.06L12 0Z"/></svg>,
+            Beer: () => (
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M7 7h10v11a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3V7Z" fill="#eab308" stroke="#eab308" fillOpacity="0.5"/>
+                    <path d="M6 7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v0H6v0Z" fill="white" stroke="white"/>
+                    <path d="M17 8h1a4 4 0 0 1 0 8h-1" stroke="currentColor"/>
+                    <line x1="7" y1="7" x2="17" y2="7" stroke="currentColor"/>
+                    <line x1="7" y1="21" x2="17" y2="21" stroke="currentColor"/>
+                    <line x1="7" y1="7" x2="7" y2="21" stroke="currentColor"/>
+                    <line x1="17" y1="7" x2="17" y2="21" stroke="currentColor"/>
+                </svg>
+            ),
+            DollarSign: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>,
+            Trophy: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>,
+            Skull: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><path d="M8 20v2h8v-2"/><path d="M12.5 17l.5-2 .5 2h2l.5-2 .5 2"/><path d="M16 20a2 2 0 0 0 1.56-3.25 8 8 0 1 0-11.12 0A2 2 0 0 0 8 20"/></svg>,
+            RefreshCw: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>,
+            Zap: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
+            TrendingUp: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>,
+            Check: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
+            Help: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>,
+            Mug: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 6h2a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M4 6h13v14H4V6Z"/><path d="M8 6v14"/><path d="M12 6v14"/><path d="M4 10h13"/></svg>,
+        };
+
+        // --- CUSTOM AVATARS ---
+        const Avatars = {
+            Pete: () => (
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" className="w-full h-full">
+                    <rect width="100" height="100" fill="#4a5568"/>
+                    <path d="M20 60 Q50 90 80 60 L80 40 L20 40 Z" fill="#cbd5e0"/>
+                    <circle cx="50" cy="45" r="25" fill="#f6ad55"/>
+                    <path d="M10 40 L90 40 L80 15 L20 15 Z" fill="#2d3748"/>
+                    <circle cx="40" cy="45" r="3" fill="#1a202c"/>
+                    <circle cx="60" cy="45" r="3" fill="#1a202c"/>
+                </svg>
+            ),
+            Rick: () => (
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" className="w-full h-full">
+                    <rect width="100" height="100" fill="#2b6cb0"/>
+                    <rect x="25" y="25" width="50" height="60" rx="10" fill="#f6ad55"/>
+                    <path d="M25 25 L35 10 L65 10 L75 25 Z" fill="#1a202c"/>
+                    <rect x="30" y="40" width="15" height="10" fill="black"/>
+                    <rect x="55" y="40" width="15" height="10" fill="black"/>
+                    <line x1="45" y1="45" x2="55" y2="45" stroke="black" strokeWidth="2"/>
+                    <path d="M40 70 Q50 75 60 68" stroke="black" strokeWidth="3" fill="none"/>
+                </svg>
+            ),
+            Mara: () => (
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" className="w-full h-full">
+                    <rect width="100" height="100" fill="#d53f8c"/>
+                    <path d="M20 20 Q50 0 80 20 L90 90 L10 90 Z" fill="#5D4037"/>
+                    <circle cx="50" cy="50" r="25" fill="#f6e05e"/>
+                    <circle cx="40" cy="48" r="3" fill="#1a202c"/>
+                    <circle cx="60" cy="48" r="3" fill="#1a202c"/>
+                    <path d="M40 60 Q50 70 60 60" stroke="#c53030" strokeWidth="2" fill="none"/>
+                </svg>
+            ),
+            James: () => (
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" className="w-full h-full">
+                    <rect width="100" height="100" fill="#1a202c"/>
+                    {/* Reverted to previous larger head, no glasses, blue eyes */}
+                    <ellipse cx="50" cy="55" rx="35" ry="30" fill="#c0b2a4"/>
+                    <circle cx="35" cy="50" r="5" fill="#3182ce"/>
+                    <circle cx="65" cy="50" r="5" fill="#3182ce"/>
+                    <circle cx="35" cy="50" r="2" fill="black"/>
+                    <circle cx="65" cy="50" r="2" fill="black"/>
+                    <path d="M45 60 L50 70 L55 60 Z" fill="#a09284"/>
+                    <line x1="40" y1="80" x2="60" y2="80" stroke="#718096" strokeWidth="3"/>
+                </svg>
+            )
+        };
+
+        const Icon = ({ name, size = 16, className = "" }) => {
+            const Component = Icons[name];
+            if (!Component) return null;
+            return <div className={className} style={{ width: size, height: size, display: 'inline-block' }}><Component /></div>;
+        };
+
+        // --- CONSTANTS & LOGIC ---
+        const PATRON_START_MONEY = 50;
+        const HAND_RANKS = {
+            FIVE_OF_A_KIND: 8, FOUR_OF_A_KIND: 7, FULL_HOUSE: 6, STRAIGHT: 5,
+            THREE_OF_A_KIND: 4, TWO_PAIR: 3, ONE_PAIR: 2, HIGH_CARD: 1
+        };
+
+        const HAND_NAMES = {
+            8: "Keg Stand (5 of a Kind)", 7: "Case of Beer (4 of a Kind)", 6: "Full Tab (Full House)",
+            5: "Flight (Straight)", 4: "Six Pack (3 of a Kind)", 3: "Double Fisted (Two Pair)", 2: "Solo Cup (Pair)", 1: "Spilled Drink (High Card)"
+        };
+
+        const BASE_PATRON_TYPES = [
+            { name: "Pinecone Pete", type: "Conservative", Avatar: Avatars.Pete },
+            { name: "Rick the Prick", type: "Aggressive", Avatar: Avatars.Rick },
+            { name: "Mara Lawson", type: "Random", Avatar: Avatars.Mara },
+            { name: "James Roberts", type: "Calculator", Avatar: Avatars.James }
+        ];
+
+        const evaluateHand = (dice) => {
+            if (!dice || dice[0] === 0) return null; 
+
+            try {
+                const counts = {};
+                let wilds = 0;
+                dice.forEach(d => {
+                    if (d === 1) wilds++;
+                    else counts[d] = (counts[d] || 0) + 1;
+                });
+
+                const uniqueValues = Object.keys(counts).map(Number).sort((a,b) => b-a);
+                const maxCount = uniqueValues.length > 0 ? Math.max(...Object.values(counts)) : 0;
+                
+                if (maxCount + wilds >= 5) return { rank: HAND_RANKS.FIVE_OF_A_KIND, value: uniqueValues[0] || 6 };
+                if (maxCount + wilds >= 4) return { rank: HAND_RANKS.FOUR_OF_A_KIND, value: uniqueValues[0] };
+
+                // Full House
+                for (let val of uniqueValues) {
+                    let w = wilds;
+                    let c = counts[val];
+                    if (c + w >= 3) {
+                        let w_remain = w - (3 - c);
+                        if (w_remain < 0) w_remain = 0;
+                        for (let val2 of uniqueValues) {
+                            if (val2 === val) continue;
+                            if (counts[val2] + w_remain >= 2) return { rank: HAND_RANKS.FULL_HOUSE, value: val * 10 + val2 };
+                        }
+                    }
+                }
+
+                // Straight Logic (2-3-4-5-6)
+                const needed = [2, 3, 4, 5, 6];
+                let missingCount = 0;
+                needed.forEach(n => {
+                    if (!dice.includes(n)) missingCount++;
+                });
+                
+                if (missingCount <= wilds) {
+                    return { rank: HAND_RANKS.STRAIGHT, value: 6 };
+                }
+
+                if (maxCount + wilds >= 3) return { rank: HAND_RANKS.THREE_OF_A_KIND, value: uniqueValues[0] };
+
+                let pairs = 0;
+                let w_temp = wilds;
+                for (let val of uniqueValues) {
+                    if (counts[val] >= 2) { pairs++; }
+                    else if (counts[val] === 1 && w_temp > 0) { pairs++; w_temp--; }
+                }
+                if (pairs >= 2) return { rank: HAND_RANKS.TWO_PAIR, value: uniqueValues[0] };
+                if (maxCount + wilds >= 2) return { rank: HAND_RANKS.ONE_PAIR, value: uniqueValues[0] };
+
+                return { rank: HAND_RANKS.HIGH_CARD, value: Math.max(...dice) };
+            } catch (e) {
+                console.error("Eval Error", e);
+                return { rank: 1, value: 1 };
+            }
+        };
+
+        const Die = ({ value, held, onClick, size = "large" }) => {
+            const isOne = value === 1;
+            const isZero = value === 0;
+            const sizeClass = size === "large" ? "w-16 h-16 text-3xl" : "w-8 h-8 text-sm";
+            
+            if (isZero) {
+                 return (
+                    <div className={`${sizeClass} flex items-center justify-center rounded-xl border-2 border-slate-700 bg-slate-900 text-slate-700 shadow-inner`}>
+                        <Icon name="Mug" size={size === "large" ? 24 : 12} />
+                    </div>
+                 );
+            }
+
+            return (
+                <div onClick={onClick} className={`${sizeClass} flex items-center justify-center rounded-xl border-2 font-bold cursor-pointer shadow-lg dice-face ${held ? 'border-yellow-500 bg-yellow-900/50 -translate-y-2' : 'border-slate-600 bg-slate-800'} ${isOne ? 'text-yellow-400' : 'text-white'} hover:bg-slate-700`}>
+                    {isOne ? <Icon name="Star" size={size === "large" ? 36 : 18} /> : value}
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [gameState, setGameState] = useState('START');
+            const [funds, setFunds] = useState(100);
+            const [tips, setTips] = useState(5);
+            const [round, setRound] = useState(1);
+            const [tab, setTab] = useState(0);
+            const [message, setMessage] = useState("Welcome to Law Brewing!");
+            
+            const [playerDice, setPlayerDice] = useState([0, 0, 0, 0, 0]);
+            const [heldDice, setHeldDice] = useState([false, false, false, false, false]);
+            const [rollsLeft, setRollsLeft] = useState(3);
+            const [playerHand, setPlayerHand] = useState(null);
+            
+            const [opponents, setOpponents] = useState([]);
+            
+            // Economy and Replacement Logic States
+            const [retiredPatronTypes, setRetiredPatronTypes] = useState([]); // Array of names
+            const [activePatronNames, setActivePatronNames] = useState([]); // Array of names currently playing
+            
+            const [turnOrder, setTurnOrder] = useState([]); 
+            const [currentTurnIndex, setCurrentTurnIndex] = useState(0);
+            const [lastRoundRankings, setLastRoundRankings] = useState([]);
+
+            const [imgError, setImgError] = useState(false);
+
+            // --- AI & TURN MANAGEMENT ---
+
+            useEffect(() => {
+                if (gameState === 'ROLLING') {
+                    const activeId = turnOrder[currentTurnIndex];
+                    if (activeId !== undefined && activeId !== 'player') {
+                        const aiDelay = setTimeout(() => {
+                            playAITurn(activeId);
+                        }, 1200);
+                        return () => clearTimeout(aiDelay);
+                    }
+                }
+            }, [currentTurnIndex, gameState, turnOrder]);
+
+            const findReplacementPatron = (bankruptTypeId) => {
+                const currentPatronNames = opponents.map(o => o.typeId);
+                const usedPatronNames = [...retiredPatronTypes, ...currentPatronNames];
+                
+                // Find the patron type that has never been used (active or retired)
+                const replacementType = BASE_PATRON_TYPES.find(p => !usedPatronNames.includes(p.name));
+                
+                if (!replacementType) return null; 
+
+                return {
+                    ...replacementType,
+                    id: Math.max(...opponents.map(o => o.id), 0) + 1, 
+                    dice: [0,0,0,0,0],
+                    hand: null,
+                    money: PATRON_START_MONEY,
+                    status: 'Waiting',
+                    typeId: replacementType.name 
+                };
+            };
+
+            const playAITurn = (aiId) => {
+                setOpponents(prev => {
+                    return prev.map(opp => {
+                        if (opp.id === aiId) {
+                            let currentDice = [1,1,1,1,1].map(()=>Math.ceil(Math.random()*6));
+                            for(let r=0; r<2; r++) { 
+                                const keeps = getAIKeeps(currentDice, opp.type);
+                                currentDice = currentDice.map((d, i) => keeps.includes(i) ? d : Math.ceil(Math.random() * 6));
+                            }
+                            return { 
+                                ...opp, 
+                                dice: currentDice, 
+                                hand: evaluateHand(currentDice),
+                                status: 'Done' 
+                            };
+                        }
+                        return opp;
+                    });
+                });
+                advanceTurn();
+            };
+
+            const advanceTurn = () => {
+                const nextIndex = currentTurnIndex + 1;
+                if (nextIndex >= turnOrder.length) {
+                    finishRound();
+                } else {
+                    setCurrentTurnIndex(nextIndex);
+                    const nextId = turnOrder[nextIndex];
+                    if (nextId === 'player') {
+                        setPlayerDice([0,0,0,0,0]); 
+                        setHeldDice([false,false,false,false,false]);
+                        setRollsLeft(3);
+                        setMessage("It's your turn! Roll to beat the tab.");
+                    } else {
+                        const oppName = opponents.find(o => o.id === nextId)?.name || "Opponent";
+                        setMessage(`Waiting for ${oppName}...`);
+                    }
+                }
+            };
+
+            const initializeGame = () => {
+                setFunds(100);
+                setTips(5);
+                setRound(1);
+                setLastRoundRankings([]);
+                setRetiredPatronTypes([]); 
+                
+                const allPatronTypes = [...BASE_PATRON_TYPES];
+                const shuffled = allPatronTypes.sort(() => 0.5 - Math.random());
+                const initialTypes = shuffled.slice(0, 3);
+
+                const newOpponents = initialTypes.map((pType, i) => ({
+                    ...pType,
+                    id: i,
+                    dice: [0,0,0,0,0],
+                    hand: null,
+                    money: PATRON_START_MONEY,
+                    status: 'Waiting',
+                    typeId: pType.name 
+                }));
+                
+                setOpponents(newOpponents);
+                setActivePatronNames(newOpponents.map(o => o.typeId));
+
+                const order = [...newOpponents.map(o => o.id), 'player'];
+                setupRound(order, newOpponents);
+            };
+
+            const startRound = () => {
+                let order = [];
+                if (lastRoundRankings.length > 0) {
+                    const worstToBest = [...lastRoundRankings].reverse();
+                    order = worstToBest.map(p => p.id);
+                } else {
+                    order = [...opponents.map(o => o.id), 'player'];
+                }
+                setupRound(order, opponents);
+            };
+
+            const setupRound = (order, currentOpponents) => {
+                setPlayerDice([0,0,0,0,0]);
+                setPlayerHand(null);
+                setHeldDice([false, false, false, false, false]);
+                setRollsLeft(3);
+
+                const resetOpponents = currentOpponents.map(opp => ({
+                    ...opp,
+                    dice: [0,0,0,0,0], 
+                    hand: null, 
+                    status: 'Waiting'
+                }));
+                setOpponents(resetOpponents);
+                setActivePatronNames(resetOpponents.map(o => o.typeId));
+
+                const baseCost = 15;
+                setTab(baseCost * (currentOpponents.length + 1));
+                setTurnOrder(order);
+                setCurrentTurnIndex(0);
+                setGameState('ROLLING');
+                
+                const firstId = order[0];
+                if (firstId === 'player') setMessage("You have the worst record. You go first!");
+                else {
+                    const name = resetOpponents.find(o => o.id === firstId)?.name;
+                    setMessage(`${name} had the worst hand. They start.`);
+                }
+            };
+
+            const rollDice = () => {
+                if (rollsLeft <= 0 || turnOrder[currentTurnIndex] !== 'player') return;
+                
+                const newDice = playerDice.map((val, idx) => {
+                    if (val === 0) return Math.ceil(Math.random() * 6);
+                    return heldDice[idx] ? val : Math.ceil(Math.random() * 6);
+                });
+                setPlayerDice(newDice);
+                
+                const newRolls = rollsLeft - 1;
+                setRollsLeft(newRolls);
+
+                if (newRolls === 0) {
+                    setTimeout(advanceTurn, 1000); 
+                }
+            };
+
+            const forceFinish = () => {
+                if (turnOrder[currentTurnIndex] !== 'player') return;
+                setRollsLeft(0);
+                advanceTurn();
+            };
+
+            const getAIKeeps = (dice, type) => {
+                let keeps = [];
+                dice.forEach((d, i) => { if(d === 1) keeps.push(i); });
+                const counts = {};
+                dice.forEach(d => counts[d] = (counts[d] || 0) + 1);
+                for (let i=0; i<5; i++) {
+                    if (keeps.includes(i)) continue;
+                    const val = dice[i];
+                    if (counts[val] >= 2) keeps.push(i);
+                    if (type === 'Aggressive' && val >= 5) keeps.push(i);
+                }
+                return keeps;
+            };
+
+            const finishRound = () => {
+                setGameState('EVALUATION');
+                const finalPHand = evaluateHand(playerDice);
+                setPlayerHand(finalPHand);
+                const finalOpponents = opponents.map(opp => ({ ...opp, hand: evaluateHand(opp.dice) }));
+                setOpponents(finalOpponents);
+                setTimeout(() => determineWinner(finalPHand, finalOpponents), 1000);
+            };
+
+            const determineWinner = (pHand, opps) => {
+                const safePHand = pHand || { rank: 1, value: 0 };
+                const safeOpps = opps.map(o => ({...o, hand: o.hand || {rank:1, value:0}}));
+
+                const allPlayers = [
+                    { id: 'player', name: 'You', hand: safePHand },
+                    ...safeOpps.map(o => ({ id: o.id, name: o.name, hand: o.hand, money: o.money, typeId: o.typeId }))
+                ];
+
+                allPlayers.sort((a, b) => {
+                    if (b.hand.rank !== a.hand.rank) return b.hand.rank - a.hand.rank;
+                    return b.hand.value - a.hand.value;
+                });
+                
+                setLastRoundRankings(allPlayers);
+
+                const loser = allPlayers[allPlayers.length - 1];
+                let msg = "";
+                let newFunds = funds;
+                let newTips = tips;
+
+                // --- Player Wins/Tips Logic ---
+                if (allPlayers[0].id === 'player') {
+                    newTips += 5;
+                    msg += "WINNER! You got +5 Tips. ";
+                }
+                
+                // --- Loser Pays Logic ---
+                if (loser.id === 'player') {
+                    newFunds -= tab;
+                    msg += `YOU LOST with ${HAND_NAMES[loser.hand.rank]}. Paid $${tab}.`;
+                } else {
+                    // A Patron Lost
+                    const loserPatron = opps.find(o => o.id === loser.id);
+                    const newPatronMoney = loserPatron.money - tab;
+                    
+                    if (newPatronMoney <= 0) {
+                        // BANKRUPTCY & REPLACEMENT
+                        
+                        // New elimination message
+                        const eliminationMessage = `${loserPatron.name} has bought a round of nIPLy and headed out.`;
+
+                        setRetiredPatronTypes(prev => [...prev, loserPatron.typeId]);
+                        
+                        const replacement = findReplacementPatron(loserPatron.typeId);
+                        
+                        if (replacement) {
+                            // Replace Patron and adjust funds
+                            setOpponents(prev => prev.map(opp => opp.id === loser.id ? replacement : opp));
+                            newFunds += loserPatron.money; // House takes what was left of their money
+                            msg += `${eliminationMessage} They've been replaced by ${replacement.name}.`;
+                        } else {
+                            // BAR WINS! All 4 patrons have been retired.
+                            newFunds += loserPatron.money;
+                            msg += `${eliminationMessage} The bar is clear, and you win!`;
+                            setTimeout(() => setGameState('GAME_OVER'), 3000);
+                        }
+                    } else {
+                        // Normal Patron Loss
+                        setOpponents(prev => prev.map(o => o.id === loser.id ? { ...o, money: newPatronMoney } : o));
+                        newFunds += tab;
+                        msg += `${loser.name} lost (${HAND_NAMES[loser.hand.rank]}). They paid $${tab}.`;
+                    }
+                }
+
+                setFunds(newFunds);
+                setTips(newTips);
+                setMessage(msg);
+                setGameState('ROUND_END');
+
+                if (newFunds <= 0) setTimeout(() => setGameState('GAME_OVER'), 3000);
+            };
+
+            const useAbility = (ability) => {
+                if (gameState !== 'ROLLING' || rollsLeft === 3 || turnOrder[currentTurnIndex] !== 'player') return;
+                
+                if (ability === 'REROLL_OPP') {
+                    setMessage("Ability not available in Turn Mode (Simulated).");
+                } 
+                else if (ability === 'BADGE' && tips >= 5) {
+                    const idx = playerDice.findIndex(d => d !== 1 && d !== 0);
+                    if (idx !== -1) {
+                        setTips(prev => prev - 5);
+                        const newDice = [...playerDice];
+                        newDice[idx] = 1;
+                        setPlayerDice(newDice);
+                        setMessage("Used Badge!");
+                    }
+                } else if (ability === 'FRESH_DICE' && tips >= 2) {
+                    setTips(prev => prev - 2);
+                    setRollsLeft(prev => prev + 1);
+                    setMessage("Bought Extra Roll!");
+                }
+            };
+
+            const toggleDie = (idx) => {
+                if (gameState !== 'ROLLING' || rollsLeft === 3 || turnOrder[currentTurnIndex] !== 'player') return;
+                if (playerDice[idx] === 0) return;
+                
+                const newHeld = [...heldDice];
+                newHeld[idx] = !newHeld[idx];
+                setHeldDice(newHeld);
+            };
+
+            const currentHandDisplay = useMemo(() => evaluateHand(playerDice), [playerDice]);
+            const isPlayerTurn = gameState === 'ROLLING' && turnOrder[currentTurnIndex] === 'player';
+
+            return (
+                <div className="wood-texture flex flex-col items-center">
+                    <div className="absolute inset-0 bg-black/40 pointer-events-none"></div>
+                    
+                    {/* Header */}
+                    <div className="w-full max-w-4xl p-3 z-10 flex justify-between items-center glass-panel mt-4 rounded-lg shadow-2xl mx-2 relative z-[50]">
+                        <div className="flex items-center gap-3">
+                            <div className="w-16 h-16 bg-black rounded-full border-2 border-yellow-600 flex items-center justify-center overflow-hidden shrink-0 relative">
+                                {!imgError ? (
+                                    <img src="1000001562.png" onError={() => setImgError(true)} className="w-full h-full object-cover" alt="Logo" />
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center text-yellow-600"><span className="text-sm font-western mt-1">LAW</span></div>
+                                )}
+                            </div>
+                            <div>
+                                <h1 className="text-xl font-western text-yellow-500 tracking-wider">LAW BREWING BAR DICE</h1>
+                                <div className="flex gap-3 text-xs text-slate-300 font-mono">
+                                    <span title="Bar Funds: Your total money. Game over if it reaches $0." className="flex items-center gap-1 cursor-help"><Icon name="DollarSign" size={12} className="text-green-400"/> {funds}</span>
+                                    <span title="Tips: Earned by winning (Highest Hand). Spend to use Perks." className="flex items-center gap-1 cursor-help"><Icon name="Trophy" size={12} className="text-yellow-400"/> {tips}</span>
+                                    <span title="Current Tab: The cost of this round. The player with the Lowest Hand pays this." className="flex items-center gap-1 cursor-help"><Icon name="Beer" size={12} className="text-amber-500"/> ${gameState === 'START' ? 0 : tab}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                            {/* Cheat Sheet Toggle */}
+                            <div className="relative cheat-sheet-container">
+                                <button className="flex items-center gap-1 text-xs text-slate-300 hover:text-white border border-slate-600 px-2 py-1 rounded bg-slate-800">
+                                    <Icon name="Help" size={12} /> Hand Ranks
+                                </button>
+                                {/* The Cheat Sheet Popup */}
+                                <div className="cheat-sheet hidden absolute right-0 top-8 w-64 bg-slate-900 border border-yellow-600 rounded p-3 shadow-xl text-xs">
+                                    <h3 className="font-bold text-yellow-500 mb-2 border-b border-slate-700 pb-1">Hand Rankings</h3>
+                                    <ul className="space-y-1 text-slate-300">
+                                        <li><span className="text-yellow-500">8.</span> Keg Stand (5-Kind)</li>
+                                        <li><span className="text-yellow-500">7.</span> Case (4-Kind)</li>
+                                        <li><span className="text-yellow-500">6.</span> Full Tab (Full House)</li>
+                                        <li><span className="text-yellow-500">5.</span> Flight (Straight)</li>
+                                        <li><span className="text-yellow-500">4.</span> Six Pack (3-Kind)</li>
+                                        <li><span className="text-yellow-500">3.</span> Double Fisted (2 Pair)</li>
+                                        <li><span className="text-yellow-500">2.</span> Solo Cup (Pair)</li>
+                                        <li><span className="text-yellow-500">1.</span> Spilled Drink (High)</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <div className="text-[10px] text-slate-400 uppercase tracking-widest">Round</div>
+                                <div className="text-2xl font-western text-white">{round}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Game Board */}
+                    <div className="w-full max-w-4xl mt-4 z-10 flex flex-col gap-4 px-3 pb-8">
+                        {/* Message Bar */}
+                        <div className="bg-slate-900/90 border-l-4 border-yellow-500 p-3 rounded text-center shadow-lg min-h-[3.5rem] flex items-center justify-center transition-all z-[10]">
+                            <span className="text-sm md:text-base font-medium animate-pulse">{message}</span>
+                        </div>
+
+                        {/* Opponents Grid */}
+                        <div className="grid grid-cols-3 gap-2">
+                            {opponents.map((opp) => {
+                                const isMyTurn = gameState === 'ROLLING' && turnOrder[currentTurnIndex] === opp.id;
+                                const AvatarComp = opp.Avatar;
+                                return (
+                                    <div key={opp.id} className={`glass-panel p-2 rounded-lg flex flex-col items-center gap-1 transition-all duration-500 ${isMyTurn ? 'active-turn' : 'inactive-turn'} ${gameState === 'ROUND_END' && opp.hand && opp.hand.rank < 3 ? 'border-red-500 bg-red-900/20' : ''}`}>
+                                        <div className="flex flex-col md:flex-row items-center gap-1 mb-1">
+                                            <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center shrink-0 overflow-hidden border border-slate-500">
+                                                <AvatarComp />
+                                            </div>
+                                            <div className="text-center md:text-left overflow-hidden">
+                                                <div className="text-[10px] md:text-xs font-bold text-slate-200 truncate w-full">{opp.name}</div>
+                                                <div className="flex items-center justify-center text-[10px] text-green-400 font-mono">
+                                                    <Icon name="DollarSign" size={10} className="text-green-400"/> {opp.money}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-1 justify-center flex-wrap scale-90 origin-top">
+                                            {opp.dice.map((d, i) => <Die key={i} value={d} size="small" />)}
+                                        </div>
+                                        <div className="text-[10px] font-bold text-yellow-500 mt-1 uppercase text-center h-4 leading-none">
+                                            {opp.hand ? HAND_NAMES[opp.hand.rank].split('(')[0] : (d => {
+                                                if (opp.dice[0] === 0) return
             // Updated Wild to be a 6-point Star
             Star: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 0L14.59 8.06L22.5 5.5L17.3 12L22.5 18.5L14.59 15.94L12 24L9.41 15.94L1.5 18.5L6.7 12L1.5 5.5L9.41 8.06L12 0Z"/></svg>,
             // Redesigned Beer Icon for Tab
