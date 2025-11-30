@@ -6,29 +6,16 @@
     <title>Law Brewing Bar Dice</title>
     
     <style>
-        body { background-color: #1a1a1a; color: white; font-family: sans-serif; overflow-x: hidden; }
+        @import url('https://fonts.googleapis.com/css2?family=Rye&family=Roboto:wght@400;700&display=swap');
+
+        body { 
+            font-family: 'Roboto', sans-serif;
+            background-color: #1a1a1a; 
+            color: white; 
+            overflow-x: hidden; 
+        }
         #root { width: 100%; min-height: 100vh; display: flex; justify-content: center; }
         .loading-text { margin-top: 20px; color: #888; text-align: center; }
-    </style>
-
-    <!-- Error Handler -->
-    <script>
-        window.onerror = function(message, source, lineno, colno, error) {
-            console.error(error);
-            if (message.includes("React") || message.includes("Minified")) {
-                 document.body.innerHTML = "<div style='color:white;padding:20px;text-align:center'><h2>Game Error</h2><p>Please check the console for details and refresh the page.</p><small>" + message + "</small></div>";
-            }
-        };
-    </script>
-
-    <!-- React & Babel -->
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Rye&family=Roboto:wght@400;700&display=swap');
         
         .font-western { font-family: 'Rye', serif; }
         .dice-face { transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); user-select: none; }
@@ -52,7 +39,30 @@
         .cheat-sheet-container:hover .cheat-sheet { display: block; }
         /* High Z-index to ensure it shows over game board */
         .cheat-sheet { z-index: 9999; }
+        
+        /* Ensures the white-space: pre-wrap style on the message bar is applied */
+        .message-box { white-space: pre-wrap; }
+        
+        /* Opponent seating layout (Always 3 visible slots) */
+        .opponent-seat { min-height: 140px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }
     </style>
+
+    <!-- Error Handler -->
+    <script>
+        window.onerror = function(message, source, lineno, colno, error) {
+            console.error("Critical Runtime Error:", message, "Line:", lineno);
+            if (message.includes("React") || message.includes("Minified") || message.includes("define")) {
+                 document.body.innerHTML = "<div style='color:white;padding:20px;text-align:center'><h2>Game Error Detected</h2><p>A critical rendering error occurred. Please check the browser console (F12) for specific details.</p><small>"+message+"</small></div>";
+            }
+        };
+    </script>
+
+    <!-- React & Babel (Using Development version for stability) -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
 </head>
 <body>
     
@@ -76,14 +86,22 @@
                 </svg>
             ),
             DollarSign: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>,
-            Trophy: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>,
             Skull: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><path d="M8 20v2h8v-2"/><path d="M12.5 17l.5-2 .5 2h2l.5-2 .5 2"/><path d="M16 20a2 2 0 0 0 1.56-3.25 8 8 0 1 0-11.12 0A2 2 0 0 0 8 20"/></svg>,
             RefreshCw: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>,
-            Zap: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
-            TrendingUp: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>,
-            Check: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
+            Zap: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2 L3 14 L12 14 L11 22 L21 10 L12 10 L13 2 Z"/></svg>,
+            TrendingUp: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 7 L13.5 15.5 L8.5 10.5 L2 17 M16 7 L22 7 L22 13"/></svg>,
+            Check: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 L9 17 L4 12"/></svg>,
             Help: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>,
             Mug: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 6h2a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M4 6h13v14H4V6Z"/><path d="M8 6v14"/><path d="M12 6v14"/><path d="M4 10h13"/></svg>,
+            Trophy: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>,
+            // Added icons for celebration screen
+            Party: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M15 11a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/><path d="M19 12c0 2.2-1.5 4.3-4.5 4.3S10 14.2 10 12c0-2.3 1.5-4.3 4.5-4.3S19 9.8 19 12z"/><path d="M21 12c0 3.3-2.5 6-7 6s-7-2.7-7-6c0-3.3 2.5-6 7-6s7 2.7 7 6z"/><path d="M22 12c0 4.4-3.4 8-10 8S2 16.4 2 12 5.4 4 12 4s10 3.6 10 8z"/></svg>,
+        };
+
+        const Icon = ({ name, size = 16, className = "" }) => {
+            const Component = Icons[name];
+            if (!Component) return null;
+            return <div className={className} style={{ width: size, height: size, display: 'inline-block' }}><Component /></div>;
         };
 
         // --- CUSTOM AVATARS ---
@@ -133,14 +151,15 @@
             )
         };
 
-        const Icon = ({ name, size = 16, className = "" }) => {
-            const Component = Icons[name];
-            if (!Component) return null;
-            return <div className={className} style={{ width: size, height: size, display: 'inline-block' }}><Component /></div>;
-        };
-
         // --- CONSTANTS & LOGIC ---
+        const HOUSE_START_MONEY = 50;
         const PATRON_START_MONEY = 50;
+        const CONTRIBUTION = 10;
+        const BUY_A_ROUND_COST = 20;
+        const ROUND_DRINKS = ["nIPLy", "Raspberry Cabana", "NOT Burnt Marshmallow Pastry Stout", "LFO", "subLime", "Hopped Up on Enemy's Blood"];
+        const GAME_STATE_BAR_WINS = 'BAR_WINS'; // New state for House victory celebration
+
+
         const HAND_RANKS = {
             FIVE_OF_A_KIND: 8, FOUR_OF_A_KIND: 7, FULL_HOUSE: 6, STRAIGHT: 5,
             THREE_OF_A_KIND: 4, TWO_PAIR: 3, ONE_PAIR: 2, HIGH_CARD: 1
@@ -158,6 +177,13 @@
             { name: "James Roberts", type: "Calculator", Avatar: Avatars.James }
         ];
 
+        // Utility to find the correct Avatar function by name
+        const getAvatarComponent = (name) => {
+            const patronType = BASE_PATRON_TYPES.find(p => p.name === name);
+            // Must return the actual component function
+            return patronType ? patronType.Avatar : Avatars.Pete; 
+        };
+
         const evaluateHand = (dice) => {
             if (!dice || dice[0] === 0) return null; 
 
@@ -172,36 +198,64 @@
                 const uniqueValues = Object.keys(counts).map(Number).sort((a,b) => b-a);
                 const maxCount = uniqueValues.length > 0 ? Math.max(...Object.values(counts)) : 0;
                 
+                // --- 1. Top Tier Hands (5/4 of a Kind) ---
                 if (maxCount + wilds >= 5) return { rank: HAND_RANKS.FIVE_OF_A_KIND, value: uniqueValues[0] || 6 };
                 if (maxCount + wilds >= 4) return { rank: HAND_RANKS.FOUR_OF_A_KIND, value: uniqueValues[0] };
 
-                // Full House
+                // --- 2. Full House (Crucial Fix) ---
+                let tempWilds = wilds;
+                let threeKindValue = null;
+                let pairValue = null;
+                
+                // Find best potential three-of-a-kind (3x)
                 for (let val of uniqueValues) {
-                    let w = wilds;
-                    let c = counts[val];
-                    if (c + w >= 3) {
-                        let w_remain = w - (3 - c);
-                        if (w_remain < 0) w_remain = 0;
-                        for (let val2 of uniqueValues) {
-                            if (val2 === val) continue;
-                            if (counts[val2] + w_remain >= 2) return { rank: HAND_RANKS.FULL_HOUSE, value: val * 10 + val2 };
-                        }
+                    let needed = 3 - (counts[val] || 0);
+                    if (needed <= tempWilds && needed >= 0) {
+                        tempWilds -= needed;
+                        threeKindValue = val;
+                        break; 
                     }
                 }
-
-                // Straight Logic (2-3-4-5-6)
+                
+                // If 3x found, look for best pair (2y) among remaining non-1s
+                if (threeKindValue !== null) {
+                    // Check other unique values for a pair
+                    for (let val2 of uniqueValues) {
+                        if (val2 === threeKindValue) continue;
+                        let needed = 2 - (counts[val2] || 0);
+                        if (needed <= tempWilds && needed >= 0) {
+                            pairValue = val2;
+                            break;
+                        }
+                    }
+                    
+                    // Fallback check if the remaining two dice (including wilds) form a pair of the next best card
+                    if (pairValue === null) {
+                        if (uniqueValues.length === 2 && (counts[uniqueValues[0]] + counts[uniqueValues[1]] + wilds) === 5) {
+                             // This handles cases like [4,4,4, 5,5] or [4,4,W, 5,5] where 5,5 is the pair
+                             return { rank: HAND_RANKS.FULL_HOUSE, value: threeKindValue * 10 + (uniqueValues.find(v => v !== threeKindValue) || 0) };
+                        }
+                    }
+                    
+                    if (pairValue !== null) {
+                         return { rank: HAND_RANKS.FULL_HOUSE, value: threeKindValue * 10 + pairValue };
+                    }
+                }
+                
+                // --- 3. Straight Logic (2-3-4-5-6) ---
                 const needed = [2, 3, 4, 5, 6];
                 let missingCount = 0;
                 needed.forEach(n => {
                     if (!dice.includes(n)) missingCount++;
                 });
-                
                 if (missingCount <= wilds) {
                     return { rank: HAND_RANKS.STRAIGHT, value: 6 };
                 }
 
+                // --- 4. Three of a Kind ---
                 if (maxCount + wilds >= 3) return { rank: HAND_RANKS.THREE_OF_A_KIND, value: uniqueValues[0] };
 
+                // --- 5. Two Pair ---
                 let pairs = 0;
                 let w_temp = wilds;
                 for (let val of uniqueValues) {
@@ -209,11 +263,15 @@
                     else if (counts[val] === 1 && w_temp > 0) { pairs++; w_temp--; }
                 }
                 if (pairs >= 2) return { rank: HAND_RANKS.TWO_PAIR, value: uniqueValues[0] };
+                
+                // --- 6. One Pair ---
                 if (maxCount + wilds >= 2) return { rank: HAND_RANKS.ONE_PAIR, value: uniqueValues[0] };
 
+                // --- 7. High Card ---
                 return { rank: HAND_RANKS.HIGH_CARD, value: Math.max(...dice) };
+
             } catch (e) {
-                console.error("Eval Error", e);
+                console.error("Eval Error:", e);
                 return { rank: 1, value: 1 };
             }
         };
@@ -239,13 +297,14 @@
         };
 
         const App = () => {
+            // --- STATE ---
             const [gameState, setGameState] = useState('START');
-            const [funds, setFunds] = useState(100);
-            const [tips, setTips] = useState(5);
+            const [funds, setFunds] = useState(HOUSE_START_MONEY);
+            const [pot, setPot] = useState(0); 
             const [round, setRound] = useState(1);
-            const [tab, setTab] = useState(0);
             const [message, setMessage] = useState("Welcome to Law Brewing!");
             
+            // Dice/Turn State
             const [playerDice, setPlayerDice] = useState([0, 0, 0, 0, 0]);
             const [heldDice, setHeldDice] = useState([false, false, false, false, false]);
             const [rollsLeft, setRollsLeft] = useState(3);
@@ -253,9 +312,7 @@
             
             const [opponents, setOpponents] = useState([]);
             
-            // Economy and Replacement Logic States
             const [retiredPatronTypes, setRetiredPatronTypes] = useState([]);
-            const [activePatronNames, setActivePatronNames] = useState([]); 
             
             const [turnOrder, setTurnOrder] = useState([]); 
             const [currentTurnIndex, setCurrentTurnIndex] = useState(0);
@@ -278,7 +335,7 @@
             }, [currentTurnIndex, gameState, turnOrder]);
 
             const findReplacementPatron = () => {
-                const currentPatronNames = opponents.map(o => o.typeId);
+                const currentPatronNames = opponents.map(o => o.typeId).filter(name => name !== undefined);
                 const usedPatronNames = [...retiredPatronTypes, ...currentPatronNames];
                 
                 const replacementType = BASE_PATRON_TYPES.find(p => !usedPatronNames.includes(p.name));
@@ -292,7 +349,8 @@
                     hand: null,
                     money: PATRON_START_MONEY,
                     status: 'Waiting',
-                    typeId: replacementType.name 
+                    typeId: replacementType.name,
+                    Avatar: getAvatarComponent(replacementType.name)
                 };
             };
 
@@ -300,6 +358,7 @@
                 setOpponents(prev => {
                     return prev.map(opp => {
                         if (opp.id === aiId) {
+                            // AI rolls 3 times total
                             let currentDice = [1,1,1,1,1].map(()=>Math.ceil(Math.random()*6));
                             for(let r=0; r<2; r++) { 
                                 const keeps = getAIKeeps(currentDice, opp.type);
@@ -329,17 +388,18 @@
                         setPlayerDice([0,0,0,0,0]); 
                         setHeldDice([false,false,false,false,false]);
                         setRollsLeft(3);
-                        setMessage("It's your turn! Roll to beat the tab.");
+                        setMessage("It's your turn! Roll for the pot.");
                     } else {
-                        const oppName = opponents.find(o => o.id === nextId)?.name || "Opponent";
+                        // FIX: Ensure name lookup is safe before using it
+                        const opp = opponents.find(o => o.id === nextId);
+                        const oppName = opp ? opp.name : "Opponent";
                         setMessage(`Waiting for ${oppName}...`);
                     }
                 }
             };
 
             const initializeGame = () => {
-                setFunds(100);
-                setTips(5);
+                setFunds(HOUSE_START_MONEY);
                 setRound(1);
                 setLastRoundRankings([]);
                 setRetiredPatronTypes([]); 
@@ -355,55 +415,145 @@
                     hand: null,
                     money: PATRON_START_MONEY,
                     status: 'Waiting',
-                    typeId: pType.name 
+                    typeId: pType.name,
+                    Avatar: getAvatarComponent(pType.name)
                 }));
                 
                 setOpponents(newOpponents);
-                setActivePatronNames(newOpponents.map(o => o.typeId));
 
                 const order = [...newOpponents.map(o => o.id), 'player'];
                 setupRound(order, newOpponents);
+            };
+            
+            // --- NEW ELIMINATION CHECK BEFORE STARTING ROUND ---
+            const checkAndEliminateBeforeRound = (currentOpponents) => {
+                let currentFunds = funds;
+                let updatedOpponents = [];
+                let eliminationMessage = "";
+
+                // 1. Check Patrons for Elimination (Must afford $10 contribution)
+                for (const opp of currentOpponents) {
+                    if (opp.money < CONTRIBUTION) {
+                        // ELIMINATE
+                        setRetiredPatronTypes(prev => {
+                            if (!prev.includes(opp.typeId)) {
+                                return [...prev, opp.typeId];
+                            }
+                            return prev;
+                        });
+
+                        const replacement = findReplacementPatron();
+
+                        if (replacement) {
+                            updatedOpponents.push(replacement);
+                            eliminationMessage += `\n🚨 ${opp.name} ran out of cash and was replaced by ${replacement.name}.`;
+                        } else {
+                            // All 4 patrons played, seat remains empty.
+                            updatedOpponents.push({ ...opp, money: 0 }); // Retain zeroed patron temporarily for UI consistency
+                            eliminationMessage += `\n🚨 ${opp.name} ran out of cash! That seat is now empty.`;
+                        }
+                    } else {
+                        // Keep the solvent patron
+                        updatedOpponents.push(opp);
+                    }
+                }
+                // Filter out eliminated patrons before the next round setup
+                updatedOpponents = updatedOpponents.filter(opp => opp.money >= CONTRIBUTION || opp.id > BASE_PATRON_TYPES.length); 
+
+                // 2. Check House for Elimination
+                let isGameOver = false;
+                if (currentFunds < CONTRIBUTION) {
+                    eliminationMessage += "\n\n🚨 Womp. Womp. The House cannot afford the next round's contribution.";
+                    isGameOver = true;
+                }
+                
+                if (isGameOver) {
+                    setMessage(eliminationMessage);
+                    setTimeout(() => setGameState('GAME_OVER'), 500);
+                    return { continue: false };
+                }
+
+                if (eliminationMessage) {
+                     setMessage(eliminationMessage);
+                     setTimeout(() => {
+                         // After showing elimination message, start the round setup
+                         setupRound(updatedOpponents.length, updatedOpponents);
+                     }, 2000);
+                     return { continue: false };
+                }
+
+                // If no eliminations, proceed immediately
+                return { continue: true, opponents: updatedOpponents };
             };
 
             const startRound = () => {
                 setRound(r => r + 1);
 
-                let order = [];
-                if (lastRoundRankings.length > 0) {
-                    const worstToBest = [...lastRoundRankings].reverse();
-                    order = worstToBest.map(p => p.id);
-                } else {
-                    order = [...opponents.map(o => o.id), 'player'];
+                // Check for eliminations before proceeding to contribution
+                const result = checkAndEliminateBeforeRound(opponents);
+
+                if (result.continue) {
+                    let order = [];
+                    if (lastRoundRankings.length > 0) {
+                        const worstToBest = [...lastRoundRankings].reverse();
+                        
+                        // Filter the order list to only include active players
+                        const activeIds = result.opponents.map(o => o.id);
+                        activeIds.push('player');
+                        order = worstToBest.map(p => p.id).filter(id => activeIds.includes(id));
+
+                    } else {
+                        order = [...result.opponents.map(o => o.id), 'player'];
+                    }
+                    setupRound(order, result.opponents);
                 }
-                setupRound(order, opponents);
             };
 
             const setupRound = (order, currentOpponents) => {
+                // 1. Contributions
+                let currentFunds = funds;
+                let newOpponents = [...currentOpponents];
+                
+                // House Contribution
+                currentFunds -= CONTRIBUTION;
+                
+                // Patron Contributions (Deduct from Patron money)
+                newOpponents = newOpponents.map(opp => ({ ...opp, money: opp.money - CONTRIBUTION }));
+
+                // Calculate Pot
+                const totalPot = (currentOpponents.length + 1) * CONTRIBUTION;
+                
+                // 2. State Reset
+                setFunds(currentFunds);
+                setPot(totalPot);
                 setPlayerDice([0,0,0,0,0]);
                 setPlayerHand(null);
                 setHeldDice([false, false, false, false, false]);
                 setRollsLeft(3);
 
-                const resetOpponents = currentOpponents.map(opp => ({
+                const resetOpponents = newOpponents.map(opp => ({
                     ...opp,
                     dice: [0,0,0,0,0], 
                     hand: null, 
                     status: 'Waiting'
                 }));
                 setOpponents(resetOpponents);
-                setActivePatronNames(resetOpponents.map(o => o.typeId));
 
-                const baseCost = 15;
-                setTab(baseCost * (currentOpponents.length + 1));
-                setTurnOrder(order);
+                // 3. Turn Order
+                // order parameter can be either the sorted list of IDs OR the number of current opponents + 1
+                const finalOrder = Array.isArray(order) ? order : [...resetOpponents.map(o => o.id), 'player'];
+                
+                setTurnOrder(finalOrder);
                 setCurrentTurnIndex(0);
                 setGameState('ROLLING');
                 
-                const firstId = order[0];
-                if (firstId === 'player') setMessage("You have the worst record. You go first!");
+                const firstId = finalOrder[0];
+                if (firstId === 'player') setMessage(`Your $${CONTRIBUTION} is in. Pot is $${totalPot}. You go first!`);
                 else {
-                    const name = resetOpponents.find(o => o.id === firstId)?.name;
-                    setMessage(`${name} had the worst hand. They start.`);
+                    // FIX: Lookup name from the opponents list passed into setupRound
+                    const opp = newOpponents.find(o => o.id === firstId);
+                    const name = opp ? opp.name : "Opponent";
+                    setMessage(`${name} starts. Pot: $${totalPot}.`);
                 }
             };
 
@@ -411,13 +561,22 @@
                 if (rollsLeft <= 0 || turnOrder[currentTurnIndex] !== 'player') return;
                 
                 const newDice = playerDice.map((val, idx) => {
-                    if (val === 0) return Math.ceil(Math.random() * 6);
-                    return heldDice[idx] ? val : Math.ceil(Math.random() * 6);
+                    // Roll if not held OR if it's the very first roll (val === 0)
+                    if (heldDice[idx] && val !== 0) { 
+                        return val;
+                    }
+                    return Math.ceil(Math.random() * 6);
                 });
+                
+                // IMPORTANT: Update state synchronously before checking rolls left
                 setPlayerDice(newDice);
                 
                 const newRolls = rollsLeft - 1;
                 setRollsLeft(newRolls);
+
+                // Force playerHand update (this addresses the delay issue)
+                const newPlayerHand = evaluateHand(newDice);
+                setPlayerHand(newPlayerHand);
 
                 if (newRolls === 0) {
                     setTimeout(advanceTurn, 1000); 
@@ -446,6 +605,7 @@
 
             const finishRound = () => {
                 setGameState('EVALUATION');
+                // Calculate final hand using current state
                 const finalPHand = evaluateHand(playerDice);
                 setPlayerHand(finalPHand);
                 const finalOpponents = opponents.map(opp => ({ ...opp, hand: evaluateHand(opp.dice) }));
@@ -470,78 +630,89 @@
                 setLastRoundRankings(allPlayers);
 
                 const loser = allPlayers[allPlayers.length - 1];
+                const winner = allPlayers[0];
+                const losingDrink = ROUND_DRINKS[Math.floor(Math.random() * ROUND_DRINKS.length)];
+                
                 let msg = "";
-                let newFunds = funds;
-                let newTips = tips;
-
-                // --- Player Wins/Tips Logic ---
-                if (allPlayers[0].id === 'player') {
-                    newTips += 5;
-                    msg += "WINNER! You got +5 Tips. ";
+                let newFunds = funds; 
+                let houseFundChange = 0;
+                
+                // --- 1. Pot Distribution ---
+                const winnerName = winner.id === 'player' ? 'You' : opps.find(o => o.id === winner.id)?.name;
+                const potMessage = `👑 ${winnerName} WON the round with a ${HAND_NAMES[winner.hand.rank].split('(')[0]} and took the $${pot} Pot.`;
+                msg += potMessage;
+                
+                if (winner.id === 'player') {
+                    newFunds += pot;
+                    houseFundChange += pot; 
+                } else {
+                    // Patron Winner
+                    setOpponents(prev => prev.map(o => o.id === winner.id ? { ...o, money: o.money + pot } : o));
                 }
                 
-                // --- Loser Pays Logic ---
+                // --- 2. Loser Pays $20 Penalty (Buys the Round) ---
+                const loserName = loser.id === 'player' ? 'You' : opps.find(o => o.id === loser.id)?.name;
+                
                 if (loser.id === 'player') {
-                    newFunds -= tab;
-                    msg += `YOU LOST with ${HAND_NAMES[loser.hand.rank]}. Paid $${tab}.`;
+                    newFunds -= BUY_A_ROUND_COST;
+                    houseFundChange -= BUY_A_ROUND_COST;
+                    msg += `\n\n💀 YOU had the lowest hand (${HAND_NAMES[loser.hand.rank].split('(')[0]}) and had to buy a round of ${losingDrink} (-$${BUY_A_ROUND_COST}).`;
                 } else {
-                    // A Patron Lost
+                    // Patron Loser Logic
                     const loserPatron = opps.find(o => o.id === loser.id);
-                    const newPatronMoney = loserPatron.money - tab;
                     
-                    if (newPatronMoney <= 0) {
-                        // BANKRUPTCY & REPLACEMENT
-                        setRetiredPatronTypes(prev => [...prev, loserPatron.typeId]);
+                    // Bankruptcy Check: If current money is less than or equal to the penalty cost
+                    if (loserPatron.money <= BUY_A_ROUND_COST) {
+                        // BANKRUPTCY & ELIMINATION
                         
-                        const replacement = findReplacementPatron();
+                        setRetiredPatronTypes(prev => {
+                            if (!prev.includes(loserPatron.typeId)) {
+                                return [...prev, loserPatron.typeId];
+                            }
+                            return prev;
+                        });
                         
-                        if (replacement) {
-                            // Replace Patron and adjust funds
-                            setOpponents(prev => prev.map(opp => opp.id === loser.id ? replacement : opp));
-                            newFunds += loserPatron.money; // House takes what was left of their money
-                            msg += `${loserPatron.name} bought a round of nIPLy and headed out! They've been replaced by ${replacement.name}.`;
-                        } else {
-                            // BAR WINS! All 4 patrons have been retired.
-                            newFunds += loserPatron.money;
-                            msg += `${loserPatron.name} bought a round of nIPLy! ALL PATRONS HAVE BEEN BANKRUPTED!`;
-                            setTimeout(() => setGameState('GAME_OVER'), 3000);
-                        }
+                        // House takes whatever money the patron had left (Patron money becomes 0)
+                        newFunds += loserPatron.money; 
+                        houseFundChange += loserPatron.money;
+                        
+                        // We update their money to 0 to signal elimination in the next step
+                        setOpponents(prev => prev.map(o => o.id === loser.id ? { ...o, money: 0 } : o));
+                        
+                        msg += `\n🚨 ${loserPatron.name} bought a round of ${losingDrink} and ran out of cash! They headed out.`;
+
                     } else {
-                        // Normal Patron Loss
+                        // Normal Patron Loss (Patron pays penalty, money deducted)
+                        const newPatronMoney = loserPatron.money - BUY_A_ROUND_COST;
                         setOpponents(prev => prev.map(o => o.id === loser.id ? { ...o, money: newPatronMoney } : o));
-                        newFunds += tab;
-                        msg += `${loser.name} lost (${HAND_NAMES[loser.hand.rank]}). They paid $${tab}.`;
+                        
+                        // Bartender gains NOTHING from the $20 penalty (it's spent on drinks)
+                        msg += `\n\n💀 ${loserPatron.name} had the lowest hand (${HAND_NAMES[loser.hand.rank].split('(')[0]}) and paid $${BUY_A_ROUND_COST} for a round of ${losingDrink}.`;
                     }
                 }
+                
+                // Final Fund Check
+                setPot(0);
+                
+                msg += `\n\nHouse Fund Change: ${houseFundChange > 0 ? '+' : ''}$${houseFundChange}`;
 
-                setFunds(newFunds);
-                setTips(newTips);
-                setMessage(msg);
-                setGameState('ROUND_END');
-
-                if (newFunds <= 0) setTimeout(() => setGameState('GAME_OVER'), 3000);
+                // Check for BAR WINS (all 4 types retired)
+                if (retiredPatronTypes.length + (loser.id !== 'player' && loserPatron.money <= BUY_A_ROUND_COST ? 1 : 0) >= BASE_PATRON_TYPES.length) {
+                    setMessage(`FINAL: ${msg} \n\n 🎉 BAR CONQUERS ALL!`);
+                    setTimeout(() => setGameState(GAME_STATE_BAR_WINS), 3000);
+                } else if (newFunds <= 0) {
+                    setMessage(`FINAL: ${msg} \n\n Womp. Womp. The House is out of money.`);
+                    setFunds(0); 
+                    setTimeout(() => setGameState('GAME_OVER'), 3000);
+                } else {
+                    setFunds(newFunds);
+                    setMessage(msg);
+                    setGameState('ROUND_END');
+                }
             };
 
             const useAbility = (ability) => {
-                if (gameState !== 'ROLLING' || rollsLeft === 3 || turnOrder[currentTurnIndex] !== 'player') return;
-                
-                if (ability === 'REROLL_OPP') {
-                    setMessage("Ability not available in Turn Mode (Simulated).");
-                } 
-                else if (ability === 'BADGE' && tips >= 5) {
-                    const idx = playerDice.findIndex(d => d !== 1 && d !== 0);
-                    if (idx !== -1) {
-                        setTips(prev => prev - 5);
-                        const newDice = [...playerDice];
-                        newDice[idx] = 1;
-                        setPlayerDice(newDice);
-                        setMessage("Used Badge!");
-                    }
-                } else if (ability === 'FRESH_DICE' && tips >= 2) {
-                    setTips(prev => prev - 2);
-                    setRollsLeft(prev => prev + 1);
-                    setMessage("Bought Extra Roll!");
-                }
+                setMessage("House Perks are currently disabled under the Pot/Penalty rules.");
             };
 
             const toggleDie = (idx) => {
@@ -573,9 +744,8 @@
                             <div>
                                 <h1 className="text-xl font-western text-yellow-500 tracking-wider">LAW BREWING BAR DICE</h1>
                                 <div className="flex gap-3 text-xs text-slate-300 font-mono">
-                                    <span title="Bar Funds: Your total money. Game over if it reaches $0." className="flex items-center gap-1 cursor-help"><Icon name="DollarSign" size={12} className="text-green-400"/> {funds}</span>
-                                    <span title="Tips: Earned by winning (Highest Hand). Spend to use Perks." className="flex items-center gap-1 cursor-help"><Icon name="Trophy" size={12} className="text-yellow-400"/> {tips}</span>
-                                    <span title="Current Tab: The cost of this round. The player with the Lowest Hand pays this." className="flex items-center gap-1 cursor-help"><Icon name="Beer" size={12} className="text-amber-500"/> ${gameState === 'START' ? 0 : tab}</span>
+                                    <span title="House Funds: Start at $50. Game over if $0 is reached." className="flex items-center gap-1 cursor-help"><Icon name="DollarSign" size={12} className="text-green-400"/> {funds}</span>
+                                    <span title="Current Pot: All players contribute $10. The winner takes this pot." className="flex items-center gap-1 cursor-help"><Icon name="Beer" size={12} className="text-amber-500"/> ${pot}</span>
                                 </div>
                             </div>
                         </div>
@@ -611,16 +781,29 @@
                     <div className="w-full max-w-4xl mt-4 z-10 flex flex-col gap-4 px-3 pb-8">
                         {/* Message Bar */}
                         <div className="bg-slate-900/90 border-l-4 border-yellow-500 p-3 rounded text-center shadow-lg min-h-[3.5rem] flex items-center justify-center transition-all z-[10]">
-                            <span className="text-sm md:text-base font-medium animate-pulse">{message}</span>
+                            <span className="text-sm md:text-base font-medium animate-pulse message-box">{message}</span>
                         </div>
 
                         {/* Opponents Grid */}
                         <div className="grid grid-cols-3 gap-2">
-                            {opponents.map((opp) => {
+                            {/* We loop 3 times to always show 3 seats, even if empty */}
+                            {[0, 1, 2].map(seatIndex => {
+                                const opp = opponents[seatIndex];
+                                
+                                if (!opp) {
+                                    // Empty Seat Logic
+                                    return (
+                                        <div key={seatIndex} className={`glass-panel p-2 rounded-lg opponent-seat flex-col items-center justify-center inactive-turn`}>
+                                            <div className="text-slate-500 text-xs italic">Seat Empty</div>
+                                        </div>
+                                    );
+                                }
+
                                 const isMyTurn = gameState === 'ROLLING' && turnOrder[currentTurnIndex] === opp.id;
                                 const AvatarComp = opp.Avatar;
+                                
                                 return (
-                                    <div key={opp.id} className={`glass-panel p-2 rounded-lg flex flex-col items-center gap-1 transition-all duration-500 ${isMyTurn ? 'active-turn' : 'inactive-turn'} ${gameState === 'ROUND_END' && opp.hand && opp.hand.rank < 3 ? 'border-red-500 bg-red-900/20' : ''}`}>
+                                    <div key={opp.id} className={`glass-panel p-2 rounded-lg flex flex-col items-center gap-1 transition-all duration-500 ${isMyTurn ? 'active-turn' : 'inactive-turn'} ${gameState === 'ROUND_END' && opp.hand && opp.hand.rank < 3 ? 'border-red-500 bg-red-900/20' : ''} opponent-seat`}>
                                         <div className="flex flex-col md:flex-row items-center gap-1 mb-1">
                                             <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center shrink-0 overflow-hidden border border-slate-500">
                                                 <AvatarComp />
@@ -647,40 +830,45 @@
                         </div>
 
                         {/* Player Area */}
-                        {gameState === 'START' || gameState === 'GAME_OVER' ? (
+                        {(gameState === 'START' || gameState === 'GAME_OVER' || gameState === GAME_STATE_BAR_WINS) ? (
                             <div className="glass-panel p-6 rounded-xl flex flex-col items-center justify-center text-center gap-4 mt-2">
-                                {gameState === 'GAME_OVER' ? (
+                                {gameState === GAME_STATE_BAR_WINS ? (
+                                    <>
+                                        <div className="text-yellow-500"><Icon name="Party" size={48} /></div>
+                                        <h2 className="text-2xl font-western text-yellow-500">BAR CONQUERS ALL!</h2>
+                                        <p className="text-slate-300 text-sm">
+                                            You successfully bankrupted every patron and secured the House's future!
+                                        </p>
+                                        <div className="text-lg font-bold text-green-400 flex items-center gap-2 mt-4">
+                                            Final Funds: <Icon name="DollarSign" size={20} />${funds}
+                                        </div>
+                                    </>
+                                ) : gameState === 'GAME_OVER' ? (
                                     <>
                                         <div className="text-red-500"><Icon name="Skull" size={48} /></div>
-                                        <h2 className="text-2xl font-western text-red-500">
-                                            {retiredPatronTypes.length === BASE_PATRON_TYPES.length ? "BAR CONQUERS ALL!" : "BAR CLOSED"}
-                                        </h2>
-                                        <p className="text-slate-300 text-sm">
-                                            {retiredPatronTypes.length === BASE_PATRON_TYPES.length ? "You successfully bankrupted every patron!" : "You ran out of house funds."}
-                                        </p>
+                                        <h2 className="text-2xl font-western text-red-500">BAR CLOSED</h2>
+                                        <p className="text-slate-300 text-sm">Womp. Womp. The House ran out of money.</p>
                                     </>
                                 ) : (
                                     <>
-                                        <div className="text-yellow-500"><Icon name="Star" size={48} /></div>
-                                        <h2 className="text-2xl font-western">Turn-Based Strategy</h2>
+                                        <div className="text-green-400"><Icon name="DollarSign" size={48} /></div>
+                                        <h2 className="text-2xl font-western">High-Stakes Bar Dice</h2>
                                         <div className="text-slate-300 text-xs md:text-sm max-w-md text-left space-y-2 bg-slate-800/50 p-4 rounded-lg">
-                                            <p><span className="text-yellow-400 font-bold">Round 1:</span> You go last. Use this to see what you need to beat.</p>
-                                            <p><span className="text-yellow-400 font-bold">Future Rounds:</span> Order is determined by previous hands. Worst hand goes FIRST.</p>
-                                            <p><span className="text-yellow-400 font-bold">Game Goal:</span> Bankrupt all four unique patrons (They each start with ${PATRON_START_MONEY}). Lose if House Funds reach $0.</p>
-                                            <p className="border-t border-slate-700 pt-2"><span className="text-yellow-400 font-bold">Bartender Perks:</span>
-                                                <br/>• <span className="text-blue-400">Fresh Dice ($2):</span> Buy an extra roll.
-                                                <br/>• <span className="text-yellow-400">Badge ($5):</span> Turn a die into a Wild (Star).
-                                            </p>
+                                            <p><span className="text-green-400 font-bold">START:</span> House & Patrons each start with ${HOUSE_START_MONEY}.</p>
+                                            <p><span className="text-yellow-400 font-bold">CONTRIBUTE:</span> Everyone puts in ${CONTRIBUTION} to the Pot each round ($40 Total Pot).</p>
+                                            <p><span className="text-yellow-400 font-bold">WINNER (Highest Hand):</span> Takes the entire $40 Pot.</p>
+                                            <p><span className="text-red-400 font-bold">LOSER (Lowest Hand):</span> Pays a fixed $20 penalty (Buys the Round).</p>
+                                            <p className="border-t border-slate-700 pt-2"><span className="text-yellow-400 font-bold">Game End:</span> The House wins by bankrupting all four unique Patrons, or the House loses if House Funds reach $0.</p>
                                         </div>
                                     </>
                                 )}
                                 <button onClick={initializeGame} className="px-6 py-2 bg-yellow-600 hover:bg-yellow-500 text-black font-bold rounded shadow-lg uppercase tracking-wider transition-colors text-sm">
-                                    {gameState === 'GAME_OVER' ? 'Start New Game' : 'Open Bar'}
+                                    {gameState === 'START' ? 'Open Bar' : 'Start New Game'}
                                 </button>
                             </div>
                         ) : (
                             <div className={`glass-panel p-4 rounded-xl mt-2 border-t-4 transition-all duration-500 ${isPlayerTurn ? 'border-yellow-500 shadow-[0_0_20px_rgba(234,179,8,0.2)]' : 'border-slate-700 opacity-80 grayscale-[0.5]'}`}>
-                                {/* Player Info & Abilities */}
+                                {/* Player Info */}
                                 <div className="flex justify-between items-end mb-4">
                                     <div>
                                         <h2 className="text-lg font-bold text-white flex items-center gap-2">
@@ -690,16 +878,6 @@
                                         <div className="text-xs text-slate-400">
                                             Result: <span className="text-yellow-400">{currentHandDisplay ? HAND_NAMES[currentHandDisplay.rank] : 'Roll to Reveal'}</span>
                                         </div>
-                                    </div>
-                                    <div className="flex gap-1">
-                                        <button title="Fresh Dice (Cost: 2 Tips): Get 1 additional roll this turn." onClick={() => useAbility('FRESH_DICE')} disabled={!isPlayerTurn || tips < 2 || rollsLeft === 0} className="p-1.5 rounded bg-slate-800 border border-slate-600 disabled:opacity-30 hover:bg-slate-700 w-12 flex flex-col items-center transition-all">
-                                            <span className="text-blue-400"><Icon name="RefreshCw" size={12} /></span>
-                                            <span className="text-[9px] text-yellow-500">$2</span>
-                                        </button>
-                                        <button title="The Badge (Cost: 5 Tips): Turn one of your regular dice into a Wild Star." onClick={() => useAbility('BADGE')} disabled={!isPlayerTurn || tips < 5 || rollsLeft === 0} className="p-1.5 rounded bg-slate-800 border border-slate-600 disabled:opacity-30 hover:bg-slate-700 w-12 flex flex-col items-center transition-all">
-                                            <span className="text-yellow-400"><Icon name="Star" size={12} /></span>
-                                            <span className="text-[9px] text-yellow-500">$5</span>
-                                        </button>
                                     </div>
                                 </div>
 
@@ -723,7 +901,7 @@
                                             )}
                                             
                                             {/* STAY BUTTON */}
-                                            {isPlayerTurn && (rollsLeft < 3 || rollsLeft === 0) && (
+                                            {isPlayerTurn && (rollsLeft < 3 || playerDice[0] !== 0) && (
                                                 <button onClick={forceFinish} className="px-4 py-3 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-full shadow-lg flex items-center gap-2 border border-slate-500 text-sm">
                                                     <Icon name="Check" size={18} /> FINISH
                                                 </button>
