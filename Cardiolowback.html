@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cardio & Lower Back</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        
+        .exercise-item { transition: all 0.3s ease; }
+        .active-card { border-left: 4px solid #3b82f6; background-color: #eff6ff; }
+        .completed-card { opacity: 0.6; background-color: #f9fafb; }
+        
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .active-tab {
+            border-bottom: 2px solid #3b82f6;
+            color: #3b82f6;
+            font-weight: 600;
+        }
+
+        .progress-bar { transition: width 1s linear; }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 h-screen flex flex-col overflow-hidden">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm z-10 flex-none">
+        <div class="max-w-md mx-auto px-4 py-3 flex justify-between items-center">
+            <h1 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <i data-lucide="activity" class="text-blue-500"></i> Cardio & Lower Back
+            </h1>
+            <div class="text-xs text-gray-500 font-medium bg-gray-100 px-2 py-1 rounded-full" id="progress-indicator">0% Complete</div>
+        </div>
+        <div class="flex overflow-x-auto no-scrollbar border-b border-gray-200 max-w-md mx-auto bg-white">
+            <button onclick="window.app.switchTab('day1')" id="tab-day1" class="flex-1 py-3 text-sm text-gray-500 font-medium text-center whitespace-nowrap active-tab">Day 1</button>
+            <button onclick="window.app.switchTab('day2')" id="tab-day2" class="flex-1 py-3 text-sm text-gray-500 font-medium text-center whitespace-nowrap">Day 2</button>
+            <button onclick="window.app.switchTab('day3')" id="tab-day3" class="flex-1 py-3 text-sm text-gray-500 font-medium text-center whitespace-nowrap">Day 3</button>
+            <button onclick="window.app.switchTab('cool')" id="tab-cool" class="flex-1 py-3 text-sm text-gray-500 font-medium text-center whitespace-nowrap">Cool Down</button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto pb-40 scroll-smooth" id="content-area">
+        <div class="max-w-md mx-auto p-4 space-y-6">
+            <div id="intro-card" class="mb-2">
+                <h2 class="text-2xl font-bold text-gray-900 mb-1" id="day-title">Loading...</h2>
+                <p class="text-gray-600 text-sm" id="day-desc">Initializing workout data...</p>
+            </div>
+            <div id="exercise-list" class="space-y-3"></div>
+            <div class="h-20"></div>
+        </div>
+    </main>
+
+    <!-- HUD -->
+    <div id="active-hud" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-20 transition-transform duration-300 translate-y-full">
+        <div class="max-w-md mx-auto p-4">
+            <div class="flex justify-between items-end mb-2">
+                <div>
+                    <div class="text-xs font-bold text-blue-600 uppercase tracking-wide mb-1">Current Exercise</div>
+                    <div class="text-lg font-bold text-gray-900 leading-none truncate w-64" id="hud-title">Plank</div>
+                </div>
+                <div class="text-3xl font-mono font-bold text-gray-900" id="hud-timer">00:00</div>
+            </div>
+            <div class="w-full bg-gray-200 h-2 rounded-full overflow-hidden mb-3">
+                <div id="hud-progress" class="bg-blue-500 h-full w-0 progress-bar"></div>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="window.app.toggleTimer()" id="hud-action-btn" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 active:scale-95 transition shadow-sm">Pause</button>
+                <button onclick="window.app.skipExercise()" class="px-4 bg-gray-100 text-gray-600 rounded-xl font-medium hover:bg-gray-200 transition">Skip</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio File -->
+    <audio id="sound-complete" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
+
+    <script>
+        // --- DATA CONSTRUCTION ---
+        const buildDay3 = () => {
+            const warmUp = [
+                { id: 'd3-1', name: "Pigeon / Figure-4 (R)", reps: "60s", type: "timer", duration: 60, note: "Deep hip stretch." },
+                { id: 'd3-2', name: "Pigeon / Figure-4 (L)", reps: "60s", type: "timer", duration: 60, note: "Breathe into tension." },
+                { id: 'd3-3', name: "Hamstring Stretch (R)", reps: "60s", type: "timer", duration: 60, note: "Keep leg straight but soft." },
+                { id: 'd3-4', name: "Hamstring Stretch (L)", reps: "60s", type: "timer", duration: 60, note: "Hinge from hips." },
+                { id: 'd3-5', name: "Child's Pose", reps: "60s", type: "timer", duration: 60, note: "Rest forehead on floor." },
+                { id: 'd3-6', name: "Happy Baby", reps: "60s", type: "timer", duration: 60, note: "Grab feet, knees wide." }
+            ];
+
+            const circuitExercises = [
+                { name: "High Knees", duration: 45, note: "Knees up!" },
+                { name: "Rest", duration: 15, note: "Breathe." },
+                { name: "Butt Kicks", duration: 45, note: "Heels to glutes." },
+                { name: "Rest", duration: 15, note: "Breathe." },
+                { name: "Jumping Jacks", duration: 45, note: "Full extension." },
+                { name: "Rest", duration: 15, note: "Breathe." },
+                { name: "Mountain Climbers", duration: 45, note: "Back flat, knees in." },
+                { name: "Rest", duration: 15, note: "Prepare for next round." }
+            ];
+
+            let fullRoutine = [...warmUp];
+            
+            for(let i=1; i<=4; i++) {
+                circuitExercises.forEach((ex, idx) => {
+                    if (i === 4 && ex.name === "Rest") return; 
+                    
+                    fullRoutine.push({
+                        id: `d3-r${i}-${idx}`,
+                        name: `${ex.name} (Round ${i})`,
+                        reps: `${ex.duration}s`,
+                        type: "timer",
+                        duration: ex.duration,
+                        note: ex.note
+                    });
+                });
+            }
+            return fullRoutine;
+        };
+
+        const workoutData = {
+            day1: {
+                title: "Day 1: Mobility & Low Impact",
+                desc: "Dynamic movement to warm up the spine.",
+                exercises: [
+                    { id: 'd1-1', name: "Cat-Cow Stretch", reps: "10 reps", type: "reps", note: "Move slowly segment by segment." },
+                    { id: 'd1-2', name: "Bird-Dog (Right)", reps: "10 reps", type: "reps", note: "Extend opposite arm & leg." },
+                    { id: 'd1-3', name: "Bird-Dog (Left)", reps: "10 reps", type: "reps", note: "Keep core tight." },
+                    { id: 'd1-4', name: "Pelvic Tilts", reps: "15 reps", type: "reps", note: "Flatten back into floor." },
+                    { id: 'd1-5', name: "Knee-to-Chest Hold", reps: "30s", type: "timer", duration: 30, note: "Both knees gentle pull." },
+                    { id: 'd1-6', name: "Spinal Twist (Right)", reps: "30s", type: "timer", duration: 30, note: "Shoulders flat." },
+                    { id: 'd1-7', name: "Spinal Twist (Left)", reps: "30s", type: "timer", duration: 30, note: "Relax into it." },
+                    { id: 'd1-8', name: "Cardio: Brisk Walk/Cycle", reps: "20 min", type: "timer", duration: 1200, note: "Steady, comfortable pace." } 
+                ]
+            },
+            day2: {
+                title: "Day 2: Strength & Cardio",
+                desc: "Core strength and moderate intensity cardio.",
+                exercises: [
+                    { id: 'd2-1', name: "Bridges", reps: "12 reps", type: "reps", note: "Squeeze glutes at top." },
+                    { id: 'd2-2', name: "Rest / Reset", reps: "30s", type: "timer", duration: 30, note: "Breathe." },
+                    { id: 'd2-3', name: "Bridges (Set 2)", reps: "12 reps", type: "reps", note: "Focus on form." },
+                    { id: 'd2-4', name: "Plank", reps: "45s", type: "timer", duration: 45, note: "Straight line head to heels." },
+                    { id: 'd2-5', name: "Rest", reps: "15s", type: "timer", duration: 15, note: "Drop to knees." },
+                    { id: 'd2-6', name: "Plank (Set 2)", reps: "45s", type: "timer", duration: 45, note: "Hold tight." },
+                    { id: 'd2-7', name: "Side Plank (Right)", reps: "30s", type: "timer", duration: 30, note: "Lift hips high." },
+                    { id: 'd2-8', name: "Side Plank (Left)", reps: "30s", type: "timer", duration: 30, note: "Lift hips high." },
+                    { id: 'd2-9', name: "Superman", reps: "10 reps", type: "reps", note: "Lift arms and legs gently." },
+                    { id: 'd2-10', name: "Cardio: Jog/Row", reps: "20 min", type: "timer", duration: 1200, note: "Moderate intensity." }
+                ]
+            },
+            day3: {
+                title: "Day 3: Deep Flex & Circuit",
+                desc: "Deep stretching followed by 4 rounds of interval cardio.",
+                exercises: buildDay3()
+            },
+            cool: {
+                title: "Cool Down",
+                desc: "Essential post-workout recovery.",
+                exercises: [
+                    { id: 'c-1', name: "Reclined Twist (R)", reps: "45s", type: "timer", duration: 45, note: "Twist gently." },
+                    { id: 'c-2', name: "Reclined Twist (L)", reps: "45s", type: "timer", duration: 45, note: "Twist gently." },
+                    { id: 'c-3', name: "Figure-Four (R)", reps: "45s", type: "timer", duration: 45, note: "Thread the needle." },
+                    { id: 'c-4', name: "Figure-Four (L)", reps: "45s", type: "timer", duration: 45, note: "Relax shoulders." },
+                    { id: 'c-5', name: "Knee Hug Rock", reps: "45s", type: "timer", duration: 45, note: "Massage lower back." },
+                    { id: 'c-6', name: "Seated Forward Fold", reps: "60s", type: "timer", duration: 60, note: "Reach for toes." }
+                ]
+            }
+        };
+
+        class App {
+            constructor() {
+                this.currentDay = 'day1';
+                this.exercises = [];
+                this.completedIds = new Set();
+                this.activeIndex = -1; 
+                this.timerInterval = null;
+                this.timeLeft = 0;
+                this.totalTime = 0;
+                this.isPaused = false;
+                
+                this.init();
+            }
+
+            init() {
+                this.safeCreateIcons();
+                this.switchTab('day1');
+            }
+
+            safeCreateIcons() {
+                try {
+                    if (typeof lucide !== 'undefined' && lucide.createIcons) {
+                        lucide.createIcons();
+                    }
+                } catch (e) {}
+            }
+
+            switchTab(dayId) {
+                document.querySelectorAll('header button').forEach(b => {
+                    b.classList.remove('active-tab', 'text-blue-500');
+                    b.classList.add('text-gray-500');
+                });
+                const btn = document.getElementById(`tab-${dayId}`);
+                if(btn) {
+                    btn.classList.add('active-tab');
+                    btn.classList.remove('text-gray-500');
+                }
+
+                this.currentDay = dayId;
+                this.completedIds.clear();
+                this.stopTimer();
+                this.closeHUD();
+                this.activeIndex = -1;
+
+                const data = workoutData[dayId];
+                this.exercises = JSON.parse(JSON.stringify(data.exercises)); // Deep copy to allow editing
+                
+                document.getElementById('day-title').innerText = data.title;
+                document.getElementById('day-desc').innerText = data.desc;
+
+                this.renderList();
+            }
+
+            editTime(index) {
+                const ex = this.exercises[index];
+                const currentMins = Math.floor(ex.duration / 60);
+                const input = prompt(`Enter duration in minutes for ${ex.name}:`, currentMins);
+                
+                if (input !== null && !isNaN(input) && input > 0) {
+                    const newSeconds = Math.round(parseFloat(input) * 60);
+                    ex.duration = newSeconds;
+                    
+                    if(newSeconds >= 60) {
+                        ex.reps = `${Math.floor(newSeconds/60)} min`;
+                    } else {
+                        ex.reps = `${newSeconds}s`;
+                    }
+                    
+                    this.renderList();
+                }
+            }
+
+            renderList() {
+                const container = document.getElementById('exercise-list');
+                container.innerHTML = '';
+
+                this.exercises.forEach((ex, index) => {
+                    const isCompleted = this.completedIds.has(ex.id);
+                    const isActive = (index === this.activeIndex);
+                    
+                    const div = document.createElement('div');
+                    div.id = `card-${index}`;
+                    div.className = `exercise-item bg-white rounded-xl p-4 shadow-sm border border-gray-100 relative ${isCompleted ? 'completed-card' : ''} ${isActive ? 'active-card' : ''}`;
+                    
+                    let btnHTML = '';
+                    if (isCompleted) {
+                        btnHTML = `<button disabled class="bg-green-100 text-green-700 px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 w-full justify-center"><i data-lucide="check" size="16"></i> Done</button>`;
+                    } else if (isActive) {
+                        btnHTML = `<button onclick="window.app.toggleTimer()" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-sm shadow-md w-full animate-pulse">
+                            ${ex.type === 'timer' ? 'Running...' : 'Finish Set'}
+                        </button>`;
+                    } else {
+                        const label = ex.type === 'timer' ? `Start (${this.formatTime(ex.duration)})` : 'Mark Done';
+                        const icon = ex.type === 'timer' ? 'play' : 'check-circle';
+                        btnHTML = `<button onclick="window.app.startExercise(${index})" class="bg-white border border-gray-200 text-gray-700 hover:bg-blue-50 hover:border-blue-200 px-4 py-2 rounded-lg font-medium text-sm w-full transition flex items-center justify-center gap-2">
+                            <i data-lucide="${icon}" size="16"></i> ${label}
+                        </button>`;
+                    }
+
+                    const editBtn = ex.type === 'timer' && !isActive && !isCompleted 
+                        ? `<button onclick="window.app.editTime(${index})" class="ml-2 text-gray-400 hover:text-blue-600 p-1" title="Edit Duration"><i data-lucide="pencil" size="14"></i></button>` 
+                        : '';
+
+                    div.innerHTML = `
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <h3 class="font-bold text-gray-800 text-lg">${ex.name}</h3>
+                                <p class="text-gray-500 text-sm">${ex.note}</p>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="text-xs font-bold bg-gray-100 text-gray-600 px-2 py-1 rounded whitespace-nowrap">${ex.reps}</span>
+                                ${editBtn}
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            ${btnHTML}
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+                
+                this.safeCreateIcons();
+                this.updateProgress();
+            }
+
+            startExercise(index) {
+                if (this.activeIndex !== -1 && this.activeIndex !== index) {
+                    this.stopTimer();
+                }
+
+                this.activeIndex = index;
+                const ex = this.exercises[index];
+                
+                this.renderList();
+                
+                setTimeout(() => {
+                    const el = document.getElementById(`card-${index}`);
+                    if(el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 100);
+
+                if (ex.type === 'timer') {
+                    this.totalTime = ex.duration;
+                    this.timeLeft = ex.duration;
+                    this.isPaused = false;
+                    this.openHUD(ex);
+                    this.runTimer();
+                } else {
+                    this.markComplete(index);
+                }
+            }
+
+            openHUD(ex) {
+                const hud = document.getElementById('active-hud');
+                document.getElementById('hud-title').innerText = ex.name;
+                document.getElementById('hud-action-btn').innerText = "Pause";
+                hud.classList.remove('translate-y-full');
+                this.updateHUDDisplay();
+            }
+
+            closeHUD() {
+                document.getElementById('active-hud').classList.add('translate-y-full');
+            }
+
+            runTimer() {
+                clearInterval(this.timerInterval);
+                this.timerInterval = setInterval(() => {
+                    if (!this.isPaused) {
+                        this.timeLeft--;
+                        this.updateHUDDisplay();
+
+                        if (this.timeLeft <= 0) {
+                            this.finishTimer();
+                        }
+                    }
+                }, 1000);
+            }
+
+            toggleTimer() {
+                this.isPaused = !this.isPaused;
+                const btn = document.getElementById('hud-action-btn');
+                btn.innerText = this.isPaused ? "Resume" : "Pause";
+                btn.className = this.isPaused 
+                    ? "flex-1 bg-green-500 text-white py-3 rounded-xl font-bold transition shadow-sm"
+                    : "flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold transition shadow-sm";
+            }
+
+            skipExercise() {
+                this.stopTimer();
+                this.closeHUD();
+                this.activeIndex = -1;
+                this.renderList();
+            }
+
+            finishTimer() {
+                this.stopTimer();
+                this.playCompleteSound();
+                this.markComplete(this.activeIndex);
+            }
+
+            playCompleteSound() {
+                // 1. Try playing audio file
+                const audio = document.getElementById('sound-complete');
+                let played = false;
+                
+                if(audio) {
+                    audio.currentTime = 0;
+                    const promise = audio.play();
+                    if(promise !== undefined) {
+                        promise.then(() => { played = true; }).catch(e => {
+                            console.log("Audio file blocked/failed, using fallback beep.");
+                            this.playSynthBeep();
+                        });
+                    }
+                } else {
+                    this.playSynthBeep();
+                }
+
+                // 2. Vibrate on mobile
+                if (navigator.vibrate) {
+                    navigator.vibrate([200, 100, 200]);
+                }
+            }
+
+            // Fallback: Generate a beep using AudioContext (Always works)
+            playSynthBeep() {
+                try {
+                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(880, ctx.currentTime); // High pitch
+                    osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.5); // Drop pitch
+                    
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.5);
+                    
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.5);
+                } catch(e) {
+                    console.error("Audio Context unavailable", e);
+                }
+            }
+
+            stopTimer() {
+                clearInterval(this.timerInterval);
+            }
+
+            updateHUDDisplay() {
+                document.getElementById('hud-timer').innerText = this.formatTime(this.timeLeft);
+                const pct = ((this.totalTime - this.timeLeft) / this.totalTime) * 100;
+                document.getElementById('hud-progress').style.width = `${pct}%`;
+            }
+
+            markComplete(index) {
+                const ex = this.exercises[index];
+                this.completedIds.add(ex.id);
+                this.activeIndex = -1;
+                this.closeHUD();
+                this.renderList();
+
+                const nextIndex = index + 1;
+                if (nextIndex < this.exercises.length) {
+                    setTimeout(() => {
+                         const el = document.getElementById(`card-${nextIndex}`);
+                         if(el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 500);
+                } else {
+                    setTimeout(() => alert("Workout Complete! Great job!"), 300);
+                }
+            }
+
+            updateProgress() {
+                const total = this.exercises.length;
+                const done = this.completedIds.size;
+                const pct = Math.round((done / total) * 100);
+                document.getElementById('progress-indicator').innerText = `${pct}% Complete`;
+            }
+
+            formatTime(s) {
+                const m = Math.floor(s / 60);
+                const sec = s % 60;
+                return `${m}:${sec < 10 ? '0' : ''}${sec}`;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            window.app = new App();
+        });
+    </script>
+</body>
+</html>
