@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Volleyball Functional Trainer</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --secondary: #1e40af;
+            --bg: #f3f4f6;
+            --card-bg: #ffffff;
+            --text: #1f2937;
+            --success: #10b981;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        h1 { text-align: center; color: var(--secondary); margin-bottom: 20px; }
+        
+        /* Navigation Tabs */
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; justify-content: center; }
+        .tab-btn {
+            padding: 10px 20px;
+            border: none;
+            background: #d1d5db;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            flex: 1;
+        }
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Content Sections */
+        .day-section { display: none; }
+        .day-section.active { display: block; }
+
+        /* Exercise Card */
+        .card {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+            border-left: 5px solid var(--primary);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .ex-name { font-size: 1.1em; font-weight: bold; }
+        .video-link {
+            font-size: 0.8em;
+            color: var(--primary);
+            text-decoration: none;
+            border: 1px solid var(--primary);
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .details { font-size: 0.9em; color: #555; margin-bottom: 10px; }
+        
+        /* Set Counter */
+        .set-tracker {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+            background: #f9fafb;
+            padding: 8px;
+            border-radius: 6px;
+        }
+        .set-bubble {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px solid #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 0.8em;
+            background: white;
+        }
+        .set-bubble.done {
+            background: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+
+        /* Timer Section */
+        .timer-box {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .timer-display {
+            font-family: monospace;
+            font-size: 1.2em;
+            font-weight: bold;
+            width: 60px;
+            text-align: center;
+        }
+        .timer-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .timer-input {
+            width: 50px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        /* Cardio Section */
+        .cardio-box {
+            background: #e0e7ff;
+            border-left: 5px solid #4338ca;
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+        select, textarea {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            box-sizing: border-box; 
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>🏐 Volleyball Fit</h1>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="showDay('day1')">Day 1</button>
+        <button class="tab-btn" onclick="showDay('day2')">Day 2</button>
+        <button class="tab-btn" onclick="showDay('day3')">Day 3</button>
+    </div>
+
+    <div id="day1" class="day-section active">
+        <h3>Lower Body Power & Agility</h3>
+        <div id="day1-container"></div>
+        
+        <div class="cardio-box">
+            <h3>🫀 Cardio Finisher</h3>
+            <label><strong>Select Equipment:</strong></label>
+            <select id="cardio1-select" onchange="updateCardioDetails('cardio1')">
+                <option value="Intervals">Generic Intervals</option>
+                <option value="Treadmill">Treadmill (Sprint/Jog)</option>
+                <option value="Bike">Stationary Bike (RPM High/Low)</option>
+                <option value="Elliptical">Elliptical (Resistance High/Low)</option>
+            </select>
+            <br><br>
+            <label><strong>Plan (Editable):</strong></label>
+            <textarea id="cardio1-text" rows="3">10 rounds: 30 sec HARD / 30 sec EASY.</textarea>
+            
+            <div class="timer-box">
+                <input type="number" id="cardio1-time" class="timer-input" value="30"> sec
+                <button class="timer-btn" onclick="startTimer('cardio1-timer', 'cardio1-time')">Start Interval</button>
+                <span id="cardio1-timer" class="timer-display">00:30</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="day2" class="day-section">
+        <h3>Upper Body Stability & Core</h3>
+        <div id="day2-container"></div>
+
+        <div class="cardio-box">
+            <h3>🫀 Cardio Finisher</h3>
+            <label><strong>Select Equipment:</strong></label>
+            <select id="cardio2-select" onchange="updateCardioDetails('cardio2')">
+                <option value="Steady">Steady State</option>
+                <option value="Rowing">Rowing Machine</option>
+                <option value="Treadmill">Treadmill (Incline Walk)</option>
+            </select>
+            <br><br>
+            <label><strong>Plan (Editable):</strong></label>
+            <textarea id="cardio2-text" rows="3">15 minutes moderate pace (Nasal Breathing).</textarea>
+            
+            <div class="timer-box">
+                <input type="number" id="cardio2-time" class="timer-input" value="900"> sec
+                <button class="timer-btn" onclick="startTimer('cardio2-timer', 'cardio2-time')">Start Timer</button>
+                <span id="cardio2-timer" class="timer-display">15:00</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="day3" class="day-section">
+        <h3>Full Body Metabolic Conditioning</h3>
+        <p style="font-size:0.9em; color:#666;">Circuit: No rest between exercises. Rest 90s after full round.</p>
+        <div id="day3-container"></div>
+
+        <div class="cardio-box">
+            <h3>🫀 Cardio Finisher</h3>
+            <label><strong>Select Equipment:</strong></label>
+            <select id="cardio3-select" onchange="updateCardioDetails('cardio3')">
+                <option value="Sprints">Suicide Sprints</option>
+                <option value="Bike">Bike Sprints</option>
+                <option value="Rower">Rower Sprints</option>
+            </select>
+            <br><br>
+            <label><strong>Plan (Editable):</strong></label>
+            <textarea id="cardio3-text" rows="3">1 min HARD, 1 min REST. Repeat 5 times.</textarea>
+            
+            <div class="timer-box">
+                <input type="number" id="cardio3-time" class="timer-input" value="60"> sec
+                <button class="timer-btn" onclick="startTimer('cardio3-timer', 'cardio3-time')">Start Sprint</button>
+                <span id="cardio3-timer" class="timer-display">01:00</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA ---
+        const workouts = {
+            day1: [
+                { name: "Goblet Squat (Pulse)", sets: 3, reps: "15-20", note: "12lb. Pulse at bottom.", timer: 60 },
+                { name: "Single-Leg RDL", sets: 3, reps: "12/leg", note: "10-12lb. Flat back.", timer: 60 },
+                { name: "Lateral Lunges", sets: 3, reps: "12/leg", note: "Bodyweight. Step wide.", timer: 0 },
+                { name: "Jump Squats", sets: 4, reps: "10", note: "Explosive up. Soft landing.", timer: 45 },
+                { name: "Calf Raises", sets: 3, reps: "25", note: "Hold both 12lb DBs.", timer: 0 },
+                { name: "Wall Sits", sets: 3, reps: "45 sec", note: "Isometric hold.", timer: 45 }
+            ],
+            day2: [
+                { name: "Push-Ups", sets: 3, reps: "Failure", note: "Elbows at 45 degrees.", timer: 60 },
+                { name: "Single-Arm Overhead Press", sets: 3, reps: "15/arm", note: "12lb. Tight core.", timer: 60 },
+                { name: "Y-T-W Raises", sets: 3, reps: "10 each", note: "3-5lb. Bent over.", timer: 0 },
+                { name: "Bent Over Rows", sets: 4, reps: "20", note: "12lb. Squeeze back.", timer: 60 },
+                { name: "Russian Twists", sets: 3, reps: "30 total", note: "12lb. Feet up.", timer: 45 },
+                { name: "Woodchoppers", sets: 3, reps: "15/side", note: "10-12lb. Hip to shoulder.", timer: 0 }
+            ],
+            day3: [
+                { name: "Kettlebell Swings", sets: 4, reps: "25", note: "12lb. Snap hips.", timer: 0 },
+                { name: "DB Thrusters", sets: 4, reps: "15", note: "10-12lb. Squat to Press.", timer: 0 },
+                { name: "Mountain Climbers", sets: 4, reps: "45 sec", note: "Fast pace.", timer: 45 },
+                { name: "Renegade Rows", sets: 4, reps: "10/arm", note: "Pushup position row.", timer: 0 },
+                { name: "Burpees", sets: 4, reps: "10", note: "Chest to floor.", timer: 0 },
+                { name: "Plank Hold", sets: 4, reps: "60 sec", note: "Stable core.", timer: 60 }
+            ]
+        };
+
+        // --- APP LOGIC ---
+
+        function renderWorkouts() {
+            for (const [day, exercises] of Object.entries(workouts)) {
+                const container = document.getElementById(`${day}-container`);
+                container.innerHTML = exercises.map((ex, index) => {
+                    // Generate Video Search Link
+                    const videoQuery = `how to do ${ex.name} exercise`;
+                    const videoUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(videoQuery)}`;
+                    
+                    // Generate Set Bubbles
+                    let setBubbles = '';
+                    for(let i=0; i<ex.sets; i++) {
+                        setBubbles += `<div class="set-bubble" onclick="this.classList.toggle('done')">${i+1}</div>`;
+                    }
+
+                    // Generate Timer HTML if needed (default rest timer or exercise timer)
+                    let timerHtml = '';
+                    const defaultTime = ex.timer > 0 ? ex.timer : 60; // Default 60s rest if not specified
+                    const label = ex.timer > 0 && (ex.name.includes("Hold") || ex.name.includes("Sit") || ex.name.includes("Climber")) ? "Duration" : "Rest Timer";
+                    
+                    timerHtml = `
+                        <div class="timer-box">
+                            <span style="font-size:0.8em; color:#666; margin-right:5px;">${label}:</span>
+                            <input type="number" id="timer-input-${day}-${index}" class="timer-input" value="${defaultTime}"> s
+                            <button class="timer-btn" onclick="startTimer('timer-display-${day}-${index}', 'timer-input-${day}-${index}')">Start</button>
+                            <span id="timer-display-${day}-${index}" class="timer-display">${formatTime(defaultTime)}</span>
+                        </div>
+                    `;
+
+                    return `
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="ex-name">${ex.name}</div>
+                                <a href="${videoUrl}" target="_blank" class="video-link">🎥 Watch Video</a>
+                            </div>
+                            <div class="details">
+                                <strong>${ex.sets} Sets</strong> x <strong>${ex.reps}</strong> <br>
+                                <em>${ex.note}</em>
+                            </div>
+                            <div class="set-tracker">
+                                <span style="font-size:0.8em; font-weight:bold;">Sets:</span>
+                                ${setBubbles}
+                            </div>
+                            ${timerHtml}
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        // Tab Switching
+        function showDay(dayId) {
+            document.querySelectorAll('.day-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(dayId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Timer Logic
+        let activeIntervals = {};
+
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const s = (seconds % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        function startTimer(displayId, inputId) {
+            // Clear existing timer for this specific ID if running
+            if (activeIntervals[displayId]) clearInterval(activeIntervals[displayId]);
+
+            const display = document.getElementById(displayId);
+            const input = document.getElementById(inputId);
+            let timeLeft = parseInt(input.value);
+
+            // Update immediately
+            display.innerText = formatTime(timeLeft);
+            display.style.color = "var(--primary)";
+
+            activeIntervals[displayId] = setInterval(() => {
+                timeLeft--;
+                display.innerText = formatTime(timeLeft);
+
+                if (timeLeft <= 0) {
+                    clearInterval(activeIntervals[displayId]);
+                    display.innerText = "DONE";
+                    display.style.color = "red";
+                    // Optional: Play sound here
+                }
+            }, 1000);
+        }
+
+        // Cardio Logic
+        function updateCardioDetails(id) {
+            const select = document.getElementById(`${id}-select`);
+            const text = document.getElementById(`${id}-text`);
+            const val = select.value;
+
+            // Simple preset logic
+            if (val === 'Treadmill' && id === 'cardio1') text.value = "10 rounds: 30s Sprint / 30s Walk on rails.";
+            if (val === 'Bike' && id === 'cardio1') text.value = "10 rounds: 30s High RPM / 30s Low RPM.";
+            if (val === 'Rowing') text.value = "Steady state rowing, keep stroke rate consistent.";
+        }
+
+        // Initialize
+        renderWorkouts();
+
+    </script>
+</body>
+</html>
