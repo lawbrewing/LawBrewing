@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Taproom v6.0</title>
+    <title>The Taproom</title>
     <style>
         :root {
             --bg-color: #2c241b;
@@ -26,96 +26,69 @@
             align-items: center;
             min-height: 100vh;
             text-align: center;
-            padding-bottom: 70px; /* Space for sticky footer */
+            padding-bottom: 70px;
         }
 
         h1 { color: var(--text-gold); text-shadow: 2px 2px #000; margin-bottom: 5px; }
-        h2 { color: var(--accent); border-bottom: 1px solid #555; padding-bottom: 5px; }
 
         /* CONTAINERS */
         .screen {
-            width: 100%;
-            max-width: 600px;
-            padding: 10px;
-            box-sizing: border-box;
-            display: none; 
-            animation: fadeIn 0.5s;
+            width: 100%; max-width: 600px; padding: 10px;
+            box-sizing: border-box; display: none; animation: fadeIn 0.5s;
         }
         .active-screen { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         /* BUTTONS */
         .btn-main {
-            background: var(--text-gold);
-            color: #2c241b;
-            border: none;
-            padding: 15px 25px;
-            font-size: 1.1em;
-            font-weight: bold;
-            cursor: pointer;
-            border-radius: 5px;
-            margin: 10px;
-            width: 80%;
+            background: var(--text-gold); color: #2c241b; border: none;
+            padding: 15px 25px; font-size: 1.1em; font-weight: bold;
+            cursor: pointer; border-radius: 5px; margin: 10px; width: 80%;
             transition: transform 0.1s;
         }
         .btn-main:hover { transform: scale(1.02); background: #fff; }
         .btn-secondary { background: #555; color: white; width: auto; font-size: 0.9em; padding: 10px 20px; }
         .btn-small { padding: 5px 10px; font-size: 1.2em; font-weight: bold; cursor: pointer; }
 
-        /* GAME STYLES */
+        /* GAME UI */
         .zone {
-            background: rgba(0,0,0,0.3);
-            border: 2px solid #5c4a35;
-            padding: 10px;
-            border-radius: 10px;
-            min-height: 110px;
-            position: relative;
+            background: rgba(0,0,0,0.3); border: 2px solid #5c4a35;
+            padding: 10px; border-radius: 10px; min-height: 110px; position: relative;
         }
         .card-container { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
         .card {
-            width: 60px; height: 90px;
-            background: var(--card-bg); color: black;
-            border-radius: 4px;
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            font-weight: bold; cursor: pointer;
-            user-select: none;
-            position: relative;
+            width: 60px; height: 90px; background: var(--card-bg); color: black;
+            border-radius: 4px; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; font-weight: bold;
+            cursor: pointer; user-select: none; position: relative;
         }
         .card.red { color: #c00; }
         .card.black { color: #111; }
         .card:hover { transform: translateY(-5px); border: 2px solid white; }
         .card-corner { position: absolute; top: 2px; left: 4px; font-size: 0.7em; }
-        
-        /* CARD MEANING TOOLTIP */
-        .card-hint {
-            font-size: 0.6em; color: #555; margin-top: 2px; font-weight: normal; text-align: center;
-        }
+        .card-hint { font-size: 0.6em; color: #555; margin-top: 2px; font-weight: normal; }
 
-        /* LOG & FOOTER */
+        /* LOG */
         #log {
-            height: 80px; overflow-y: auto;
-            background: #111; border: 1px solid #444;
-            padding: 5px; font-size: 0.8em; text-align: left;
-            margin-bottom: 10px; color: cyan;
+            height: 80px; overflow-y: auto; background: #111; border: 1px solid #444;
+            padding: 5px; font-size: 0.8em; text-align: left; margin-bottom: 10px; color: cyan;
         }
 
-        /* STICKY FOOTER LEGEND */
+        /* SCOREBOARD & FOOTER */
+        .match-score {
+            display: flex; justify-content: space-around; background: #222;
+            padding: 10px; border-radius: 5px; margin-bottom: 10px; border: 1px solid #555;
+        }
+        .score-val { font-size: 1.5em; color: var(--text-gold); font-weight: bold; }
+        
         #cheat-sheet {
-            position: fixed;
-            bottom: 0; left: 0; right: 0;
-            background: #1a1510;
-            border-top: 2px solid var(--text-gold);
-            padding: 8px;
-            display: none; /* Active in game */
-            justify-content: space-around;
-            font-size: 0.75em;
-            color: var(--text-gold);
-            z-index: 100;
+            position: fixed; bottom: 0; left: 0; right: 0; background: #1a1510;
+            border-top: 2px solid var(--text-gold); padding: 8px; display: none;
+            justify-content: space-around; font-size: 0.75em; color: var(--text-gold); z-index: 100;
         }
         .legend-item b { color: white; display: block; font-size: 1.1em; }
 
-        /* REF CARD (Manual Mode) */
+        /* MANUAL */
         .ref-card {
             background: var(--parchment); color: var(--ink); padding: 15px;
             border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.5);
@@ -125,19 +98,9 @@
         .ref-table th { border-bottom: 2px solid var(--ink); text-align: left; }
         .ref-table td { border-bottom: 1px solid #ccc; padding: 4px 0; }
 
-        /* MATCH SCOREBOARD */
-        .match-score {
-            display: flex; justify-content: space-around;
-            background: #222; padding: 10px; border-radius: 5px;
-            margin-bottom: 10px; border: 1px solid #555;
-        }
-        .score-box { text-align: center; }
-        .score-val { font-size: 1.5em; color: var(--text-gold); font-weight: bold; }
-
-        /* TIEBREAKER */
+        /* ANIMATIONS */
         .scan-line { width: 100%; height: 2px; background: cyan; animation: flash 1s infinite; margin: 10px 0; }
         @keyframes flash { 0% { opacity: 0; } 50% { opacity: 1; } 100% { opacity: 0; } }
-
     </style>
 </head>
 <body>
@@ -145,14 +108,14 @@
     <div id="cheat-sheet">
         <div class="legend-item"><b>J</b>Draw 2, Disc 1</div>
         <div class="legend-item"><b>Q</b>Remove Opp Card</div>
-        <div class="legend-item"><b>K</b>Opp Discards 2</div>
+        <div class="legend-item"><b>K</b>Opp Disc 2</div>
         <div class="legend-item"><b>A</b>Steal Opp Brew</div>
     </div>
 
     <div id="landing-screen" class="screen active-screen">
         <h1 style="font-size: 3em;">🍺</h1>
         <h1>THE TAPROOM</h1>
-        <p><i>Digital Edition v6.0</i></p>
+        <p><i>Smart AI Edition v7.0</i></p>
         <hr style="border-color: #444; width: 50%;">
         <br>
         <button class="btn-main" onclick="goToManualMode()">🛠️ Manual Assistant</button>
@@ -165,23 +128,15 @@
     <div id="manual-screen" class="screen">
         <button class="btn-main btn-secondary" onclick="goHome()">← Back</button>
         <h2>Physical Assistant</h2>
-        
         <div class="match-score">
-            <div class="score-box">
-                <div>YOU</div>
-                <button class="btn-small" onclick="modManualScore('p', -1)">-</button>
-                <span id="manual-p-score" class="score-val">0</span>
-                <button class="btn-small" onclick="modManualScore('p', 1)">+</button>
-            </div>
-            <div class="score-box" style="padding-top:10px;">
-                SHIFTS<br><span style="font-size:0.7em">(First to 3)</span>
-            </div>
-            <div class="score-box">
-                <div>OPP</div>
-                <button class="btn-small" onclick="modManualScore('o', -1)">-</button>
-                <span id="manual-o-score" class="score-val">0</span>
-                <button class="btn-small" onclick="modManualScore('o', 1)">+</button>
-            </div>
+            <div>YOU<br><span id="manual-p-score" class="score-val">0</span></div>
+            <div style="padding-top:10px;">SHIFTS<br><span style="font-size:0.7em">(First to 3)</span></div>
+            <div>OPP<br><span id="manual-o-score" class="score-val">0</span></div>
+        </div>
+        <div style="display:flex; justify-content:center; gap:10px; margin-bottom:10px;">
+            <button class="btn-small" onclick="modManualScore('p',1)">+ You</button>
+            <button class="btn-small" onclick="modManualScore('o',1)">+ Opp</button>
+            <button class="btn-small" style="background:#444;" onclick="modManualScore('reset',0)">Reset</button>
         </div>
 
         <div class="ref-card">
@@ -190,19 +145,15 @@
                 <li><b>Pour:</b> Draw 1.</li>
                 <li><b>Serve:</b> Play Brew, Play Patron, or Waste.</li>
             </ol>
-            <h3>THE MENU (Effects)</h3>
+            <h3>THE MENU</h3>
             <table class="ref-table">
-                <tr><th>Card</th><th>Effect</th></tr>
-                <tr><td><b>Jack</b> (Regular)</td><td>Draw 2, Discard 1.</td></tr>
-                <tr><td><b>Queen</b> (Barmaid)</td><td>Remove 1 from opp. Flight.</td></tr>
-                <tr><td><b>King</b> (Bouncer)</td><td>Opp. discards 2 (random).</td></tr>
-                <tr><td><b>Ace</b> (Tip Jar)</td><td>Steal 1 Brew from opp. Flight.</td></tr>
+                <tr><td><b>Jack</b></td><td>Draw 2, Discard 1.</td></tr>
+                <tr><td><b>Queen</b></td><td>Remove 1 from opp. Flight.</td></tr>
+                <tr><td><b>King</b></td><td>Opp. discards 2.</td></tr>
+                <tr><td><b>Ace</b></td><td>Steal 1 Brew from opp. Flight.</td></tr>
             </table>
-            <h3>LAST CALL (Winning)</h3>
-            <p style="font-size:0.9em;">
-                Start your turn with 4 cards in Flight -> Yell "Last Call!". Opponent gets <b>1 final turn</b>.
-                If you still have 4 cards after their turn, the shift ends. Highest score wins the Shift.
-            </p>
+            <h3>LAST CALL</h3>
+            <p style="font-size:0.9em;">Start turn with 4 cards -> Yell "Last Call!". Opponent gets 1 final turn. If flight breaks (<4), game continues.</p>
         </div>
         <div class="tool-panel" style="margin-top:10px; background:var(--panel-bg); padding:10px; border-radius:5px;">
             <button class="btn-main btn-secondary" onclick="runTiebreaker('MANUAL')">🎀 Cuteness Tiebreaker</button>
@@ -211,10 +162,7 @@
 
     <div id="tiebreaker-screen" class="screen">
         <h2>🎀 Cuteness Algorithm 🎀</h2>
-        <div id="scan-anim">
-            <p>Scanning facial symmetry...</p>
-            <div class="scan-line"></div>
-        </div>
+        <div id="scan-anim"><p>Scanning...</p><div class="scan-line"></div></div>
         <div id="tiebreaker-final" style="display:none;">
             <h3 id="tiebreaker-winner" style="color:var(--text-gold);"></h3>
             <p id="tiebreaker-reason"></p>
@@ -224,7 +172,7 @@
 
     <div id="game-screen" class="screen">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-            <button class="btn-main btn-secondary" style="padding:5px 10px;" onclick="if(confirm('Quit Match? Progress will be lost.')) goHome()">Exit</button>
+            <button class="btn-main btn-secondary" style="padding:5px 10px;" onclick="if(confirm('Quit Match?')) goHome()">Exit</button>
             <div class="match-score" style="margin:0; padding:5px; border:none; background:transparent;">
                 <span style="color:white;">You: <b id="game-p-wins" style="color:var(--text-gold)">0</b></span>
                 <span style="margin:0 10px;">|</span>
@@ -236,7 +184,7 @@
             <div style="font-size:0.8em; color:gray;">Bartender's Flight</div>
             <div id="cpu-flight" class="card-container"></div>
         </div>
-        <div style="font-size:0.8em; text-align:right;">Bartender Hand: <span id="cpu-hand-count">3</span></div>
+        <div style="font-size:0.8em; text-align:right;">Hand: <span id="cpu-hand-count">3</span></div>
 
         <div id="log"></div>
         
@@ -244,9 +192,6 @@
             <div id="turn-indicator" style="font-weight:bold; color:var(--text-gold);">Starting...</div>
             <div id="player-options" style="display:none; margin-top:5px;">
                 <label><input type="checkbox" id="waste-mode"> 🗑️ Waste Mode</label>
-                <div style="font-size:0.7em; color:yellow; margin-top:5px;">
-                    Tip: Check Waste Mode to discard unplayable cards.
-                </div>
             </div>
         </div>
 
@@ -262,74 +207,52 @@
     </div>
 
 <script>
-    // --- NAVIGATION ---
-    function showScreen(id) {
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
-        document.getElementById(id).classList.add('active-screen');
-        
-        const sheet = document.getElementById('cheat-sheet');
-        if(id === 'game-screen') sheet.style.display = 'flex';
-        else sheet.style.display = 'none';
-    }
-
-    function goHome() { showScreen('landing-screen'); }
-    function goToManualMode() { showScreen('manual-screen'); }
-
-    // --- MANUAL SCOREBOARD LOGIC ---
-    let mPWins = 0;
-    let mOWins = 0;
-    function modManualScore(who, amt) {
-        if(who === 'p') {
-            mPWins += amt;
-            if(mPWins < 0) mPWins = 0;
-            if(mPWins > 3) mPWins = 3;
-            document.getElementById('manual-p-score').innerText = mPWins;
-        } else {
-            mOWins += amt;
-            if(mOWins < 0) mOWins = 0;
-            if(mOWins > 3) mOWins = 3;
-            document.getElementById('manual-o-score').innerText = mOWins;
-        }
-    }
-
-    // --- TIEBREAKER ---
-    function runTiebreaker(context) {
-        showScreen('tiebreaker-screen');
-        document.getElementById('scan-anim').style.display = 'block';
-        document.getElementById('tiebreaker-final').style.display = 'none';
-
-        setTimeout(() => {
-            document.getElementById('scan-anim').style.display = 'none';
-            document.getElementById('tiebreaker-final').style.display = 'block';
-            
-            const reasons = ["has better hair volume.", "is radiating charm.", "has a winning smile.", "is objectively cuter."];
-            const reason = reasons[Math.floor(Math.random() * reasons.length)];
-            let winner = Math.random() > 0.5 ? "You" : (context === 'GAME' ? "The Bartender" : "Opponent");
-            if(winner === "You") document.getElementById('tiebreaker-winner').innerText = "You are Cuter!";
-            else document.getElementById('tiebreaker-winner').innerText = `${winner} is Cuter!`;
-            
-            document.getElementById('tiebreaker-reason').innerText = `Reason: ${winner} ${reason}`;
-            
-            document.getElementById('tiebreaker-continue-btn').onclick = function() {
-                if(context === 'MANUAL') { showScreen('manual-screen'); }
-                else { startShift(winner === "You" ? 'PLAYER' : 'CPU'); }
-            };
-        }, 2000);
-    }
-
-    // --- GAME ENGINE ---
+    // --- HELPERS ---
     const SUITS = ['♥', '♦', '♣', '♠'];
     const RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
     
-    // Match State
-    let matchPWins = 0;
-    let matchCWins = 0;
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
+        document.getElementById(id).classList.add('active-screen');
+        const sheet = document.getElementById('cheat-sheet');
+        sheet.style.display = (id === 'game-screen') ? 'flex' : 'none';
+    }
+    function goHome() { showScreen('landing-screen'); }
+    function goToManualMode() { showScreen('manual-screen'); }
 
-    // Shift State
-    let deck = [], pHand = [], cHand = [], pFlight = [], cFlight = [];
-    let turn = "", gameState = "IDLE";
-    let lastCallCaller = null; 
-    let pendingAction = null;
+    // --- MANUAL SCORE ---
+    let mPWins=0, mOWins=0;
+    function modManualScore(who, amt) {
+        if(who==='reset') { mPWins=0; mOWins=0; }
+        else if(who==='p') { mPWins+=amt; if(mPWins>3) mPWins=3; }
+        else { mOWins+=amt; if(mOWins>3) mOWins=3; }
+        document.getElementById('manual-p-score').innerText = mPWins;
+        document.getElementById('manual-o-score').innerText = mOWins;
+    }
+
+    // --- TIEBREAKER ---
+    function runTiebreaker(ctx) {
+        showScreen('tiebreaker-screen');
+        document.getElementById('scan-anim').style.display='block';
+        document.getElementById('tiebreaker-final').style.display='none';
+        setTimeout(()=>{
+            document.getElementById('scan-anim').style.display='none';
+            document.getElementById('tiebreaker-final').style.display='block';
+            let winner = Math.random()>0.5?"You":(ctx==='GAME'?"The Bartender":"Opponent");
+            let reason = ["is radiating charm.", "has better hair.", "is objectively cuter.", "has a winning smile."][Math.floor(Math.random()*4)];
+            document.getElementById('tiebreaker-winner').innerText = winner==="You"?"You are Cuter!":`${winner} is Cuter!`;
+            document.getElementById('tiebreaker-reason').innerText = `Reason: ${winner} ${reason}`;
+            document.getElementById('tiebreaker-continue-btn').onclick=()=>{
+                if(ctx==='MANUAL') showScreen('manual-screen');
+                else startShift(winner==="You"?'PLAYER':'CPU');
+            };
+        }, 1500);
+    }
+
+    // --- GAME LOGIC ---
+    let matchPWins=0, matchCWins=0;
+    let deck=[], pHand=[], cHand=[], pFlight=[], cFlight=[];
+    let turn="", gameState="IDLE", lastCallCaller=null, pendingAction=null;
 
     class Card {
         constructor(r, s) {
@@ -339,249 +262,166 @@
             this.uid = Math.random().toString(36);
         }
         getEffectName() {
-            if(this.r === 'J') return "Draw 2, Disc 1";
-            if(this.r === 'Q') return "Remove Opp Card";
-            if(this.r === 'K') return "Opp Disc 2";
-            if(this.r === 'A') return "Steal Brew";
+            if(this.r==='J') return "Draw 2, Disc 1";
+            if(this.r==='Q') return "Remove Opp Card";
+            if(this.r==='K') return "Opp Disc 2";
+            if(this.r==='A') return "Steal Brew";
             return "";
         }
     }
 
-    function log(msg) {
-        const d = document.getElementById('log');
-        d.innerHTML += `<div>> ${msg}</div>`;
-        d.scrollTop = d.scrollHeight;
-    }
-
-    function startNewMatch() {
-        matchPWins = 0;
-        matchCWins = 0;
-        updateMatchScoreUI();
-        runTiebreaker('GAME'); // Start match with tiebreaker
-    }
-
-    function updateMatchScoreUI() {
-        document.getElementById('game-p-wins').innerText = matchPWins;
-        document.getElementById('game-c-wins').innerText = matchCWins;
+    function startNewMatch() { matchPWins=0; matchCWins=0; updateMatchUI(); runTiebreaker('GAME'); }
+    function updateMatchUI() { document.getElementById('game-p-wins').innerText=matchPWins; document.getElementById('game-c-wins').innerText=matchCWins; }
+    function log(msg) { 
+        const d=document.getElementById('log'); 
+        d.innerHTML += `<div>> ${msg}</div>`; d.scrollTop=d.scrollHeight; 
     }
 
     function startShift(starter) {
         showScreen('game-screen');
-        deck = [];
-        for(let s of SUITS) for(let r of RANKS) deck.push(new Card(r,s));
-        deck.sort(() => Math.random() - 0.5);
-        
-        pHand = [deck.pop(), deck.pop(), deck.pop()];
-        cHand = [deck.pop(), deck.pop(), deck.pop()];
-        pFlight = []; cFlight = [];
-        lastCallCaller = null;
-        
-        document.getElementById('log').innerHTML = "";
-        log(`Shift Starting. ${starter} goes first.`);
-        log(`Score: You ${matchPWins} - ${matchCWins} CPU`);
-        
+        deck=[]; for(let s of SUITS) for(let r of RANKS) deck.push(new Card(r,s));
+        deck.sort(()=>Math.random()-0.5);
+        pHand=[deck.pop(),deck.pop(),deck.pop()];
+        cHand=[deck.pop(),deck.pop(),deck.pop()];
+        pFlight=[]; cFlight=[]; lastCallCaller=null;
+        document.getElementById('log').innerHTML="";
+        log(`Shift Started. ${starter} goes first.`);
         startTurn(starter);
     }
 
-    // --- TURN LOGIC ---
     function startTurn(who) {
         turn = who;
         
-        // 1. CHECK IF LAST CALL IS ACTIVE AND RESOLVING
-        if (lastCallCaller !== null) {
-            if (turn === lastCallCaller) {
-                let flight = (turn === 'PLAYER') ? pFlight : cFlight;
-                if (flight.length === 4) {
-                    endShift(); // SURVIVED -> SHIFT OVER
-                    return;
-                } else {
-                    log(`🚫 LAST CALL BROKEN! ${turn}'s flight dropped below 4! Play continues.`);
-                    lastCallCaller = null; 
-                }
-            }
+        // Last Call Logic
+        if(lastCallCaller !== null && turn === lastCallCaller) {
+            let flight = (turn==='PLAYER') ? pFlight : cFlight;
+            if(flight.length===4) { endShift(); return; }
+            else { log(`🚫 Last Call Broken! Play continues.`); lastCallCaller=null; }
         }
 
-        // 2. CHECK FOR NEW LAST CALL TRIGGER
-        let myFlight = (who === 'PLAYER') ? pFlight : cFlight;
-        if (myFlight.length === 4 && lastCallCaller === null) {
+        let myFlight = (who==='PLAYER') ? pFlight : cFlight;
+        if(myFlight.length===4 && lastCallCaller===null) {
             lastCallCaller = who;
-            log(`🔔 LAST CALL! ${who} yells "Last Call!"`);
-            log(`Opponent gets ONE FINAL TURN to break the flight!`);
+            log(`🔔 ${who} yells "Last Call!"`);
             renderGame();
-            
-            // Pass turn immediately to opponent for the specific retaliation turn
-            let opponent = (who === 'PLAYER') ? 'CPU' : 'PLAYER';
-            setTimeout(() => startTurn(opponent), 2000);
+            setTimeout(()=>startTurn(who==='PLAYER'?'CPU':'PLAYER'), 2000);
             return;
         }
 
-        // 3. STANDARD TURN
-        document.getElementById('turn-indicator').innerText = `${who === 'PLAYER' ? 'YOUR' : "BARTENDER'S"} TURN`;
-        document.getElementById('turn-indicator').style.color = who === 'PLAYER' ? '#0f0' : '#f00';
+        document.getElementById('turn-indicator').innerText = `${who==='PLAYER'?'YOUR':"BARTENDER'S"} TURN`;
+        document.getElementById('turn-indicator').style.color = who==='PLAYER'?'#0f0':'#f00';
 
-        // Draw Phase
         if(deck.length) {
             let c = deck.pop();
-            if(who === 'PLAYER') pHand.push(c); else cHand.push(c);
+            if(who==='PLAYER') pHand.push(c); else cHand.push(c);
         }
-
         renderGame();
 
-        if(who === 'PLAYER') {
-            gameState = 'PLAY';
-            document.getElementById('player-options').style.display = 'block';
-            document.getElementById('waste-mode').checked = false;
+        if(who==='PLAYER') {
+            gameState='PLAY'; document.getElementById('player-options').style.display='block';
+            document.getElementById('waste-mode').checked=false;
         } else {
-            document.getElementById('player-options').style.display = 'none';
+            document.getElementById('player-options').style.display='none';
             setTimeout(cpuTurn, 1500);
         }
     }
 
-    // --- ACTIONS ---
-    window.cardAction = function(loc, uid) {
-        if(turn !== 'PLAYER') return;
-
-        if(loc === 'HAND' && gameState === 'PLAY') {
-            const idx = pHand.findIndex(c => c.uid === uid);
-            const card = pHand[idx];
-            
-            if(document.getElementById('waste-mode').checked) {
-                pHand.splice(idx, 1);
-                log(`Wasted ${card.r}${card.s}`);
-                nextTurn();
-                return;
-            }
-
-            if(card.isBrew) {
-                if(pFlight.length < 4) {
-                    pHand.splice(idx, 1);
-                    pFlight.push(card);
-                    log(`Served ${card.r}${card.s}`);
-                    nextTurn();
-                } else alert("Flight Full! Waste a card or play a Patron.");
-            } else {
-                if (card.r === 'A' && (cFlight.length === 0 || pFlight.length === 4)) {
-                    alert("Cannot play Ace. Waste it?"); return;
-                }
-                if (card.r === 'Q' && cFlight.length === 0) {
-                    alert("Cannot play Queen. Waste it?"); return;
-                }
-                handlePatron(card, idx);
-            }
-        }
-        else if (loc === 'HAND' && gameState === 'DISCARD') {
-            const idx = pHand.findIndex(c => c.uid === uid);
-            const card = pHand[idx];
-            pHand.splice(idx, 1);
-            log(`Discarded ${card.r}${card.s}`);
-            nextTurn();
-        }
-        else if (loc === 'CPU' && gameState === 'TARGET') {
-             const idx = cFlight.findIndex(c => c.uid === uid);
-             if(pendingAction) pendingAction(idx);
-        }
-    };
-
-    function handlePatron(card, idx) {
-        if(card.r === 'J') { 
-            pHand.splice(idx, 1);
-            log("Jack: Drawing 2...");
-            if(deck.length) pHand.push(deck.pop());
-            if(deck.length) pHand.push(deck.pop());
-            log("Select 1 card to Discard.");
-            gameState = 'DISCARD';
-            renderGame();
-        }
-        else if(card.r === 'Q') {
-            pHand.splice(idx, 1);
-            gameState = 'TARGET';
-            log("Select card to REMOVE.");
-            pendingAction = (targetIdx) => {
-                let r = cFlight.splice(targetIdx,1)[0];
-                log(`Removed ${r.r}${r.s}`);
-                nextTurn();
-            };
-            renderGame();
-        }
-        else if(card.r === 'K') {
-            pHand.splice(idx, 1);
-            log("King: Bartender discards 2.");
-            if(cHand.length) cHand.pop();
-            if(cHand.length) cHand.pop();
-            nextTurn();
-        }
-        else if(card.r === 'A') {
-            pHand.splice(idx, 1);
-            gameState = 'TARGET';
-            log("Select card to STEAL.");
-            pendingAction = (targetIdx) => {
-                let s = cFlight.splice(targetIdx,1)[0];
-                pFlight.push(s);
-                log(`Stole ${s.r}${s.s}`);
-                nextTurn();
-            };
-            renderGame();
-        }
-    }
-
-    function nextTurn() {
-        gameState = 'IDLE';
-        renderGame();
-        startTurn('CPU');
-    }
-
-    // --- CPU AI ---
+    // --- SMART AI ---
     function cpuTurn() {
         let played = false;
 
-        // Break Last Call Logic
-        if (lastCallCaller === 'PLAYER' && pFlight.length === 4) {
+        // 1. EMERGENCY: Break Player Last Call
+        if(lastCallCaller === 'PLAYER' && pFlight.length === 4) {
             let qIdx = cHand.findIndex(c => c.r === 'Q');
-            if (qIdx !== -1) {
-                cHand.splice(qIdx, 1);
-                let r = pFlight.pop();
+            if(qIdx !== -1) {
+                cHand.splice(qIdx, 1); pFlight.pop();
                 log(`🚨 Bartender breaks Last Call with Queen!`);
                 renderGame(); startTurn('PLAYER'); return;
             }
             let aIdx = cHand.findIndex(c => c.r === 'A');
-            if (aIdx !== -1 && cFlight.length < 4) {
-                 cHand.splice(aIdx, 1);
-                 cFlight.push(pFlight.pop());
-                 log(`🚨 Bartender breaks Last Call with Ace!`);
-                 renderGame(); startTurn('PLAYER'); return;
+            if(aIdx !== -1 && cFlight.length < 4) {
+                cHand.splice(aIdx, 1); cFlight.push(pFlight.pop());
+                log(`🚨 Bartender breaks Last Call with Ace!`);
+                renderGame(); startTurn('PLAYER'); return;
             }
         }
 
-        // Standard AI
+        // 2. SMART STEAL (Target 9s, 10s, or Bonus Suits)
+        let bestStealIdx = -1;
         let aIdx = cHand.findIndex(c => c.r === 'A');
         if(!played && aIdx !== -1 && pFlight.length > 0 && cFlight.length < 4) {
-            cHand.splice(aIdx, 1);
-            cFlight.push(pFlight.shift());
-            log("🤖 Bartender plays Ace & Steals!");
-            played = true;
+            // Find highest value card in player flight
+            let bestVal = 0;
+            pFlight.forEach((c, i) => { if(c.val > bestVal) { bestVal = c.val; bestStealIdx = i; } });
+            
+            // Prioritize stealing if card is 9 or 10
+            if(bestVal >= 9) {
+                cHand.splice(aIdx, 1);
+                cFlight.push(pFlight.splice(bestStealIdx, 1)[0]);
+                log(`🤖 Bartender steals your ${bestVal} with Ace!`);
+                played = true;
+            }
         }
 
+        // 3. SMART REMOVE (Target 9s, 10s)
+        if(!played) {
+            let qIdx = cHand.findIndex(c => c.r === 'Q');
+            if(qIdx !== -1 && pFlight.length > 0) {
+                 let bestVal = 0; let target = -1;
+                 pFlight.forEach((c, i) => { if(c.val > bestVal) { bestVal = c.val; target = i; } });
+                 
+                 // Only use Queen if player has something worth removing
+                 if(bestVal >= 8) {
+                     cHand.splice(qIdx, 1);
+                     pFlight.splice(target, 1);
+                     log(`🤖 Bartender removes your ${bestVal} with Queen.`);
+                     played = true;
+                 }
+            }
+        }
+
+        // 4. BONUS HUNTING (Flush/Color)
+        if(!played && cFlight.length > 0 && cFlight.length < 4) {
+            // Check major suit in flight
+            let suits = cFlight.map(c => c.s);
+            let dominantSuit = suits.sort((a,b) => suits.filter(v => v===a).length - suits.filter(v => v===b).length).pop();
+            
+            // Find card in hand matching dominant suit
+            let matchIdx = cHand.findIndex(c => c.isBrew && c.s === dominantSuit);
+            if(matchIdx !== -1) {
+                let c = cHand.splice(matchIdx, 1)[0];
+                cFlight.push(c);
+                log(`🤖 Bartender plays ${c.r}${c.s} (Chasing Bonus!)`);
+                played = true;
+            }
+        }
+
+        // 5. HIGH VALUE PLAY (8+)
         if(!played) {
             let bIdx = cHand.findIndex(c => c.isBrew && c.val >= 8);
             if(bIdx !== -1 && cFlight.length < 4) {
                 let c = cHand.splice(bIdx, 1)[0];
                 cFlight.push(c);
-                log(`🤖 Bartender serves ${c.r}${c.s}`);
+                log(`🤖 Bartender serves High Brew ${c.r}${c.s}`);
                 played = true;
             }
         }
 
+        // 6. STRATEGIC WASTE (Don't play junk if not winning)
+        // If holding only low cards (2-7) and flight isn't full, throw one away to dig for gold.
         if(!played) {
-            let qIdx = cHand.findIndex(c => c.r === 'Q');
-            if(qIdx !== -1 && pFlight.length > 0) {
-                cHand.splice(qIdx, 1);
-                pFlight.pop();
-                log("🤖 Bartender plays Queen.");
-                played = true;
+            let lowCardIdx = cHand.findIndex(c => c.isBrew && c.val < 8);
+            // Only waste if we aren't about to win (flight length 3)
+            if(lowCardIdx !== -1 && cFlight.length < 3) {
+                 let w = cHand.splice(lowCardIdx, 1)[0];
+                 log(`🤖 Bartender thinks hand is weak. Wastes ${w.r}${w.s}.`);
+                 played = true;
             }
         }
 
+        // 7. FALLBACK (Play anything legal)
         if(!played) {
+            // Try to play any brew
             let anyB = cHand.findIndex(c => c.isBrew);
             if(anyB !== -1 && cFlight.length < 4) {
                 let c = cHand.splice(anyB, 1)[0];
@@ -589,99 +429,114 @@
                 log(`🤖 Bartender serves ${c.r}${c.s}`);
                 played = true;
             }
-        }
-
-        if(!played && cHand.length) {
-            cHand.shift();
-            log("🤖 Bartender wastes a card.");
+            // Or use an effect just to use it
+            else if (cHand.length > 0) {
+                 // Try Ace/Queen on whatever
+                 let aIdx2 = cHand.findIndex(c => c.r === 'A');
+                 let qIdx2 = cHand.findIndex(c => c.r === 'Q');
+                 
+                 if(aIdx2 !== -1 && pFlight.length > 0 && cFlight.length < 4) {
+                     cHand.splice(aIdx2, 1); cFlight.push(pFlight.pop());
+                     log("🤖 Bartender plays Ace.");
+                 }
+                 else if(qIdx2 !== -1 && pFlight.length > 0) {
+                     cHand.splice(qIdx2, 1); pFlight.pop();
+                     log("🤖 Bartender plays Queen.");
+                 }
+                 else {
+                     // Just waste first card
+                     let w = cHand.shift();
+                     log(`🤖 Bartender wastes ${w.r}${w.s}`);
+                 }
+            }
         }
 
         renderGame();
         startTurn('PLAYER');
     }
 
-    function renderGame() {
-        const renderC = (c, loc) => {
-            const isRed = ['♥','♦'].includes(c.s);
-            const clickable = (loc === 'HAND' && turn === 'PLAYER') || 
-                              (loc === 'CPU' && gameState === 'TARGET');
-            const hint = loc === 'HAND' ? `<div class="card-hint">${c.getEffectName()}</div>` : '';
-            
-            return `<div class="card ${isRed?'red':'black'}" 
-                    style="${clickable?'border:2px solid cyan':''}" 
-                    onclick="cardAction('${loc}', '${c.uid}')">
-                    <div class="card-corner">${c.r}</div>
-                    <div>${c.s}</div>
-                    ${hint}
-                    </div>`;
-        };
-
-        document.getElementById('player-flight').innerHTML = pFlight.map(c => renderC(c,'P_FLIGHT')).join('');
-        document.getElementById('cpu-flight').innerHTML = cFlight.map(c => renderC(c,'CPU')).join('');
-        document.getElementById('player-hand').innerHTML = pHand.map(c => renderC(c,'HAND')).join('');
-        document.getElementById('cpu-hand-count').innerText = cHand.length;
+    // --- PLAYER ACTIONS ---
+    window.cardAction = function(loc, uid) {
+        if(turn !== 'PLAYER') return;
+        if(loc==='HAND' && gameState==='PLAY') {
+            const idx = pHand.findIndex(c => c.uid === uid);
+            const card = pHand[idx];
+            if(document.getElementById('waste-mode').checked) {
+                pHand.splice(idx,1); log(`Wasted ${card.r}${card.s}`); nextTurn(); return;
+            }
+            if(card.isBrew) {
+                if(pFlight.length<4) { pHand.splice(idx,1); pFlight.push(card); log(`Served ${card.r}${card.s}`); nextTurn(); }
+                else alert("Flight Full!");
+            } else {
+                if(card.r==='A' && (cFlight.length===0 || pFlight.length===4)) { alert("Cannot steal."); return; }
+                if(card.r==='Q' && cFlight.length===0) { alert("Nothing to remove."); return; }
+                handlePatron(card, idx);
+            }
+        }
+        else if(loc==='HAND' && gameState==='DISCARD') {
+            pHand.splice(pHand.findIndex(c=>c.uid===uid),1); log("Discarded."); nextTurn();
+        }
+        else if(loc==='CPU' && gameState==='TARGET') {
+            if(pendingAction) pendingAction(cFlight.findIndex(c=>c.uid===uid));
+        }
     }
 
-    function calcFinal(flight) {
-        if(!flight.length) return 0;
-        let s = flight.reduce((a,b)=>a+b.val,0);
-        if(flight.length===4) {
-            let suits = flight.map(c=>c.s);
-            if(new Set(suits).size === 1) s+=20;
-            else {
-                let reds = flight.every(c=>['♥','♦'].includes(c.s));
-                let blacks = flight.every(c=>['♣','♠'].includes(c.s));
-                if(reds||blacks) s+=10;
-            }
+    function handlePatron(c, i) {
+        if(c.r==='J') { 
+            pHand.splice(i,1); if(deck.length) pHand.push(deck.pop()); if(deck.length) pHand.push(deck.pop());
+            log("Jack played. Discard 1."); gameState='DISCARD'; renderGame();
+        }
+        else if(c.r==='K') {
+            pHand.splice(i,1); if(cHand.length) cHand.pop(); if(cHand.length) cHand.pop();
+            log("King played. Bartender discards 2."); nextTurn();
+        }
+        else if(c.r==='Q') {
+            pHand.splice(i,1); log("Select card to Remove."); gameState='TARGET';
+            pendingAction=(t)=>{ cFlight.splice(t,1); log("Removed card."); nextTurn(); }; renderGame();
+        }
+        else if(c.r==='A') {
+            pHand.splice(i,1); log("Select card to Steal."); gameState='TARGET';
+            pendingAction=(t)=>{ pFlight.push(cFlight.splice(t,1)[0]); log("Stole card."); nextTurn(); }; renderGame();
+        }
+    }
+
+    function nextTurn() { gameState='IDLE'; renderGame(); startTurn('CPU'); }
+
+    function renderGame() {
+        const rC = (c,l) => {
+            const clk = (l==='HAND'&&turn==='PLAYER')||(l==='CPU'&&gameState==='TARGET');
+            return `<div class="card ${['♥','♦'].includes(c.s)?'red':'black'}" style="${clk?'border:2px solid cyan':''}" onclick="cardAction('${l}','${c.uid}')"><div class="card-corner">${c.r}</div><div>${c.s}</div>${l==='HAND'?`<div class="card-hint">${c.getEffectName()}</div>`:''}</div>`;
+        };
+        document.getElementById('p-flight').innerHTML = pFlight.map(c=>rC(c,'P_FLIGHT')).join('');
+        document.getElementById('c-flight').innerHTML = cFlight.map(c=>rC(c,'CPU')).join('');
+        document.getElementById('p-hand').innerHTML = pHand.map(c=>rC(c,'HAND')).join('');
+        document.getElementById('cpu-hand-count').innerText = cHand.length;
+        // Fix ID ref
+        document.getElementById('player-flight').innerHTML = pFlight.map(c=>rC(c,'P_FLIGHT')).join('');
+        document.getElementById('cpu-flight').innerHTML = cFlight.map(c=>rC(c,'CPU')).join('');
+        document.getElementById('player-hand').innerHTML = pHand.map(c=>rC(c,'HAND')).join('');
+    }
+
+    function calcScore(f) {
+        if(!f.length) return 0;
+        let s=f.reduce((a,b)=>a+b.val,0);
+        if(f.length===4) {
+            if(new Set(f.map(c=>c.s)).size===1) s+=20;
+            else { let r=f.filter(c=>['♥','♦'].includes(c.s)).length; if(r===0||r===4) s+=10; }
         }
         return s;
     }
 
     function endShift() {
-        let ps = calcFinal(pFlight);
-        let cs = calcFinal(cFlight);
-        let winner = "";
-        
-        let msg = `SHIFT OVER!\n\nPlayer: ${ps}\nBartender: ${cs}\n\n`;
-        
-        if (ps > cs) {
-            msg += "🏆 YOU WIN THE SHIFT!";
-            winner = 'PLAYER';
-            matchPWins++;
-        } else if (cs > ps) {
-            msg += "😞 BARTENDER WINS THE SHIFT.";
-            winner = 'CPU';
-            matchCWins++;
-        } else {
-            msg += "🤝 IT'S A TIE. (No points awarded).";
-            winner = 'TIE';
-        }
-        
-        updateMatchScoreUI();
-        alert(msg);
-
-        // Check for Match Win
-        if (matchPWins >= 3) {
-            endMatch('PLAYER');
-        } else if (matchCWins >= 3) {
-            endMatch('CPU');
-        } else {
-            // Next Shift
-            // Winner goes first? Or alternate? Let's say Winner goes first.
-            let starter = (winner === 'PLAYER') ? 'PLAYER' : (winner === 'CPU' ? 'CPU' : (Math.random()>0.5?'PLAYER':'CPU'));
-            startShift(starter);
-        }
-    }
-
-    function endMatch(winner) {
-        let txt = winner === 'PLAYER' ? "🎉 YOU WON THE MATCH! (3 Shifts)" : "💀 BARTENDER WON THE MATCH. (3 Shifts)";
-        txt += "\n\nWould you like to play another match?";
-        
-        if(confirm(txt)) {
-            startNewMatch();
-        } else {
-            goHome();
-        }
+        let ps=calcScore(pFlight), cs=calcScore(cFlight);
+        let msg = `SHIFT OVER!\nYou: ${ps} | Bartender: ${cs}\n`;
+        if(ps>cs) { msg+="🏆 YOU WIN!"; matchPWins++; }
+        else if(cs>ps) { msg+="💀 BARTENDER WINS."; matchCWins++; }
+        else msg+="🤝 TIE.";
+        alert(msg); updateMatchUI();
+        if(matchPWins>=3) { if(confirm("YOU WON THE MATCH! Play again?")) startNewMatch(); else goHome(); }
+        else if(matchCWins>=3) { if(confirm("BARTENDER WON THE MATCH. Retry?")) startNewMatch(); else goHome(); }
+        else startShift(ps>cs?'PLAYER':(cs>ps?'CPU':(Math.random()>.5?'PLAYER':'CPU')));
     }
 </script>
 </body>
