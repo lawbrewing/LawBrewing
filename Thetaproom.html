@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Taproom - Digital Edition</title>
+    <style>
+        :root {
+            --bg-color: #2c241b;
+            --table-color: #3e5f40;
+            --card-bg: #f4e4bc;
+            --text-gold: #f0c05a;
+            --danger: #d9534f;
+        }
+
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: var(--bg-color);
+            color: white;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        h1 { color: var(--text-gold); text-shadow: 2px 2px #000; margin: 10px 0; }
+        
+        /* LAYOUT */
+        #game-container {
+            width: 100%;
+            max-width: 800px;
+            display: none; /* Hidden until game starts */
+            flex-direction: column;
+            gap: 15px;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .zone {
+            background: rgba(0,0,0,0.3);
+            border: 2px solid #5c4a35;
+            border-radius: 10px;
+            padding: 10px;
+            min-height: 120px;
+            position: relative;
+        }
+
+        .zone-label {
+            position: absolute;
+            top: -10px;
+            left: 10px;
+            background: var(--bg-color);
+            padding: 0 5px;
+            color: var(--text-gold);
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        /* CARDS */
+        .card-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .card {
+            width: 70px;
+            height: 100px;
+            background: var(--card-bg);
+            color: black;
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            cursor: pointer;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+            transition: transform 0.2s;
+            position: relative;
+            user-select: none;
+        }
+
+        .card:hover { transform: translateY(-10px); }
+        .card.red { color: #d00; }
+        .card.black { color: #111; }
+        
+        .card.selected { border: 3px solid cyan; }
+
+        .card-top { position: absolute; top: 5px; left: 5px; font-size: 0.6em; }
+        .card-center { font-size: 1.2em; font-weight: bold; }
+
+        /* INTRO / MODALS */
+        #start-screen {
+            text-align: center;
+            margin-top: 50px;
+        }
+        
+        button {
+            background: var(--text-gold);
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 20px;
+            color: #2c241b;
+        }
+        button:hover { background: #fff; }
+
+        .btn-small { padding: 5px 10px; font-size: 0.8em; margin: 5px; }
+        .btn-waste { background: var(--danger); color: white; }
+
+        #log-area {
+            height: 80px;
+            overflow-y: auto;
+            background: #1a1510;
+            border: 1px solid #555;
+            padding: 5px;
+            font-size: 0.9em;
+            color: #ddd;
+        }
+
+        #action-bar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            background: #222;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .turn-indicator {
+            font-weight: bold;
+            color: cyan;
+            text-transform: uppercase;
+        }
+
+        /* ANIMATIONS */
+        @keyframes flash { 0% { opacity: 0; } 50% { opacity: 1; } 100% { opacity: 0; } }
+        .scan-line {
+            width: 100%; height: 2px; background: cyan;
+            animation: flash 1s infinite;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="start-screen">
+        <h1>🍺 THE TAPROOM</h1>
+        <p>A Game of Brews & Bar Brawls</p>
+        <br>
+        <div id="cuteness-module">
+            <input type="text" id="player-name" placeholder="Enter Your Name" style="padding: 10px; font-size:1em;">
+            <br>
+            <button onclick="startCutenessScan()">Enter Taproom</button>
+        </div>
+        <div id="scan-result" style="margin-top:20px; font-weight:bold; color:cyan;"></div>
+    </div>
+
+    <div id="game-container">
+        <div class="zone" style="background: #3a2e24;">
+            <div class="zone-label">CPU's Flight (Score Area)</div>
+            <div id="cpu-flight" class="card-container"></div>
+        </div>
+        
+        <div style="text-align:center; font-size:0.8em; color: gray;">
+            CPU Hand: <span id="cpu-hand-count">3</span> cards
+        </div>
+
+        <div id="log-area">Welcome to the shift. Good luck!</div>
+
+        <div id="action-bar">
+            <span id="turn-display">Waiting...</span>
+            <div id="player-controls" style="display:none;">
+                <label style="font-size: 0.8em; display:flex; align-items:center; gap:5px;">
+                    <input type="checkbox" id="waste-mode"> 🗑️ Waste Mode (Discard)
+                </label>
+                <span id="instruction-text" style="color:yellow; font-size:0.8em; margin-left:10px;"></span>
+            </div>
+        </div>
+
+        <div class="zone" style="background: var(--table-color);">
+            <div class="zone-label">Your Flight (Score Area)</div>
+            <div id="player-flight" class="card-container"></div>
+        </div>
+
+        <div class="zone">
+            <div class="zone-label">Your Hand</div>
+            <div id="player-hand" class="card-container"></div>
+        </div>
+    </div>
+
+<script>
+    // --- GAME CONFIG ---
+    const SUITS = ['♥', '♦', '♣', '♠'];
+    const RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+    
+    // GAME STATE
+    let deck = [];
+    let pHand = [];
+    let cHand = [];
+    let pFlight = [];
+    let cFlight = [];
+    let turn = ""; 
+    let gameState = "IDLE"; // IDLE, PLAY, TARGET_SELECT, DISCARD_SELECT
+    let lastCallTriggered = false;
+    let finalTurnTaker = "";
+    let actionPending = null; // Stores function to run after selection
+
+    // --- CUTENESS TIEBREAKER ---
+    function startCutenessScan() {
+        const name = document.getElementById('player-name').value || "Player";
+        const resDiv = document.getElementById('scan-result');
+        const module = document.getElementById('cuteness-module');
+        
+        module.innerHTML = `<p>Scanning facial symmetry...</p><div class="scan-line"></div>`;
+        
+        setTimeout(() => {
+            const reasons = [
+                "has better hair texture today.",
+                "possesses a winning smile.",
+                "is radiating pure charm.",
+                "has an undeniable sparkle."
+            ];
+            const reason = reasons[Math.floor(Math.random() * reasons.length)];
+            const winner = Math.random() > 0.5 ? name : "The Computer";
+            
+            resDiv.innerHTML = `RESULT: <b>${winner}</b> is cuter because ${winner} ${reason}`;
+            
+            setTimeout(() => {
+                initGame(winner === name ? "PLAYER" : "CPU");
+            }, 2500);
+        }, 1500);
+    }
+
+    // --- CORE LOGIC ---
+    class Card {
+        constructor(rank, suit) {
+            this.rank = rank;
+            this.suit = suit;
+            this.isBrew = !['J','Q','K','A'].includes(rank);
+            this.value = this.isBrew ? parseInt(rank) : 0;
+            this.id = Math.random().toString(36).substr(2, 9);
+        }
+    }
+
+    function createDeck() {
+        let d = [];
+        for(let s of SUITS) {
+            for(let r of RANKS) {
+                d.push(new Card(r, s));
+            }
+        }
+        return d.sort(() => Math.random() - 0.5);
+    }
+
+    function log(msg) {
+        const div = document.getElementById('log-area');
+        div.innerHTML += `<div>> ${msg}</div>`;
+        div.scrollTop = div.scrollHeight;
+    }
+
+    function initGame(starter) {
+        document.getElementById('start-screen').style.display = 'none';
+        document.getElementById('game-container').style.display = 'flex';
+        
+        deck = createDeck();
+        pHand = [deck.pop(), deck.pop(), deck.pop()];
+        cHand = [deck.pop(), deck.pop(), deck.pop()];
+        pFlight = [];
+        cFlight = [];
+        lastCallTriggered = false;
+        
+        log("Bar is open! Deals made.");
+        startTurn(starter);
+    }
+
+    function startTurn(who) {
+        turn = who;
+        document.getElementById('turn-display').innerText = `${who}'S TURN`;
+        document.getElementById('turn-display').style.color = who === 'PLAYER' ? '#0f0' : '#f00';
+        
+        // Check End Game
+        if (lastCallTriggered) {
+             if ((turn === "PLAYER" && finalTurnTaker !== "PLAYER") || 
+                 (turn === "CPU" && finalTurnTaker !== "CPU")) {
+                 endGame();
+                 return;
+             }
+        }
+
+        // Draw Phase
+        if(deck.length > 0) {
+            let card = deck.pop();
+            if(who === 'PLAYER') pHand.push(card);
+            else cHand.push(card);
+            // log(`${who} draws a card.`);
+        }
+
+        // Last Call Check
+        if (!lastCallTriggered && (pFlight.length === 4 || cFlight.length === 4)) {
+            log("🔔 LAST CALL! Opponent gets 1 final turn!");
+            lastCallTriggered = true;
+            finalTurnTaker = (turn === "PLAYER") ? "CPU" : "PLAYER";
+        }
+
+        render();
+
+        if (who === 'PLAYER') {
+            gameState = 'PLAY';
+            document.getElementById('player-controls').style.display = 'flex';
+            document.getElementById('waste-mode').checked = false;
+            updateInstruction("Select a card to Play, or toggle Waste Mode.");
+        } else {
+            document.getElementById('player-controls').style.display = 'none';
+            setTimeout(cpuTurn, 1500);
+        }
+    }
+
+    // --- PLAYER INTERACTION ---
+    function handleCardClick(index, location) {
+        if (turn !== 'PLAYER') return;
+
+        // 1. PLAYING FROM HAND
+        if (location === 'HAND' && gameState === 'PLAY') {
+            const card = pHand[index];
+            const wasteMode = document.getElementById('waste-mode').checked;
+
+            if (wasteMode) {
+                pHand.splice(index, 1);
+                log(`You wasted ${card.rank}${card.suit}`);
+                endPlayerTurn();
+                return;
+            }
+
+            // Play Logic
+            if (card.isBrew) {
+                if (pFlight.length < 4) {
+                    pHand.splice(index, 1);
+                    pFlight.push(card);
+                    log(`Served ${card.rank}${card.suit}`);
+                    endPlayerTurn();
+                } else {
+                    alert("Flight full! Waste a card or play a Patron.");
+                }
+            } else {
+                // Patron Effects
+                playPatronEffect(card, index);
+            }
+        }
+        
+        // 2. TARGETING (For Queen/Ace)
+        else if (location === 'CPU_FLIGHT' && gameState === 'TARGET_SELECT') {
+            if (actionPending) {
+                actionPending(index); // Execute the stored function with the target index
+            }
+        }
+        
+        // 3. DISCARDING (For Jack)
+        else if (location === 'HAND' && gameState === 'DISCARD_SELECT') {
+            const card = pHand[index];
+            pHand.splice(index, 1);
+            log(`Discarded ${card.rank}${card.suit}`);
+            gameState = 'PLAY';
+            endPlayerTurn();
+        }
+    }
+
+    function playPatronEffect(card, index) {
+        // Jack: Regular (Draw 2, Discard 1)
+        if (card.rank === 'J') {
+            pHand.splice(index, 1); // Play card
+            log("Played Jack: Drawing 2 cards...");
+            if(deck.length) pHand.push(deck.pop());
+            if(deck.length) pHand.push(deck.pop());
+            render();
+            gameState = 'DISCARD_SELECT';
+            updateInstruction("Select 1 card to discard to finish turn.");
+        }
+        // Queen: Barmaid (Remove Opponent Card)
+        else if (card.rank === 'Q') {
+            if (cFlight.length === 0) {
+                log("Played Queen: No targets. Effect wasted.");
+                pHand.splice(index, 1);
+                endPlayerTurn();
+            } else {
+                pHand.splice(index, 1);
+                gameState = 'TARGET_SELECT';
+                updateInstruction("Click a card in CPU Flight to remove it.");
+                actionPending = (targetIdx) => {
+                    let removed = cFlight.splice(targetIdx, 1)[0];
+                    log(`Barmaid removed CPU's ${removed.rank}${removed.suit}`);
+                    endPlayerTurn();
+                };
+                render(); // Re-render to show hover effects on targets
+            }
+        }
+        // King: Bouncer (Opponent Discards 2)
+        else if (card.rank === 'K') {
+            pHand.splice(index, 1);
+            log("Played King: Bouncer kicks out cards!");
+            if(cHand.length > 0) cHand.pop();
+            if(cHand.length > 0) cHand.pop();
+            log("CPU discarded 2 cards.");
+            endPlayerTurn();
+        }
+        // Ace: Tip Jar (Steal)
+        else if (card.rank === 'A') {
+            if (cFlight.length === 0 || pFlight.length >= 4) {
+                alert("Cannot steal (CPU empty or your flight full). Waste or play another.");
+            } else {
+                pHand.splice(index, 1);
+                gameState = 'TARGET_SELECT';
+                updateInstruction("Click a card in CPU Flight to STEAL it.");
+                actionPending = (targetIdx) => {
+                    let stolen = cFlight.splice(targetIdx, 1)[0];
+                    pFlight.push(stolen);
+                    log(`Stole CPU's ${stolen.rank}${stolen.suit}`);
+                    endPlayerTurn();
+                };
+                render();
+            }
+        }
+    }
+
+    function updateInstruction(text) {
+        document.getElementById('instruction-text').innerText = text;
+    }
+
+    function endPlayerTurn() {
+        gameState = 'IDLE';
+        render();
+        startTurn('CPU');
+    }
+
+    // --- CPU AI ---
+    function cpuTurn() {
+        // Simple AI Logic
+        let played = false;
+
+        // 1. Try to steal with Ace if possible
+        const aceIdx = cHand.findIndex(c => c.rank === 'A');
+        if (aceIdx !== -1 && pFlight.length > 0 && cFlight.length < 4) {
+            cHand.splice(aceIdx, 1);
+            let stolen = pFlight.shift(); // Steal first card
+            cFlight.push(stolen);
+            log(`🤖 CPU played Ace. Stole your ${stolen.rank}${stolen.suit}!`);
+            played = true;
+        }
+
+        // 2. Play High Brews
+        if (!played) {
+            const highBrewIdx = cHand.findIndex(c => c.isBrew && c.value >= 8);
+            if (highBrewIdx !== -1 && cFlight.length < 4) {
+                let c = cHand.splice(highBrewIdx, 1)[0];
+                cFlight.push(c);
+                log(`🤖 CPU played Brew ${c.rank}${c.suit}`);
+                played = true;
+            }
+        }
+
+        // 3. Play Queen if Player has cards
+        if (!played) {
+            const qIdx = cHand.findIndex(c => c.rank === 'Q');
+            if (qIdx !== -1 && pFlight.length > 0) {
+                cHand.splice(qIdx, 1);
+                let rem = pFlight.pop();
+                log(`🤖 CPU played Queen. Removed your ${rem.rank}${rem.suit}`);
+                played = true;
+            }
+        }
+
+        // 4. Play any Brew
+        if (!played) {
+            const brewIdx = cHand.findIndex(c => c.isBrew);
+            if (brewIdx !== -1 && cFlight.length < 4) {
+                let c = cHand.splice(brewIdx, 1)[0];
+                cFlight.push(c);
+                log(`🤖 CPU played Brew ${c.rank}${c.suit}`);
+                played = true;
+            }
+        }
+
+        // 5. Waste
+        if (!played && cHand.length > 0) {
+            let wasted = cHand.shift();
+            log(`🤖 CPU wasted a card.`);
+        }
+
+        render();
+        startTurn('PLAYER');
+    }
+
+    // --- SCORING & RENDER ---
+    function calculateScore(flight) {
+        if(flight.length === 0) return 0;
+        let score = flight.reduce((sum, c) => sum + c.value, 0);
+        
+        if (flight.length === 4) {
+            const suits = flight.map(c => c.suit);
+            const isFlush = new Set(suits).size === 1;
+            
+            const isRed = flight.every(c => ['♥','♦'].includes(c.suit));
+            const isBlack = flight.every(c => ['♣','♠'].includes(c.suit));
+            
+            if (isFlush) score += 20;
+            else if (isRed || isBlack) score += 10;
+        }
+        return score;
+    }
+
+    function renderCardHTML(c, index, location) {
+        const isRed = ['♥','♦'].includes(c.suit);
+        const clickable = (location === 'HAND' && turn === 'PLAYER') || 
+                          (location === 'CPU_FLIGHT' && gameState === 'TARGET_SELECT');
+        
+        return `
+            <div class="card ${isRed ? 'red' : 'black'} ${clickable ? 'selected' : ''}" 
+                 onclick="handleCardClick(${index}, '${location}')">
+                <div class="card-top">${c.rank}</div>
+                <div class="card-center">${c.suit}</div>
+                <div class="card-top" style="top:auto; bottom:5px; right:5px; left:auto; transform:rotate(180deg);">${c.rank}</div>
+            </div>
+        `;
+    }
+
+    function render() {
+        document.getElementById('cpu-flight').innerHTML = cFlight.map((c, i) => renderCardHTML(c, i, 'CPU_FLIGHT')).join('');
+        document.getElementById('player-flight').innerHTML = pFlight.map((c, i) => renderCardHTML(c, i, 'PLAYER_FLIGHT')).join('');
+        
+        document.getElementById('player-hand').innerHTML = pHand.map((c, i) => renderCardHTML(c, i, 'HAND')).join('');
+        document.getElementById('cpu-hand-count').innerText = cHand.length;
+    }
+
+    function endGame() {
+        document.getElementById('player-controls').style.display = 'none';
+        const pScore = calculateScore(pFlight);
+        const cScore = calculateScore(cFlight);
+        
+        let msg = `SHIFT OVER!\n\nPlayer Score: ${pScore}\nCPU Score: ${cScore}\n\n`;
+        if (pScore > cScore) msg += "🏆 YOU WIN THE SHIFT!";
+        else if (cScore > pScore) msg += "💻 COMPUTER WINS.";
+        else msg += "🤝 IT'S A TIE.";
+        
+        alert(msg);
+        location.reload(); // Quick restart
+    }
+
+</script>
+</body>
+</html>
