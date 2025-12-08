@@ -172,14 +172,13 @@
             <h3>🫀 Cardio Finisher</h3>
             <label><strong>Select Equipment:</strong></label>
             <select id="cardio1-select" onchange="updateCardioDetails('cardio1')">
-                <option value="Intervals">Generic Intervals</option>
-                <option value="Treadmill">Treadmill (Sprint/Jog)</option>
-                <option value="Bike">Stationary Bike (RPM High/Low)</option>
-                <option value="Elliptical">Elliptical (Resistance High/Low)</option>
+                <option value="Elliptical">Elliptical (Intervals)</option>
+                <option value="Hoop">Infinity Hoop (Continuous)</option>
+                <option value="None">No Equipment (High Knees/Jog in Place)</option>
             </select>
             <br><br>
             <label><strong>Plan (Editable):</strong></label>
-            <textarea id="cardio1-text" rows="3">10 rounds: 30 sec HARD / 30 sec EASY.</textarea>
+            <textarea id="cardio1-text" rows="3">Elliptical: 10 rounds of [30 sec HARD / 30 sec EASY]. Focus on leg drive.</textarea>
             
             <div class="timer-box">
                 <input type="number" id="cardio1-time" class="timer-input" value="30"> sec
@@ -197,13 +196,13 @@
             <h3>🫀 Cardio Finisher</h3>
             <label><strong>Select Equipment:</strong></label>
             <select id="cardio2-select" onchange="updateCardioDetails('cardio2')">
-                <option value="Steady">Steady State</option>
-                <option value="Rowing">Rowing Machine</option>
-                <option value="Treadmill">Treadmill (Incline Walk)</option>
+                <option value="Elliptical">Elliptical (Steady State)</option>
+                <option value="Hoop">Infinity Hoop (Rhythm)</option>
+                <option value="None">No Equipment (Shadow Boxing)</option>
             </select>
             <br><br>
             <label><strong>Plan (Editable):</strong></label>
-            <textarea id="cardio2-text" rows="3">15 minutes moderate pace (Nasal Breathing).</textarea>
+            <textarea id="cardio2-text" rows="3">Elliptical: 15 minutes at moderate pace. Keep hands on moving handles for upper body work.</textarea>
             
             <div class="timer-box">
                 <input type="number" id="cardio2-time" class="timer-input" value="900"> sec
@@ -222,13 +221,13 @@
             <h3>🫀 Cardio Finisher</h3>
             <label><strong>Select Equipment:</strong></label>
             <select id="cardio3-select" onchange="updateCardioDetails('cardio3')">
-                <option value="Sprints">Suicide Sprints</option>
-                <option value="Bike">Bike Sprints</option>
-                <option value="Rower">Rower Sprints</option>
+                <option value="Elliptical">Elliptical (Sprints)</option>
+                <option value="Hoop">Infinity Hoop (Speed Intervals)</option>
+                <option value="None">No Equipment (Suicide Drills)</option>
             </select>
             <br><br>
             <label><strong>Plan (Editable):</strong></label>
-            <textarea id="cardio3-text" rows="3">1 min HARD, 1 min REST. Repeat 5 times.</textarea>
+            <textarea id="cardio3-text" rows="3">Elliptical: Go MAX EFFORT for 1 minute, rest 1 minute. Repeat 5 times.</textarea>
             
             <div class="timer-box">
                 <input type="number" id="cardio3-time" class="timer-input" value="60"> sec
@@ -273,7 +272,7 @@
             for (const [day, exercises] of Object.entries(workouts)) {
                 const container = document.getElementById(`${day}-container`);
                 container.innerHTML = exercises.map((ex, index) => {
-                    // Generate Video Search Link
+                    // Generate Video Search Link - using regular Youtube search URL for reliability
                     const videoQuery = `how to do ${ex.name} exercise`;
                     const videoUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(videoQuery)}`;
                     
@@ -324,7 +323,8 @@
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
             
             document.getElementById(dayId).classList.add('active');
-            event.target.classList.add('active');
+            // Safely handle event target if called manually
+            if(event) event.target.classList.add('active');
         }
 
         // Timer Logic
@@ -367,10 +367,26 @@
             const text = document.getElementById(`${id}-text`);
             const val = select.value;
 
-            // Simple preset logic
-            if (val === 'Treadmill' && id === 'cardio1') text.value = "10 rounds: 30s Sprint / 30s Walk on rails.";
-            if (val === 'Bike' && id === 'cardio1') text.value = "10 rounds: 30s High RPM / 30s Low RPM.";
-            if (val === 'Rowing') text.value = "Steady state rowing, keep stroke rate consistent.";
+            // Day 1 Logic
+            if (id === 'cardio1') {
+                if (val === 'Elliptical') text.value = "Elliptical: 10 rounds of [30 sec HARD / 30 sec EASY]. Focus on leg drive.";
+                if (val === 'Hoop') text.value = "Infinity Hoop: Spin continuously for 30 sec, rest 30 sec. 10 Rounds. Switch spin direction halfway.";
+                if (val === 'None') text.value = "No Equipment: High Knees or Jog in Place. 30 sec ON / 30 sec OFF. 10 Rounds.";
+            }
+            
+            // Day 2 Logic
+            if (id === 'cardio2') {
+                if (val === 'Elliptical') text.value = "Elliptical: 15 minutes at moderate pace. Keep hands on moving handles for upper body work.";
+                if (val === 'Hoop') text.value = "Infinity Hoop: 15 minutes steady rhythm. Try to maintain constant speed.";
+                if (val === 'None') text.value = "No Equipment: Shadow Boxing. Keep feet moving, throw constant light punches. 15 mins.";
+            }
+
+            // Day 3 Logic
+            if (id === 'cardio3') {
+                if (val === 'Elliptical') text.value = "Elliptical: Go MAX EFFORT for 1 minute, rest 1 minute. Repeat 5 times.";
+                if (val === 'Hoop') text.value = "Infinity Hoop: Speed Intervals. Spin as fast as possible for 1 min, slow spin for 1 min.";
+                if (val === 'None') text.value = "No Equipment: Suicide Drills. Sprint 10 ft and back, 20 ft and back. 1 min on / 1 min rest.";
+            }
         }
 
         // Initialize
