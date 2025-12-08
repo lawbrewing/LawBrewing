@@ -12,6 +12,8 @@
             --accent: #5c9e60; /* Hops Green */
             --danger: #d9534f;
             --card-bg: #f4e4bc;
+            --parchment: #e8dcb5;
+            --ink: #2a2a2a;
         }
 
         body {
@@ -33,7 +35,7 @@
         .screen {
             width: 100%;
             max-width: 600px;
-            padding: 20px;
+            padding: 10px;
             box-sizing: border-box;
             display: none; /* Managed by JS */
             animation: fadeIn 0.5s;
@@ -73,12 +75,26 @@
         .calc-row { display: flex; gap: 10px; margin-bottom: 10px; justify-content: space-between; }
         select, input { padding: 8px; background: #222; color: white; border: 1px solid #555; }
 
-        /* GAME STYLES */
-        #game-board {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
+        /* REFERENCE GUIDE STYLES (The Card Look) */
+        .ref-card {
+            background: var(--parchment);
+            color: var(--ink);
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            font-family: Arial, sans-serif; /* Readable like the image */
+            text-align: left;
         }
+        .ref-card h3 { margin-top: 0; text-transform: uppercase; font-weight: 900; border-bottom: 2px solid var(--ink); display: inline-block; }
+        .ref-card h4 { margin: 10px 0 5px 0; text-transform: uppercase; font-weight: 800; }
+        .ref-table { width: 100%; border-collapse: collapse; margin-top: 5px; font-size: 0.9em; }
+        .ref-table th { border-bottom: 2px solid var(--ink); text-align: left; }
+        .ref-table td { border-bottom: 1px solid #ccc; padding: 4px 0; }
+        .ref-card ul { padding-left: 20px; margin: 5px 0; }
+        .ref-card li { margin-bottom: 4px; }
+
+        /* GAME STYLES */
+        #game-board { display: flex; flex-direction: column; gap: 15px; }
         .zone {
             background: rgba(0,0,0,0.3);
             border: 2px solid #5c4a35;
@@ -126,12 +142,12 @@
         <br>
         
         <button class="btn-main" onclick="goToManualMode()">🛠️ Manual Assistant</button>
-        <p style="font-size:0.8em; color:gray;">(For playing with physical cards)</p>
+        <p style="font-size:0.8em; color:gray;">(Reference Guide & Calculator)</p>
         
         <br>
         
         <button class="btn-main" onclick="startDigitalGameFlow()">🤖 Play vs. Bartender</button>
-        <p style="font-size:0.8em; color:gray;">(Play the game right here)</p>
+        <p style="font-size:0.8em; color:gray;">(Full Digital Game)</p>
     </div>
 
     <div id="manual-screen" class="screen">
@@ -139,44 +155,71 @@
         <h2>Physical Assistant</h2>
 
         <div class="tool-panel">
-            <h3>🎀 Cuteness Check</h3>
-            <p>Do you already know who is cuter?</p>
+            <h3 style="margin-top:0;">🎀 Cuteness Tiebreaker</h3>
             <div id="cuteness-manual-options">
-                <button class="btn-main btn-secondary" onclick="manualResult('We know. Skip it.')">Yes, we know.</button>
-                <button class="btn-main btn-secondary" style="background:var(--text-gold); color:black;" onclick="runTiebreaker('MANUAL')">No, help us decide!</button>
+                <button class="btn-main btn-secondary" style="width:100%; background:var(--text-gold); color:black;" onclick="runTiebreaker('MANUAL')">Who goes first?</button>
             </div>
             <div id="manual-tiebreaker-result" style="color: cyan; font-weight: bold; margin-top:10px;"></div>
         </div>
 
-        <div class="tool-panel">
-            <h3>🧮 Score Calculator</h3>
-            <p>Enter a 4-card Flight to check score.</p>
+        <div class="ref-card">
+            <h3>🍺 THE TAPROOM: Quick Guide</h3>
             
-            <div id="calc-inputs">
-                </div>
-            <button class="btn-main" onclick="calculateManualScore()">Calculate</button>
-            <div id="calc-result" style="font-size: 1.2em; color: var(--text-gold); margin-top: 10px;"></div>
+            <h4>THE TURN</h4>
+            <ol style="padding-left: 20px; margin:0;">
+                <li><b>The Pour:</b> Draw 1 Card.</li>
+                <li><b>The Serve:</b> Do ONE of the following:
+                    <ul>
+                        <li><b>Play a Brew (2-10):</b> Place in Flight (Max 4).</li>
+                        <li><b>Play a Patron (J,Q,K,A):</b> Discard for effect.</li>
+                        <li><b>Waste:</b> Discard 1 card from hand.</li>
+                    </ul>
+                </li>
+            </ol>
+
+            <h4>THE MENU (Discard for Effect)</h4>
+            <table class="ref-table">
+                <tr><th>Card</th><th>Name</th><th>Effect</th></tr>
+                <tr><td><b>Jack</b></td><td>The Regular</td><td>Draw 2, Discard 1.</td></tr>
+                <tr><td><b>Queen</b></td><td>The Barmaid</td><td>Remove 1 card from opp. Flight.</td></tr>
+                <tr><td><b>King</b></td><td>The Bouncer</td><td>Opp. discards 2 cards (random).</td></tr>
+                <tr><td><b>Ace</b></td><td>The Tip Jar</td><td>Steal 1 Brew from opp. Flight.</td></tr>
+            </table>
+
+            <h4>SCORING & WINNING</h4>
+            <ul>
+                <li><b>Brews (2-10):</b> Face Value.</li>
+                <li><b>Bonuses (Full Flight):</b> +10 (Same Color) | +20 (Same Suit).</li>
+                <li><b>Victory:</b> Highest Score wins Shift. Win 3 Shifts.</li>
+            </ul>
+
+            <h4>ENDING THE ROUND</h4>
+            <ul>
+                <li><b>Last Call:</b> Start turn with 4 Cards in Flight -> Yell "Last Call!". Opponent gets 1 final turn.</li>
+            </ul>
+            
+            <div style="text-align: center; margin-top: 10px; font-style: italic; font-weight: bold;">
+                Remember: The cute player goes first!
+            </div>
         </div>
 
+        <br>
+
         <div class="tool-panel">
-            <h3>📜 Quick Rules</h3>
-            <ul style="font-size: 0.9em; padding-left: 20px;">
-                <li><b>Jack (Regular):</b> Draw 2, Discard 1.</li>
-                <li><b>Queen (Barmaid):</b> Remove 1 card from opponent Flight.</li>
-                <li><b>King (Bouncer):</b> Opponent discards 2 cards.</li>
-                <li><b>Ace (Tip Jar):</b> Steal 1 card from opponent Flight.</li>
-                <hr>
-                <li><b>Last Call:</b> Triggered when someone has 4 cards in Flight. Opponent gets 1 final turn.</li>
-            </ul>
+            <h3 style="margin-top:0;">🧮 Score Calculator</h3>
+            <div id="calc-inputs">
+                </div>
+            <button class="btn-main" onclick="calculateManualScore()">Calculate Score</button>
+            <div id="calc-result" style="font-size: 1.2em; color: var(--text-gold); margin-top: 10px;"></div>
         </div>
     </div>
 
     <div id="tiebreaker-screen" class="screen">
         <h2>🎀 Cuteness Algorithm 🎀</h2>
         <div id="scan-anim">
-            <p>Analyzing facial symmetry...</p>
+            <p>Scanning facial features...</p>
             <div class="scan-line"></div>
-            <p>Calculating charm metrics...</p>
+            <p>Analyzing charm metrics...</p>
         </div>
         <div id="tiebreaker-final" style="display:none;">
             <h3 id="tiebreaker-winner" style="color:var(--text-gold); font-size:1.5em;"></h3>
@@ -232,17 +275,17 @@
         showScreen('manual-screen');
         // Render Calculator inputs if not present
         const calcDiv = document.getElementById('calc-inputs');
-        if(calcDiv.innerHTML === "") {
+        if(calcDiv.innerHTML.trim() === "") {
             for(let i=1; i<=4; i++) {
                 calcDiv.innerHTML += `
                 <div class="calc-row">
                     <span>Card ${i}:</span>
-                    <input type="number" min="2" max="10" placeholder="Val (2-10)" id="c${i}-val" style="width:80px;">
+                    <input type="number" min="2" max="10" placeholder="Val (2-10)" id="c${i}-val" style="width:70px;">
                     <select id="c${i}-suit">
-                        <option value="H">♥ Hearts</option>
-                        <option value="D">♦ Diamonds</option>
-                        <option value="C">♣ Clubs</option>
-                        <option value="S">♠ Spades</option>
+                        <option value="H">♥ H</option>
+                        <option value="D">♦ D</option>
+                        <option value="C">♣ C</option>
+                        <option value="S">♠ S</option>
                     </select>
                 </div>`;
             }
@@ -260,7 +303,8 @@
         let count = 0;
 
         for(let i=1; i<=4; i++) {
-            let val = parseInt(document.getElementById(`c${i}-val`).value);
+            let valInput = document.getElementById(`c${i}-val`).value;
+            let val = parseInt(valInput);
             let suit = document.getElementById(`c${i}-suit`).value;
             
             if(!isNaN(val)) {
@@ -292,6 +336,9 @@
             }
         } else if (count > 0 && count < 4) {
             bonusMsg = "(No bonus - Flight not full)";
+        } else if (count === 0) {
+            total = 0;
+            bonusMsg = "Empty";
         }
 
         document.getElementById('calc-result').innerHTML = `Score: ${total} <span style="font-size:0.7em">${bonusMsg}</span>`;
@@ -311,11 +358,12 @@
                 "has significantly better hair volume.",
                 "has a superior outfit choice today.",
                 "is radiating pure charisma.",
-                "has a winning smile."
+                "has a winning smile.",
+                "is objectively delightful."
             ];
             const reason = reasons[Math.floor(Math.random() * reasons.length)];
             
-            // If playing vs Bartender, randomize. If manual, randomize between "You" and "Opponent".
+            // Randomize Winner
             let winner = "";
             let pName = "You";
             let oName = (context === 'GAME') ? "The Bartender" : "Opponent";
@@ -330,7 +378,7 @@
             btn.onclick = function() {
                 if(context === 'MANUAL') {
                     showScreen('manual-screen');
-                    manualResult(`${winner} goes first!`);
+                    manualResult(`✨ ${winner} goes first!`);
                 } else {
                     initGame(winner === "You" ? 'PLAYER' : 'CPU');
                 }
@@ -473,6 +521,7 @@
         }
         else if (loc === 'HAND' && gameState === 'DISCARD') {
             const idx = pHand.findIndex(c => c.uid === uid);
+            const card = pHand[idx];
             pHand.splice(idx, 1);
             log(`Discarded ${card.r}${card.s}`);
             nextTurn();
