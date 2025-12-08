@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Taproom: Assistant & Game</title>
+    <title>The Taproom v5.0</title>
     <style>
         :root {
             --bg-color: #2c241b;
             --panel-bg: #3a2e24;
             --text-gold: #f0c05a;
-            --accent: #5c9e60; /* Hops Green */
+            --accent: #5c9e60; 
             --danger: #d9534f;
             --card-bg: #f4e4bc;
             --parchment: #e8dcb5;
@@ -26,6 +26,7 @@
             align-items: center;
             min-height: 100vh;
             text-align: center;
+            padding-bottom: 60px; /* Space for sticky footer */
         }
 
         h1 { color: var(--text-gold); text-shadow: 2px 2px #000; margin-bottom: 5px; }
@@ -37,12 +38,10 @@
             max-width: 600px;
             padding: 10px;
             box-sizing: border-box;
-            display: none; /* Managed by JS */
+            display: none; 
             animation: fadeIn 0.5s;
         }
-
         .active-screen { display: block; }
-
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         /* BUTTONS */
@@ -62,45 +61,14 @@
         .btn-main:hover { transform: scale(1.02); background: #fff; }
         .btn-secondary { background: #555; color: white; width: auto; font-size: 0.9em; padding: 10px 20px; }
 
-        /* MANUAL MODE STYLES */
-        .tool-panel {
-            background: var(--panel-bg);
-            border: 1px solid #5c4a35;
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 8px;
-            text-align: left;
-        }
-
-        .calc-row { display: flex; gap: 10px; margin-bottom: 10px; justify-content: space-between; }
-        select, input { padding: 8px; background: #222; color: white; border: 1px solid #555; }
-
-        /* REFERENCE GUIDE STYLES (The Card Look) */
-        .ref-card {
-            background: var(--parchment);
-            color: var(--ink);
-            padding: 15px;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
-            font-family: Arial, sans-serif; /* Readable like the image */
-            text-align: left;
-        }
-        .ref-card h3 { margin-top: 0; text-transform: uppercase; font-weight: 900; border-bottom: 2px solid var(--ink); display: inline-block; }
-        .ref-card h4 { margin: 10px 0 5px 0; text-transform: uppercase; font-weight: 800; }
-        .ref-table { width: 100%; border-collapse: collapse; margin-top: 5px; font-size: 0.9em; }
-        .ref-table th { border-bottom: 2px solid var(--ink); text-align: left; }
-        .ref-table td { border-bottom: 1px solid #ccc; padding: 4px 0; }
-        .ref-card ul { padding-left: 20px; margin: 5px 0; }
-        .ref-card li { margin-bottom: 4px; }
-
         /* GAME STYLES */
-        #game-board { display: flex; flex-direction: column; gap: 15px; }
         .zone {
             background: rgba(0,0,0,0.3);
             border: 2px solid #5c4a35;
             padding: 10px;
             border-radius: 10px;
             min-height: 110px;
+            position: relative;
         }
         .card-container { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
         .card {
@@ -115,16 +83,46 @@
         }
         .card.red { color: #c00; }
         .card.black { color: #111; }
-        .card:hover { transform: translateY(-5px); }
+        .card:hover { transform: translateY(-5px); border: 2px solid white; }
         .card-corner { position: absolute; top: 2px; left: 4px; font-size: 0.7em; }
+        
+        /* CARD MEANING TOOLTIP */
+        .card-hint {
+            font-size: 0.6em; color: #555; margin-top: 2px; font-weight: normal; text-align: center;
+        }
 
-        /* LOG */
+        /* LOG & FOOTER */
         #log {
-            height: 60px; overflow-y: auto;
+            height: 80px; overflow-y: auto;
             background: #111; border: 1px solid #444;
             padding: 5px; font-size: 0.8em; text-align: left;
             margin-bottom: 10px; color: cyan;
         }
+
+        /* STICKY FOOTER LEGEND */
+        #cheat-sheet {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: #1a1510;
+            border-top: 2px solid var(--text-gold);
+            padding: 8px;
+            display: none; /* Active in game */
+            justify-content: space-around;
+            font-size: 0.75em;
+            color: var(--text-gold);
+            z-index: 100;
+        }
+        .legend-item b { color: white; display: block; font-size: 1.1em; }
+
+        /* REF CARD (Manual Mode) */
+        .ref-card {
+            background: var(--parchment); color: var(--ink); padding: 15px;
+            border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            font-family: Arial, sans-serif; text-align: left;
+        }
+        .ref-table { width: 100%; border-collapse: collapse; margin-top: 5px; font-size: 0.9em; }
+        .ref-table th { border-bottom: 2px solid var(--ink); text-align: left; }
+        .ref-table td { border-bottom: 1px solid #ccc; padding: 4px 0; }
 
         /* TIEBREAKER */
         .scan-line { width: 100%; height: 2px; background: cyan; animation: flash 1s infinite; margin: 10px 0; }
@@ -134,95 +132,63 @@
 </head>
 <body>
 
+    <div id="cheat-sheet">
+        <div class="legend-item"><b>J</b>Draw 2, Disc 1</div>
+        <div class="legend-item"><b>Q</b>Remove Opp Card</div>
+        <div class="legend-item"><b>K</b>Opp Discards 2</div>
+        <div class="legend-item"><b>A</b>Steal Opp Brew</div>
+    </div>
+
     <div id="landing-screen" class="screen active-screen">
         <h1 style="font-size: 3em;">🍺</h1>
         <h1>THE TAPROOM</h1>
-        <p><i>The Digital Companion</i></p>
+        <p><i>Digital Edition v5.0</i></p>
         <hr style="border-color: #444; width: 50%;">
         <br>
-        
         <button class="btn-main" onclick="goToManualMode()">🛠️ Manual Assistant</button>
-        <p style="font-size:0.8em; color:gray;">(Reference Guide & Calculator)</p>
-        
+        <p style="font-size:0.8em; color:gray;">(Rules, Calculator & Reference)</p>
         <br>
-        
         <button class="btn-main" onclick="startDigitalGameFlow()">🤖 Play vs. Bartender</button>
-        <p style="font-size:0.8em; color:gray;">(Full Digital Game)</p>
+        <p style="font-size:0.8em; color:gray;">(Full Game)</p>
     </div>
 
     <div id="manual-screen" class="screen">
-        <button class="btn-main btn-secondary" onclick="goHome()">← Back to Menu</button>
+        <button class="btn-main btn-secondary" onclick="goHome()">← Back</button>
         <h2>Physical Assistant</h2>
-
-        <div class="tool-panel">
-            <h3 style="margin-top:0;">🎀 Cuteness Tiebreaker</h3>
-            <div id="cuteness-manual-options">
-                <button class="btn-main btn-secondary" style="width:100%; background:var(--text-gold); color:black;" onclick="runTiebreaker('MANUAL')">Who goes first?</button>
-            </div>
-            <div id="manual-tiebreaker-result" style="color: cyan; font-weight: bold; margin-top:10px;"></div>
-        </div>
-
         <div class="ref-card">
-            <h3>🍺 THE TAPROOM: Quick Guide</h3>
-            
-            <h4>THE TURN</h4>
-            <ol style="padding-left: 20px; margin:0;">
-                <li><b>The Pour:</b> Draw 1 Card.</li>
-                <li><b>The Serve:</b> Do ONE of the following:
-                    <ul>
-                        <li><b>Play a Brew (2-10):</b> Place in Flight (Max 4).</li>
-                        <li><b>Play a Patron (J,Q,K,A):</b> Discard for effect.</li>
-                        <li><b>Waste:</b> Discard 1 card from hand.</li>
-                    </ul>
-                </li>
+            <h3>THE TURN</h3>
+            <ol style="padding-left:20px; margin:5px;">
+                <li><b>Pour:</b> Draw 1.</li>
+                <li><b>Serve:</b> Play Brew, Play Patron, or Waste.</li>
             </ol>
-
-            <h4>THE MENU (Discard for Effect)</h4>
+            <h3>THE MENU (Effects)</h3>
             <table class="ref-table">
-                <tr><th>Card</th><th>Name</th><th>Effect</th></tr>
-                <tr><td><b>Jack</b></td><td>The Regular</td><td>Draw 2, Discard 1.</td></tr>
-                <tr><td><b>Queen</b></td><td>The Barmaid</td><td>Remove 1 card from opp. Flight.</td></tr>
-                <tr><td><b>King</b></td><td>The Bouncer</td><td>Opp. discards 2 cards (random).</td></tr>
-                <tr><td><b>Ace</b></td><td>The Tip Jar</td><td>Steal 1 Brew from opp. Flight.</td></tr>
+                <tr><th>Card</th><th>Effect</th></tr>
+                <tr><td><b>Jack</b> (Regular)</td><td>Draw 2, Discard 1.</td></tr>
+                <tr><td><b>Queen</b> (Barmaid)</td><td>Remove 1 from opp. Flight.</td></tr>
+                <tr><td><b>King</b> (Bouncer)</td><td>Opp. discards 2 (random).</td></tr>
+                <tr><td><b>Ace</b> (Tip Jar)</td><td>Steal 1 Brew from opp. Flight.</td></tr>
             </table>
-
-            <h4>SCORING & WINNING</h4>
-            <ul>
-                <li><b>Brews (2-10):</b> Face Value.</li>
-                <li><b>Bonuses (Full Flight):</b> +10 (Same Color) | +20 (Same Suit).</li>
-                <li><b>Victory:</b> Highest Score wins Shift. Win 3 Shifts.</li>
-            </ul>
-
-            <h4>ENDING THE ROUND</h4>
-            <ul>
-                <li><b>Last Call:</b> Start turn with 4 Cards in Flight -> Yell "Last Call!". Opponent gets 1 final turn.</li>
-            </ul>
-            
-            <div style="text-align: center; margin-top: 10px; font-style: italic; font-weight: bold;">
-                Remember: The cute player goes first!
-            </div>
+            <h3>LAST CALL (Winning)</h3>
+            <p style="font-size:0.9em;">
+                Start your turn with 4 cards in Flight -> Yell "Last Call!". Opponent gets <b>1 final turn</b>.
+                If you still have 4 cards after their turn, the round ends and scores are tallied.
+                If they drop you below 4, play continues!
+            </p>
         </div>
-
-        <br>
-
-        <div class="tool-panel">
-            <h3 style="margin-top:0;">🧮 Score Calculator</h3>
-            <div id="calc-inputs">
-                </div>
-            <button class="btn-main" onclick="calculateManualScore()">Calculate Score</button>
-            <div id="calc-result" style="font-size: 1.2em; color: var(--text-gold); margin-top: 10px;"></div>
+        <div class="tool-panel" style="margin-top:10px; background:var(--panel-bg); padding:10px; border-radius:5px;">
+            <button class="btn-main btn-secondary" onclick="runTiebreaker('MANUAL')">🎀 Cuteness Tiebreaker</button>
         </div>
     </div>
 
     <div id="tiebreaker-screen" class="screen">
         <h2>🎀 Cuteness Algorithm 🎀</h2>
         <div id="scan-anim">
-            <p>Scanning facial features...</p>
+            <p>Scanning facial symmetry...</p>
             <div class="scan-line"></div>
-            <p>Analyzing charm metrics...</p>
         </div>
         <div id="tiebreaker-final" style="display:none;">
-            <h3 id="tiebreaker-winner" style="color:var(--text-gold); font-size:1.5em;"></h3>
+            <h3 id="tiebreaker-winner" style="color:var(--text-gold);"></h3>
             <p id="tiebreaker-reason"></p>
             <button id="tiebreaker-continue-btn" class="btn-main">Continue</button>
         </div>
@@ -230,121 +196,55 @@
 
     <div id="game-screen" class="screen">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-            <button class="btn-main btn-secondary" style="padding:5px 10px;" onclick="if(confirm('Quit game?')) goHome()">Exit</button>
+            <button class="btn-main btn-secondary" style="padding:5px 10px;" onclick="if(confirm('Quit?')) location.reload()">Exit</button>
             <div style="font-size:0.8em; color:gray;">Vs. The Bartender</div>
         </div>
 
         <div class="zone" style="margin-top:10px;">
-            <div style="font-size:0.8em; color:gray; margin-bottom:5px;">Bartender's Flight</div>
+            <div style="font-size:0.8em; color:gray;">Bartender's Flight</div>
             <div id="cpu-flight" class="card-container"></div>
         </div>
         <div style="font-size:0.8em; text-align:right;">Bartender Hand: <span id="cpu-hand-count">3</span></div>
 
         <div id="log"></div>
+        
         <div id="controls-area" style="background:#222; padding:10px; border-radius:5px; margin:5px 0;">
             <div id="turn-indicator" style="font-weight:bold; color:var(--text-gold);">Starting...</div>
             <div id="player-options" style="display:none; margin-top:5px;">
                 <label><input type="checkbox" id="waste-mode"> 🗑️ Waste Mode</label>
-                <div style="font-size:0.7em; color:yellow;">(Check box then click card to discard)</div>
+                <div style="font-size:0.7em; color:yellow; margin-top:5px;">
+                    Tip: Check Waste Mode to discard unplayable cards.
+                </div>
             </div>
         </div>
 
         <div class="zone" style="background:var(--panel-bg);">
-            <div style="font-size:0.8em; color:gray; margin-bottom:5px;">Your Flight</div>
+            <div style="font-size:0.8em; color:gray;">Your Flight</div>
             <div id="player-flight" class="card-container"></div>
         </div>
 
         <div class="zone">
-            <div style="font-size:0.8em; color:gray; margin-bottom:5px;">Your Hand</div>
+            <div style="font-size:0.8em; color:gray;">Your Hand</div>
             <div id="player-hand" class="card-container"></div>
         </div>
-    </div>
+        <br><br> </div>
 
 <script>
-    // --- NAVIGATION LOGIC ---
+    // --- NAVIGATION ---
     function showScreen(id) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
         document.getElementById(id).classList.add('active-screen');
+        
+        // Show/Hide Cheat Sheet
+        const sheet = document.getElementById('cheat-sheet');
+        if(id === 'game-screen') sheet.style.display = 'flex';
+        else sheet.style.display = 'none';
     }
 
-    function goHome() {
-        showScreen('landing-screen');
-    }
+    function goHome() { showScreen('landing-screen'); }
+    function goToManualMode() { showScreen('manual-screen'); }
 
-    function goToManualMode() {
-        showScreen('manual-screen');
-        // Render Calculator inputs if not present
-        const calcDiv = document.getElementById('calc-inputs');
-        if(calcDiv.innerHTML.trim() === "") {
-            for(let i=1; i<=4; i++) {
-                calcDiv.innerHTML += `
-                <div class="calc-row">
-                    <span>Card ${i}:</span>
-                    <input type="number" min="2" max="10" placeholder="Val (2-10)" id="c${i}-val" style="width:70px;">
-                    <select id="c${i}-suit">
-                        <option value="H">♥ H</option>
-                        <option value="D">♦ D</option>
-                        <option value="C">♣ C</option>
-                        <option value="S">♠ S</option>
-                    </select>
-                </div>`;
-            }
-        }
-    }
-
-    // --- MANUAL FEATURES ---
-    function manualResult(text) {
-        document.getElementById('manual-tiebreaker-result').innerText = text;
-    }
-
-    function calculateManualScore() {
-        let total = 0;
-        let suits = [];
-        let count = 0;
-
-        for(let i=1; i<=4; i++) {
-            let valInput = document.getElementById(`c${i}-val`).value;
-            let val = parseInt(valInput);
-            let suit = document.getElementById(`c${i}-suit`).value;
-            
-            if(!isNaN(val)) {
-                total += val;
-                suits.push(suit);
-                count++;
-            }
-        }
-
-        let bonusMsg = "";
-        if(count === 4) {
-            // Check Flush
-            const allSameSuit = suits.every(s => s === suits[0]);
-            
-            if(allSameSuit) {
-                total += 20;
-                bonusMsg = "(+20 Flush Bonus!)";
-            } else {
-                // Check Color
-                const reds = ['H','D'];
-                const blacks = ['C','S'];
-                const allRed = suits.every(s => reds.includes(s));
-                const allBlack = suits.every(s => blacks.includes(s));
-                
-                if(allRed || allBlack) {
-                    total += 10;
-                    bonusMsg = "(+10 Color Bonus!)";
-                }
-            }
-        } else if (count > 0 && count < 4) {
-            bonusMsg = "(No bonus - Flight not full)";
-        } else if (count === 0) {
-            total = 0;
-            bonusMsg = "Empty";
-        }
-
-        document.getElementById('calc-result').innerHTML = `Score: ${total} <span style="font-size:0.7em">${bonusMsg}</span>`;
-    }
-
-    // --- TIEBREAKER LOGIC ---
+    // --- TIEBREAKER ---
     function runTiebreaker(context) {
         showScreen('tiebreaker-screen');
         document.getElementById('scan-anim').style.display = 'block';
@@ -354,52 +254,28 @@
             document.getElementById('scan-anim').style.display = 'none';
             document.getElementById('tiebreaker-final').style.display = 'block';
             
-            const reasons = [
-                "has significantly better hair volume.",
-                "has a superior outfit choice today.",
-                "is radiating pure charisma.",
-                "has a winning smile.",
-                "is objectively delightful."
-            ];
+            const reasons = ["has better hair volume.", "is radiating charm.", "has a winning smile.", "is objectively cuter."];
             const reason = reasons[Math.floor(Math.random() * reasons.length)];
+            let winner = Math.random() > 0.5 ? "You" : (context === 'GAME' ? "The Bartender" : "Opponent");
+            if(winner === "You") document.getElementById('tiebreaker-winner').innerText = "You are Cuter!";
+            else document.getElementById('tiebreaker-winner').innerText = `${winner} is Cuter!`;
             
-            // Randomize Winner
-            let winner = "";
-            let pName = "You";
-            let oName = (context === 'GAME') ? "The Bartender" : "Opponent";
+            document.getElementById('tiebreaker-reason').innerText = `Reason: ${winner} ${reason}`;
             
-            if(Math.random() > 0.5) winner = pName;
-            else winner = oName;
-
-            document.getElementById('tiebreaker-winner').innerText = `${winner} is Cuter!`;
-            document.getElementById('tiebreaker-reason').innerText = `Because ${winner.toLowerCase()} ${reason}`;
-            
-            const btn = document.getElementById('tiebreaker-continue-btn');
-            btn.onclick = function() {
-                if(context === 'MANUAL') {
-                    showScreen('manual-screen');
-                    manualResult(`✨ ${winner} goes first!`);
-                } else {
-                    initGame(winner === "You" ? 'PLAYER' : 'CPU');
-                }
+            document.getElementById('tiebreaker-continue-btn').onclick = function() {
+                if(context === 'MANUAL') { showScreen('manual-screen'); }
+                else { initGame(winner === "You" ? 'PLAYER' : 'CPU'); }
             };
         }, 2000);
     }
 
-    // --- GAME LOGIC (Vs Bartender) ---
-    function startDigitalGameFlow() {
-        const name = prompt("Enter your name:", "Player");
-        if(name) {
-            runTiebreaker('GAME');
-        }
-    }
-
-    // GAME STATE
+    // --- GAME ENGINE ---
     const SUITS = ['♥', '♦', '♣', '♠'];
     const RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+    
     let deck = [], pHand = [], cHand = [], pFlight = [], cFlight = [];
     let turn = "", gameState = "IDLE";
-    let lastCall = false, finisher = "";
+    let lastCallCaller = null; // 'PLAYER' or 'CPU' or null
     let pendingAction = null;
 
     class Card {
@@ -409,12 +285,23 @@
             this.val = this.isBrew ? parseInt(r) : 0;
             this.uid = Math.random().toString(36);
         }
+        getEffectName() {
+            if(this.r === 'J') return "Draw 2, Disc 1";
+            if(this.r === 'Q') return "Remove Opp Card";
+            if(this.r === 'K') return "Opp Disc 2";
+            if(this.r === 'A') return "Steal Brew";
+            return "";
+        }
     }
 
     function log(msg) {
         const d = document.getElementById('log');
         d.innerHTML += `<div>> ${msg}</div>`;
         d.scrollTop = d.scrollHeight;
+    }
+
+    function startDigitalGameFlow() {
+        runTiebreaker('GAME');
     }
 
     function initGame(starter) {
@@ -426,36 +313,58 @@
         pHand = [deck.pop(), deck.pop(), deck.pop()];
         cHand = [deck.pop(), deck.pop(), deck.pop()];
         pFlight = []; cFlight = [];
-        lastCall = false; finisher = "";
+        lastCallCaller = null;
         
         document.getElementById('log').innerHTML = "";
         log(`Shift started. ${starter} goes first.`);
         startTurn(starter);
     }
 
+    // --- TURN LOGIC (UPDATED FOR LAST CALL) ---
     function startTurn(who) {
         turn = who;
-        document.getElementById('turn-indicator').innerText = `${who === 'PLAYER' ? 'YOUR' : "BARTENDER'S"} TURN`;
-        document.getElementById('turn-indicator').style.color = who === 'PLAYER' ? '#0f0' : '#f00';
-
-        // Check End
-        if(lastCall) {
-            if((who === 'PLAYER' && finisher !== 'PLAYER') || (who === 'CPU' && finisher !== 'CPU')) {
-                endGame(); return;
+        
+        // 1. CHECK IF LAST CALL IS ACTIVE AND RESOLVING
+        if (lastCallCaller !== null) {
+            // If Last Call WAS active, and we are back to the caller, check survival
+            if (turn === lastCallCaller) {
+                let flight = (turn === 'PLAYER') ? pFlight : cFlight;
+                if (flight.length === 4) {
+                    endGame(turn); // SURVIVED!
+                    return;
+                } else {
+                    log(`🚫 LAST CALL BROKEN! ${turn}'s flight dropped below 4! Play continues.`);
+                    lastCallCaller = null; // Reset Last Call
+                    // Game continues with this player's turn as normal
+                }
             }
         }
 
-        // Draw
+        // 2. CHECK FOR NEW LAST CALL TRIGGER (Start of turn check)
+        // If I start my turn with 4 cards (and Last Call isn't already active for me), I trigger it.
+        let myFlight = (who === 'PLAYER') ? pFlight : cFlight;
+        if (myFlight.length === 4 && lastCallCaller === null) {
+            lastCallCaller = who;
+            log(`🔔 LAST CALL! ${who} yells "Last Call!"`);
+            log(`Opponent gets ONE FINAL TURN to break the flight!`);
+            
+            // Render to show current state before switching
+            renderGame();
+            
+            // Pass turn immediately to opponent for the specific retaliation turn
+            let opponent = (who === 'PLAYER') ? 'CPU' : 'PLAYER';
+            setTimeout(() => startTurn(opponent), 2000);
+            return;
+        }
+
+        // 3. STANDARD TURN
+        document.getElementById('turn-indicator').innerText = `${who === 'PLAYER' ? 'YOUR' : "BARTENDER'S"} TURN`;
+        document.getElementById('turn-indicator').style.color = who === 'PLAYER' ? '#0f0' : '#f00';
+
+        // Draw Phase
         if(deck.length) {
             let c = deck.pop();
             if(who === 'PLAYER') pHand.push(c); else cHand.push(c);
-        }
-
-        // Check Last Call Trigger
-        if(!lastCall && (pFlight.length === 4 || cFlight.length === 4)) {
-            log("🔔 LAST CALL! Opponent gets 1 final turn!");
-            lastCall = true;
-            finisher = (who === 'PLAYER') ? 'CPU' : 'PLAYER';
         }
 
         renderGame();
@@ -470,26 +379,7 @@
         }
     }
 
-    function renderGame() {
-        const renderC = (c, loc) => {
-            const isRed = ['♥','♦'].includes(c.s);
-            const clickable = (loc === 'HAND' && turn === 'PLAYER') || 
-                              (loc === 'CPU' && gameState === 'TARGET');
-            return `<div class="card ${isRed?'red':'black'}" 
-                    style="${clickable?'border:2px solid cyan':''}" 
-                    onclick="cardAction('${loc}', '${c.uid}')">
-                    <div class="card-corner">${c.r}</div>
-                    <div>${c.s}</div>
-                    </div>`;
-        };
-
-        document.getElementById('player-flight').innerHTML = pFlight.map(c => renderC(c,'P_FLIGHT')).join('');
-        document.getElementById('cpu-flight').innerHTML = cFlight.map(c => renderC(c,'CPU')).join('');
-        document.getElementById('player-hand').innerHTML = pHand.map(c => renderC(c,'HAND')).join('');
-        document.getElementById('cpu-hand-count').innerText = cHand.length;
-    }
-
-    // PLAYER ACTIONS
+    // --- PLAYER ACTIONS ---
     window.cardAction = function(loc, uid) {
         if(turn !== 'PLAYER') return;
 
@@ -497,7 +387,7 @@
             const idx = pHand.findIndex(c => c.uid === uid);
             const card = pHand[idx];
             
-            // Waste
+            // Waste Mode
             if(document.getElementById('waste-mode').checked) {
                 pHand.splice(idx, 1);
                 log(`Wasted ${card.r}${card.s}`);
@@ -512,10 +402,19 @@
                     pFlight.push(card);
                     log(`Served ${card.r}${card.s}`);
                     nextTurn();
-                } else alert("Flight Full! Waste or play Patron.");
+                } else alert("Flight Full! Waste a card or play a Patron.");
             } 
             // Play Patron
             else {
+                // Prevent playing Steal/Barmaid if useless
+                if (card.r === 'A' && (cFlight.length === 0 || pFlight.length === 4)) {
+                    alert("Cannot play Ace (Tip Jar). Opponent flight empty or yours is full. Waste it?");
+                    return;
+                }
+                if (card.r === 'Q' && cFlight.length === 0) {
+                    alert("Cannot play Queen (Barmaid). Opponent flight empty. Waste it?");
+                    return;
+                }
                 handlePatron(card, idx);
             }
         }
@@ -533,92 +432,110 @@
     };
 
     function handlePatron(card, idx) {
-        if(card.r === 'J') { // Regular
+        if(card.r === 'J') { 
             pHand.splice(idx, 1);
-            log("Played Jack. Draw 2, Discard 1.");
+            log("Jack (Regular): Drawing 2...");
             if(deck.length) pHand.push(deck.pop());
             if(deck.length) pHand.push(deck.pop());
+            log("Select 1 card to Discard.");
             gameState = 'DISCARD';
             renderGame();
         }
-        else if(card.r === 'Q') { // Barmaid
-            if(cFlight.length === 0) {
-                log("Queen played. No targets.");
-                pHand.splice(idx,1); nextTurn();
-            } else {
-                pHand.splice(idx,1);
-                gameState = 'TARGET';
-                log("Select card in Bartender's Flight to remove.");
-                pendingAction = (targetIdx) => {
-                    let r = cFlight.splice(targetIdx,1)[0];
-                    log(`Removed ${r.r}${r.s}`);
-                    nextTurn();
-                };
-                renderGame();
-            }
+        else if(card.r === 'Q') {
+            pHand.splice(idx, 1);
+            gameState = 'TARGET';
+            log("Select card in Bartender's Flight to REMOVE.");
+            pendingAction = (targetIdx) => {
+                let r = cFlight.splice(targetIdx,1)[0];
+                log(`Removed Bartender's ${r.r}${r.s}`);
+                nextTurn();
+            };
+            renderGame();
         }
-        else if(card.r === 'K') { // Bouncer
-            pHand.splice(idx,1);
-            log("King played. Bartender discards 2.");
+        else if(card.r === 'K') {
+            pHand.splice(idx, 1);
+            log("King (Bouncer): Bartender discards 2.");
             if(cHand.length) cHand.pop();
             if(cHand.length) cHand.pop();
             nextTurn();
         }
-        else if(card.r === 'A') { // Tip Jar
-            if(cFlight.length === 0 || pFlight.length === 4) {
-                alert("Cannot steal. Flight issues.");
-            } else {
-                pHand.splice(idx,1);
-                gameState = 'TARGET';
-                log("Select card to Steal.");
-                pendingAction = (targetIdx) => {
-                    let s = cFlight.splice(targetIdx,1)[0];
-                    pFlight.push(s);
-                    log(`Stole ${s.r}${s.s}`);
-                    nextTurn();
-                };
-                renderGame();
-            }
+        else if(card.r === 'A') {
+            pHand.splice(idx, 1);
+            gameState = 'TARGET';
+            log("Select card in Bartender's Flight to STEAL.");
+            pendingAction = (targetIdx) => {
+                let s = cFlight.splice(targetIdx,1)[0];
+                pFlight.push(s);
+                log(`Stole Bartender's ${s.r}${s.s}`);
+                nextTurn();
+            };
+            renderGame();
         }
     }
 
     function nextTurn() {
         gameState = 'IDLE';
         renderGame();
-        startTurn('CPU');
+        startTurn('CPU'); // Pass to CPU
     }
 
-    // CPU AI
+    // --- CPU AI ---
     function cpuTurn() {
         let played = false;
-        
-        // 1. Steal
+
+        // EMERGENCY LOGIC: If Player triggered Last Call (has 4 cards), CPU MUST try to break it.
+        if (lastCallCaller === 'PLAYER' && pFlight.length === 4) {
+            // Look for Queen
+            let qIdx = cHand.findIndex(c => c.r === 'Q');
+            if (qIdx !== -1) {
+                cHand.splice(qIdx, 1);
+                let r = pFlight.pop(); // Remove last played usually, or random
+                log(`🚨 Bartender plays Queen! Removes your ${r.r}${r.s} to break Last Call!`);
+                renderGame();
+                startTurn('PLAYER'); // Pass back
+                return;
+            }
+            // Look for Ace (Steal)
+            let aIdx = cHand.findIndex(c => c.r === 'A');
+            if (aIdx !== -1 && cFlight.length < 4) {
+                 cHand.splice(aIdx, 1);
+                 let s = pFlight.pop();
+                 cFlight.push(s);
+                 log(`🚨 Bartender plays Ace! Steals your ${s.r}${s.s} to break Last Call!`);
+                 renderGame();
+                 startTurn('PLAYER');
+                 return;
+            }
+        }
+
+        // NORMAL LOGIC
+        // 1. Steal High Value
         let aIdx = cHand.findIndex(c => c.r === 'A');
-        if(aIdx !== -1 && pFlight.length > 0 && cFlight.length < 4) {
+        if(!played && aIdx !== -1 && pFlight.length > 0 && cFlight.length < 4) {
             cHand.splice(aIdx, 1);
             cFlight.push(pFlight.shift());
-            log("🤖 Bartender played Ace & Stole!");
+            log("🤖 Bartender plays Ace & Steals!");
             played = true;
         }
 
-        // 2. High Brew
+        // 2. Play High Brew
         if(!played) {
             let bIdx = cHand.findIndex(c => c.isBrew && c.val >= 8);
             if(bIdx !== -1 && cFlight.length < 4) {
                 let c = cHand.splice(bIdx, 1)[0];
                 cFlight.push(c);
-                log(`🤖 Bartender served ${c.r}${c.s}`);
+                log(`🤖 Bartender serves ${c.r}${c.s}`);
                 played = true;
             }
         }
 
-        // 3. Queen
+        // 3. Play Queen (Remove player card)
         if(!played) {
             let qIdx = cHand.findIndex(c => c.r === 'Q');
             if(qIdx !== -1 && pFlight.length > 0) {
                 cHand.splice(qIdx, 1);
                 pFlight.pop();
-                log("🤖 Bartender played Queen (Removed your card).");
+                log("🤖 Bartender plays Queen (Removes your card).");
                 played = true;
             }
         }
@@ -629,7 +546,7 @@
             if(anyB !== -1 && cFlight.length < 4) {
                 let c = cHand.splice(anyB, 1)[0];
                 cFlight.push(c);
-                log(`🤖 Bartender served ${c.r}${c.s}`);
+                log(`🤖 Bartender serves ${c.r}${c.s}`);
                 played = true;
             }
         }
@@ -637,11 +554,34 @@
         // 5. Waste
         if(!played && cHand.length) {
             cHand.shift();
-            log("🤖 Bartender wasted a card.");
+            log("🤖 Bartender wastes a card.");
         }
 
         renderGame();
         startTurn('PLAYER');
+    }
+
+    // --- RENDER & SCORING ---
+    function renderGame() {
+        const renderC = (c, loc) => {
+            const isRed = ['♥','♦'].includes(c.s);
+            const clickable = (loc === 'HAND' && turn === 'PLAYER') || 
+                              (loc === 'CPU' && gameState === 'TARGET');
+            const hint = loc === 'HAND' ? `<div class="card-hint">${c.getEffectName()}</div>` : '';
+            
+            return `<div class="card ${isRed?'red':'black'}" 
+                    style="${clickable?'border:2px solid cyan':''}" 
+                    onclick="cardAction('${loc}', '${c.uid}')">
+                    <div class="card-corner">${c.r}</div>
+                    <div>${c.s}</div>
+                    ${hint}
+                    </div>`;
+        };
+
+        document.getElementById('player-flight').innerHTML = pFlight.map(c => renderC(c,'P_FLIGHT')).join('');
+        document.getElementById('cpu-flight').innerHTML = cFlight.map(c => renderC(c,'CPU')).join('');
+        document.getElementById('player-hand').innerHTML = pHand.map(c => renderC(c,'HAND')).join('');
+        document.getElementById('cpu-hand-count').innerText = cHand.length;
     }
 
     function calcFinal(flight) {
@@ -659,11 +599,11 @@
         return s;
     }
 
-    function endGame() {
+    function endGame(winnerName) {
         let ps = calcFinal(pFlight);
         let cs = calcFinal(cFlight);
-        let msg = `SHIFT COMPLETE!\n\nYou: ${ps}\nBartender: ${cs}\n\n`;
-        msg += ps > cs ? "🏆 YOU WIN!" : (cs > ps ? "😞 BARTENDER WINS" : "🤝 TIE!");
+        let msg = `SHIFT COMPLETE!\n\nPlayer Score: ${ps}\nBartender Score: ${cs}\n\n`;
+        msg += ps > cs ? "🏆 YOU WIN THE SHIFT!" : (cs > ps ? "😞 BARTENDER WINS THE SHIFT" : "🤝 IT'S A TIE!");
         alert(msg);
         goHome();
     }
