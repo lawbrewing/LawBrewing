@@ -85,6 +85,12 @@
         }
         .hole { width: 10px; height: 10px; background: #000; border-radius: 50%; box-shadow: inset 0 0 3px white;}
 
+        /* SCORE DISPLAY ON PADDLE */
+        .flight-score-display {
+            font-family: 'Rye', serif; color: var(--gold); font-size: 1.2em;
+            margin-left: 10px; text-align: left;
+        }
+
         /* BEER GLASS VISUALS */
         .beer-glass {
             width: 50px; height: 80px;
@@ -115,11 +121,8 @@
         .card.selected { border: 3px solid var(--highlight); box-shadow: 0 0 10px var(--highlight); }
         .card:hover { transform: translateY(-5px); border-color: black; }
         
-        /* REALISTIC CARD CORNERS */
         .card-corner { position: absolute; top: 2px; left: 4px; font-size: 0.7em; font-family: 'Courier Prime', monospace; line-height: 1; text-align: center; }
         .card-corner.bottom { top: auto; bottom: 2px; left: auto; right: 4px; transform: rotate(180deg); }
-        
-        .card-hint { font-size: 0.5em; color: #555; position: absolute; bottom: 2px; text-transform: uppercase; font-family: sans-serif; text-align: center; width: 100%; display: none;} /* Hidden for realism, tooltip style better? Kept hidden for cleaner look */
         
         /* LOG */
         #log { height: 80px; overflow-y: auto; background: #111; border: 1px solid #fff; padding: 5px; font-size: 0.8em; text-align: left; margin: 10px 0; color: #fff; }
@@ -143,7 +146,7 @@
         /* MANUAL PAGE */
         .ref-card { background: white; color: black; padding: 15px; border: 2px solid #ccc; text-align: left; }
         .ref-table { width: 100%; border-collapse: collapse; margin-top: 5px; font-size: 0.9em; }
-        .ref-table th { border-bottom: 2px solid black; text-align: left; }
+        .ref-table th { border-bottom: 2px solid black; text-align: left; padding: 5px 0;}
         .ref-table td { border-bottom: 1px solid #ccc; padding: 4px 0; }
 
     </style>
@@ -182,17 +185,35 @@
         <div class="ref-card">
             <h3>THE TURN</h3>
             <ol style="padding-left:20px; margin:5px;">
-                <li><b>Pour:</b> Draw 1 Card.</li>
-                <li><b>Serve:</b> 
+                <li><b>1. The Pour:</b> Draw 1 Card.</li>
+                <li><b>2. The Serve:</b> Do ONE of the following:
                     <ul>
-                        <li>Play a Brew (2-10). If paddle is full, you may <b>Upgrade</b> (swap).</li>
-                        <li>Play a Patron (Face Card).</li>
-                        <li>Waste (Discard).</li>
+                        <li><b>Play a Brew (2-10):</b> Place in Flight (Max 4).</li>
+                        <li><b>Play a Patron (J, Q, K, A):</b> Discard for effect.</li>
+                        <li><b>Waste:</b> Discard 1 card from hand.</li>
                     </ul>
                 </li>
             </ol>
-            <h3>ACE (TIP JAR)</h3>
-            <p style="font-size:0.9em;">If you play an Ace while your paddle is full, you steal the opponent's beer, but you must then discard one from your own paddle to make room.</p>
+            
+            <h3>THE MENU (Discard for Effect)</h3>
+            <table class="ref-table">
+                <tr><th>Card</th><th>Name</th><th>Effect</th></tr>
+                <tr><td><b>Jack</b></td><td>The Regular</td><td>Draw 2, Discard 1.</td></tr>
+                <tr><td><b>Queen</b></td><td>The Barmaid</td><td>Remove 1 card from opp. Flight.</td></tr>
+                <tr><td><b>King</b></td><td>The Bouncer</td><td>Opp. discards 2 cards (random).</td></tr>
+                <tr><td><b>Ace</b></td><td>The Tip Jar</td><td>Steal 1 Brew from opp. Flight.</td></tr>
+            </table>
+
+            <h3>SCORING & WINNING</h3>
+            <ul>
+                <li><b>Brews (2-10):</b> Face Value.</li>
+                <li><b>Bonuses (Full Flight):</b> +10 (All same Color) | +20 (All same Suit).</li>
+                <li><b>Victory:</b> Highest Score wins Shift. Win 3 Shifts.</li>
+            </ul>
+
+            <h3>ENDING THE ROUND</h3>
+            <p style="font-size:0.9em;"><b>Last Call:</b> Start turn with 4 Cards in Flight -> Yell "Last Call!". Opponent gets 1 final turn.</p>
+            <p style="text-align:center; font-style:italic; margin-top:5px;">Remember: The cute player goes first!</p>
         </div>
         <br>
         <button class="btn-main" onclick="runTiebreaker('MANUAL')">Who is Cuter?</button>
@@ -233,7 +254,10 @@
             </div>
         </div>
 
-        <div style="font-size:0.8em; text-align: left; padding-left: 20px;">YOUR FLIGHT</div>
+        <div style="display:flex; justify-content: space-between; align-items: flex-end; padding: 0 20px;">
+            <div style="font-size:0.8em;">YOUR FLIGHT</div>
+            <div class="flight-score-display">Score: <span id="current-score">0</span></div>
+        </div>
         <div class="paddle-container">
             <div class="paddle" id="player-flight"></div>
             <div class="paddle-handle"><div class="hole"></div></div>
@@ -254,15 +278,8 @@
         const r = parseInt(rank);
         if(isNaN(r)) return '#fff';
         const colors = {
-            2: '#faf4d4', // Pale Straw
-            3: '#fff59d', // Straw
-            4: '#ffe082', // Pale Gold
-            5: '#ffca28', // Gold
-            6: '#ffb300', // Deep Gold/Light Amber
-            7: '#fb8c00', // Amber
-            8: '#8d6e63', // Brown
-            9: '#5d4037', // Dark Brown
-            10: '#212121' // Black
+            2: '#faf4d4', 3: '#fff59d', 4: '#ffe082', 5: '#ffca28',
+            6: '#ffb300', 7: '#fb8c00', 8: '#8d6e63', 9: '#5d4037', 10: '#212121'
         };
         return colors[r] || '#f4c542';
     }
@@ -296,7 +313,6 @@
         setTimeout(() => {
             document.getElementById('scan-anim').style.display='none';
             document.getElementById('tiebreaker-final').style.display='block';
-            
             let isPlayer = Math.random() > 0.5;
             let winnerName = isPlayer ? "You" : (ctx === 'GAME' ? "The House" : "Opponent");
             let reasons = isPlayer 
@@ -320,7 +336,7 @@
     let matchPWins=0, matchCWins=0;
     let deck=[], pHand=[], cHand=[], pFlight=[], cFlight=[];
     let turn="", gameState="IDLE", lastCallCaller=null, pendingAction=null, swapSourceIdx=null;
-    let tempStolenCard = null; // Used when stealing with a full paddle
+    let tempStolenCard = null;
 
     class Card {
         constructor(r, s) {
@@ -349,11 +365,9 @@
         showScreen('game-screen');
         deck=[]; for(let s of SUITS) for(let r of RANKS) deck.push(new Card(r,s));
         deck.sort(()=>Math.random()-0.5);
-        
         pHand=[]; cHand=[];
         for(let i=0; i<3; i++) pHand.push(deck.pop());
         for(let i=0; i<3; i++) cHand.push(deck.pop());
-        
         pFlight=[]; cFlight=[]; lastCallCaller=null;
         document.getElementById('log').innerHTML="";
         log(`Shift Started. ${starter} pours first.`);
@@ -363,7 +377,7 @@
     function startTurn(who) {
         turn = who;
         
-        // Check for Last Call Resolution
+        // Resolution Check
         if(lastCallCaller !== null && turn === lastCallCaller) {
             let flight = (turn==='PLAYER') ? pFlight : cFlight;
             if(flight.length===4) { endShift(); return; }
@@ -375,13 +389,13 @@
         document.getElementById('turn-indicator').style.color = who==='PLAYER'?'white':'#aaa';
         document.getElementById('last-call-btn').style.display = 'none';
 
-        // Draw Card
+        // Draw
         if(deck.length) {
             let c = deck.pop();
             if(who==='PLAYER') pHand.push(c); else cHand.push(c);
         }
 
-        // Allow Manual Last Call Trigger
+        // Manual Last Call
         if(who === 'PLAYER' && pFlight.length === 4 && lastCallCaller === null) {
             document.getElementById('last-call-btn').style.display = 'inline-block';
         }
@@ -412,7 +426,7 @@
     function cpuTurn() {
         let played = false;
 
-        // 1. Break Player Last Call (Priority 1)
+        // 1. Break Player Last Call
         if(lastCallCaller === 'PLAYER' && pFlight.length === 4) {
             let qIdx = cHand.findIndex(c => c.r === 'Q');
             if(qIdx !== -1) {
@@ -428,33 +442,37 @@
             }
         }
 
-        // 2. Decide: Call Last Call?
+        // 2. Decide: Call Last Call? (SMARTER LOGIC)
         if(cFlight.length === 4 && lastCallCaller === null) {
-            // Only call if score is decent (>= 25) or if it has a flush bonus
             let score = calcScore(cFlight);
-            if(score >= 25) {
+            // AI Confidence: Only call if > 30 (Flush) or > 25 (Solid High Cards)
+            // If between 20-25, only call if opponent flight is weak/empty
+            let opponentWeak = pFlight.length < 2 || calcScore(pFlight) < 15;
+            
+            if(score >= 30 || score >= 26 || (score >= 20 && opponentWeak)) {
                 lastCallCaller = 'CPU';
-                log(`🔔 House yells "LAST CALL!"`);
+                log(`🔔 House yells "LAST CALL!" (Score: ${score})`);
                 renderGame();
                 setTimeout(()=>startTurn('PLAYER'), 1500);
                 return;
+            } else {
+                log("🤖 House is full but hesitates... tries to upgrade.");
             }
         }
 
-        // 3. Smart Steal (A) with Upgrade Capability
+        // 3. Smart Steal (A)
         if(!played) {
             let aIdx = cHand.findIndex(c => c.r === 'A');
             if(aIdx !== -1 && pFlight.length > 0) {
-                // Determine best steal target
                 let bestVal = 0; let target = -1;
                 pFlight.forEach((c, i) => { if(c.val > bestVal) { bestVal = c.val; target = i; } });
                 
-                // If Paddle NOT Full: Steal if high value
+                // If Paddle NOT Full
                 if(cFlight.length < 4 && bestVal >= 7) {
                     cHand.splice(aIdx, 1); cFlight.push(pFlight.splice(target, 1)[0]);
                     log(`🤖 House steals your ${bestVal} with Ace!`); played = true;
                 }
-                // If Paddle FULL: Steal if stolen card > lowest card on paddle
+                // If Paddle FULL - Steal & Swap
                 else if (cFlight.length === 4) {
                     let lowestVal = 99; let lowIdx = -1;
                     cFlight.forEach((c, i) => { if(c.val < lowestVal) { lowestVal = c.val; lowIdx = i; } });
@@ -470,7 +488,7 @@
             }
         }
 
-        // 4. Upgrade Flight (If full and has better card)
+        // 4. Upgrade Flight
         if(!played && cFlight.length === 4) {
             let lowestVal = 99; let lowIdx = -1;
             cFlight.forEach((c, i) => { if(c.val < lowestVal) { lowestVal = c.val; lowIdx = i; } });
@@ -486,7 +504,7 @@
             }
         }
 
-        // 5. Play Brew (Avoid 2s/3s unless empty flight or flush)
+        // 5. Play Brew
         if(!played && cFlight.length < 4) {
             let brews = cHand.map((c,i)=>({c,i})).filter(o=>o.c.isBrew).sort((a,b)=>b.c.val - a.c.val);
             for(let item of brews) {
@@ -503,7 +521,7 @@
             }
         }
 
-        // 6. Waste (Dump low cards)
+        // 6. Waste
         if(!played) {
             let junkIdx = cHand.findIndex(c => c.isBrew && c.val <= 5);
             if(junkIdx !== -1) {
@@ -522,66 +540,48 @@
     window.cardAction = function(loc, uid) {
         if(turn !== 'PLAYER') return;
         
-        // 1. SWAP MODE (Upgrade existing beer)
+        // 1. SWAP MODE
         if(loc==='P_FLIGHT' && gameState==='SWAP_TARGET') {
             const flightIdx = pFlight.findIndex(c => c.uid === uid);
             const handCard = pHand[swapSourceIdx];
-            
-            pHand.splice(swapSourceIdx, 1); // Remove from hand
-            let oldCard = pFlight.splice(flightIdx, 1, handCard)[0]; // Swap
+            pHand.splice(swapSourceIdx, 1); 
+            let oldCard = pFlight.splice(flightIdx, 1, handCard)[0];
             log(`Upgraded! Swapped ${oldCard.r} for ${handCard.r}.`);
-            gameState='IDLE';
-            nextTurn();
-            return;
+            gameState='IDLE'; nextTurn(); return;
         }
 
-        // 2. STEAL & SWAP MODE (Discard one of your own to make room for stolen)
+        // 2. STEAL & SWAP MODE
         if(loc==='P_FLIGHT' && gameState==='STEAL_SWAP') {
             const flightIdx = pFlight.findIndex(c => c.uid === uid);
-            
             let discarded = pFlight.splice(flightIdx, 1, tempStolenCard)[0];
             log(`Stole ${tempStolenCard.r}, discarded own ${discarded.r}.`);
-            tempStolenCard = null;
-            gameState='IDLE';
-            nextTurn();
-            return;
+            tempStolenCard = null; gameState='IDLE'; nextTurn(); return;
         }
 
         // 3. HAND INTERACTION
         if(loc==='HAND' && gameState==='PLAY') {
             const idx = pHand.findIndex(c => c.uid === uid);
             const card = pHand[idx];
-            
-            // Waste
             if(document.getElementById('waste-mode').checked) {
                 pHand.splice(idx,1); log(`Wasted ${card.r}${card.s}`); nextTurn(); return;
             }
-            
-            // Play Brew
             if(card.isBrew) {
                 if(pFlight.length < 4) { 
                     pHand.splice(idx,1); pFlight.push(card); 
                     log(`Poured ${card.r}${card.s}`); nextTurn(); 
                 } else {
-                    // Trigger Swap Mode
-                    swapSourceIdx = idx;
-                    gameState = 'SWAP_TARGET';
-                    log("PADDLE FULL. Select a beer on your paddle to REPLACE.");
-                    renderGame();
-                    return;
+                    swapSourceIdx = idx; gameState = 'SWAP_TARGET';
+                    log("PADDLE FULL. Select a beer to REPLACE."); renderGame(); return;
                 }
             } else {
-                // Face Cards
                 if(card.r==='A' && cFlight.length===0) { alert("Nothing to steal."); return; }
                 if(card.r==='Q' && cFlight.length===0) { alert("Nothing to remove."); return; }
                 handlePatron(card, idx);
             }
         }
-        // 4. DISCARD INTERACTION (Jack)
         else if(loc==='HAND' && gameState==='DISCARD') {
             pHand.splice(pHand.findIndex(c=>c.uid===uid),1); log("Discarded."); nextTurn();
         }
-        // 5. TARGETING (Opponent Flight)
         else if(loc==='CPU' && gameState==='TARGET') {
             if(pendingAction) pendingAction(cFlight.findIndex(c=>c.uid===uid));
         }
@@ -593,41 +593,31 @@
             log("Jack: Draw 2, Disc 1."); gameState='DISCARD'; renderGame();
         }
         else if(c.r==='K') {
-            pHand.splice(i,1); if(cHand.length) cHand.pop(); if(cHand.length) cHand.pop();
-            log("King: House discards 2."); nextTurn();
+            pHand.splice(i,1); 
+            // FIXED KING LOGIC: Randomly remove 2 from CPU hand
+            let discardedCount = 0;
+            while(discardedCount < 2 && cHand.length > 0) {
+                cHand.splice(Math.floor(Math.random() * cHand.length), 1);
+                discardedCount++;
+            }
+            log(`King: House discards ${discardedCount} card(s).`); 
+            nextTurn();
         }
         else if(c.r==='Q') {
             pHand.splice(i,1); log("Select beer to Remove."); gameState='TARGET';
             pendingAction=(t)=>{ cFlight.splice(t,1); log("Removed beer."); nextTurn(); }; renderGame();
         }
         else if(c.r==='A') {
-            // Ace Logic
-            pHand.splice(i,1); 
-            log("Select beer to Steal."); 
-            gameState='TARGET';
+            pHand.splice(i,1); log("Select beer to Steal."); gameState='TARGET';
             pendingAction=(t)=>{ 
                 let stolen = cFlight.splice(t,1)[0];
-                if(pFlight.length < 4) {
-                    pFlight.push(stolen); 
-                    log("Stole beer."); 
-                    nextTurn(); 
-                } else {
-                    tempStolenCard = stolen;
-                    gameState = 'STEAL_SWAP';
-                    log(`Paddle Full! Select one of YOUR beers to discard for the ${stolen.r}.`);
-                    renderGame();
-                }
-            }; 
-            renderGame();
+                if(pFlight.length < 4) { pFlight.push(stolen); log("Stole beer."); nextTurn(); } 
+                else { tempStolenCard = stolen; gameState = 'STEAL_SWAP'; log(`Paddle Full! Discard one of YOURS for ${stolen.r}.`); renderGame(); }
+            }; renderGame();
         }
     }
 
-    function nextTurn() { 
-        gameState='IDLE'; 
-        document.getElementById('last-call-btn').style.display='none'; // Hide if action taken
-        renderGame(); 
-        startTurn('CPU'); 
-    }
+    function nextTurn() { gameState='IDLE'; document.getElementById('last-call-btn').style.display='none'; renderGame(); startTurn('CPU'); }
 
     // --- RENDER ---
     function renderGame() {
@@ -639,9 +629,7 @@
                     <div class="card-corner bottom">${c.r}<br>${c.s}</div>
                     </div>`;
         };
-        
         const rBeer = (c, loc) => {
-            // Highlight for Swap Target or Attack Target
             const clk = (loc==='CPU' && gameState==='TARGET') || (loc==='P_FLIGHT' && (gameState==='SWAP_TARGET' || gameState==='STEAL_SWAP'));
             const beerColor = getBeerColor(c.r);
             const isDark = parseInt(c.r) >= 8;
@@ -657,6 +645,7 @@
         document.getElementById('cpu-flight').innerHTML = cFlight.map(c=>rBeer(c,'CPU')).join('');
         document.getElementById('player-hand').innerHTML = pHand.map((c,i)=>rCard(c,i)).join('');
         document.getElementById('cpu-hand-count').innerText = cHand.length;
+        document.getElementById('current-score').innerText = calcScore(pFlight);
     }
 
     // --- SCORING ---
@@ -664,8 +653,8 @@
         if(!f.length) return 0;
         let s=f.reduce((a,b)=>a+b.val,0);
         if(f.length===4) {
-            if(new Set(f.map(c=>c.s)).size===1) s+=20; // Suit Bonus
-            else { let r=f.filter(c=>['♥','♦'].includes(c.s)).length; if(r===0||r===4) s+=10; } // Color Bonus
+            if(new Set(f.map(c=>c.s)).size===1) s+=20;
+            else { let r=f.filter(c=>['♥','♦'].includes(c.s)).length; if(r===0||r===4) s+=10; }
         }
         return s;
     }
@@ -676,9 +665,7 @@
         if(ps>cs) { msg+="🏆 YOU WIN!"; matchPWins++; }
         else if(cs>ps) { msg+="💀 HOUSE WINS."; matchCWins++; }
         else msg+="🤝 TIE.";
-        
         updateMatchUI();
-        
         setTimeout(() => {
             alert(msg);
             if(matchPWins>=3) { if(confirm("YOU WON THE MATCH! Play again?")) startNewMatch(); else goHome(); }
