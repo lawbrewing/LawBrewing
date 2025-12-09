@@ -114,9 +114,13 @@
         .card.black { color: #000; }
         .card.selected { border: 3px solid var(--highlight); box-shadow: 0 0 10px var(--highlight); }
         .card:hover { transform: translateY(-5px); border-color: black; }
-        .card-corner { position: absolute; top: 2px; left: 4px; font-size: 0.7em; font-family: 'Courier Prime', monospace;}
-        .card-hint { font-size: 0.5em; color: #555; position: absolute; bottom: 2px; text-transform: uppercase; font-family: sans-serif; text-align: center; width: 100%;}
-
+        
+        /* REALISTIC CARD CORNERS */
+        .card-corner { position: absolute; top: 2px; left: 4px; font-size: 0.7em; font-family: 'Courier Prime', monospace; line-height: 1; text-align: center; }
+        .card-corner.bottom { top: auto; bottom: 2px; left: auto; right: 4px; transform: rotate(180deg); }
+        
+        .card-hint { font-size: 0.5em; color: #555; position: absolute; bottom: 2px; text-transform: uppercase; font-family: sans-serif; text-align: center; width: 100%; display: none;} /* Hidden for realism, tooltip style better? Kept hidden for cleaner look */
+        
         /* LOG */
         #log { height: 80px; overflow-y: auto; background: #111; border: 1px solid #fff; padding: 5px; font-size: 0.8em; text-align: left; margin: 10px 0; color: #fff; }
         #log div { border-bottom: 1px solid #333; padding: 2px; }
@@ -187,8 +191,8 @@
                     </ul>
                 </li>
             </ol>
-            <h3>LAST CALL</h3>
-            <p style="font-size:0.9em;">If you start your turn with 4 Beers, you may <b>Call Last Call</b>. Opponent gets 1 final turn. If you still have 4, round ends.</p>
+            <h3>ACE (TIP JAR)</h3>
+            <p style="font-size:0.9em;">If you play an Ace while your paddle is full, you steal the opponent's beer, but you must then discard one from your own paddle to make room.</p>
         </div>
         <br>
         <button class="btn-main" onclick="runTiebreaker('MANUAL')">Who is Cuter?</button>
@@ -316,6 +320,7 @@
     let matchPWins=0, matchCWins=0;
     let deck=[], pHand=[], cHand=[], pFlight=[], cFlight=[];
     let turn="", gameState="IDLE", lastCallCaller=null, pendingAction=null, swapSourceIdx=null;
+    let tempStolenCard = null; // Used when stealing with a full paddle
 
     class Card {
         constructor(r, s) {
@@ -433,31 +438,43 @@
                 renderGame();
                 setTimeout(()=>startTurn('PLAYER'), 1500);
                 return;
-            } else {
-                log("🤖 House is full but decides to upgrade.");
             }
         }
 
-        // 3. Smart Steal (A) - Target 8+ or specific need
+        // 3. Smart Steal (A) with Upgrade Capability
         if(!played) {
             let aIdx = cHand.findIndex(c => c.r === 'A');
-            if(aIdx !== -1 && pFlight.length > 0 && cFlight.length < 4) {
+            if(aIdx !== -1 && pFlight.length > 0) {
+                // Determine best steal target
                 let bestVal = 0; let target = -1;
                 pFlight.forEach((c, i) => { if(c.val > bestVal) { bestVal = c.val; target = i; } });
-                if(bestVal >= 8) {
+                
+                // If Paddle NOT Full: Steal if high value
+                if(cFlight.length < 4 && bestVal >= 7) {
                     cHand.splice(aIdx, 1); cFlight.push(pFlight.splice(target, 1)[0]);
                     log(`🤖 House steals your ${bestVal} with Ace!`); played = true;
+                }
+                // If Paddle FULL: Steal if stolen card > lowest card on paddle
+                else if (cFlight.length === 4) {
+                    let lowestVal = 99; let lowIdx = -1;
+                    cFlight.forEach((c, i) => { if(c.val < lowestVal) { lowestVal = c.val; lowIdx = i; } });
+                    
+                    if(bestVal > lowestVal) {
+                        cHand.splice(aIdx, 1); // Play Ace
+                        let stolen = pFlight.splice(target, 1)[0]; // Steal
+                        let dumped = cFlight.splice(lowIdx, 1, stolen)[0]; // Swap
+                        log(`🤖 House steals ${stolen.r}, discards ${dumped.r}!`);
+                        played = true;
+                    }
                 }
             }
         }
 
         // 4. Upgrade Flight (If full and has better card)
         if(!played && cFlight.length === 4) {
-            // Find lowest card in flight
             let lowestVal = 99; let lowIdx = -1;
             cFlight.forEach((c, i) => { if(c.val < lowestVal) { lowestVal = c.val; lowIdx = i; } });
             
-            // Find highest brew in hand
             let bestHandVal = 0; let handIdx = -1;
             cHand.forEach((c, i) => { if(c.isBrew && c.val > bestHandVal) { bestHandVal = c.val; handIdx = i; } });
 
@@ -471,16 +488,12 @@
 
         // 5. Play Brew (Avoid 2s/3s unless empty flight or flush)
         if(!played && cFlight.length < 4) {
-            // Sort hand by value descending
             let brews = cHand.map((c,i)=>({c,i})).filter(o=>o.c.isBrew).sort((a,b)=>b.c.val - a.c.val);
-            
             for(let item of brews) {
-                // If high value (>=6), play it
                 if(item.c.val >= 6) {
                     cHand.splice(item.i, 1); cFlight.push(item.c);
                     log(`🤖 House pours ${item.c.r}${item.c.s}`); played = true; break;
                 }
-                // If low value, only play if flight is empty (to start) or matches suit
                 if(item.c.val < 6) {
                     if(cFlight.length === 0 || cFlight.some(fc => fc.s === item.c.s)) {
                         cHand.splice(item.i, 1); cFlight.push(item.c);
@@ -492,13 +505,11 @@
 
         // 6. Waste (Dump low cards)
         if(!played) {
-            // If we are here, we probably have low brews or unplayable face cards
             let junkIdx = cHand.findIndex(c => c.isBrew && c.val <= 5);
             if(junkIdx !== -1) {
                 let w = cHand.splice(junkIdx, 1)[0];
                 log(`🤖 House wastes weak beer (${w.r}).`); played = true;
             } else if (cHand.length > 0) {
-                 // Waste first card
                  let w = cHand.shift(); log(`🤖 House wastes ${w.r}${w.s}`); played = true;
             }
         }
@@ -511,12 +522,11 @@
     window.cardAction = function(loc, uid) {
         if(turn !== 'PLAYER') return;
         
-        // SWAP MODE (Upgrade)
+        // 1. SWAP MODE (Upgrade existing beer)
         if(loc==='P_FLIGHT' && gameState==='SWAP_TARGET') {
             const flightIdx = pFlight.findIndex(c => c.uid === uid);
             const handCard = pHand[swapSourceIdx];
             
-            // Execute Swap
             pHand.splice(swapSourceIdx, 1); // Remove from hand
             let oldCard = pFlight.splice(flightIdx, 1, handCard)[0]; // Swap
             log(`Upgraded! Swapped ${oldCard.r} for ${handCard.r}.`);
@@ -525,7 +535,19 @@
             return;
         }
 
-        // HAND INTERACTION
+        // 2. STEAL & SWAP MODE (Discard one of your own to make room for stolen)
+        if(loc==='P_FLIGHT' && gameState==='STEAL_SWAP') {
+            const flightIdx = pFlight.findIndex(c => c.uid === uid);
+            
+            let discarded = pFlight.splice(flightIdx, 1, tempStolenCard)[0];
+            log(`Stole ${tempStolenCard.r}, discarded own ${discarded.r}.`);
+            tempStolenCard = null;
+            gameState='IDLE';
+            nextTurn();
+            return;
+        }
+
+        // 3. HAND INTERACTION
         if(loc==='HAND' && gameState==='PLAY') {
             const idx = pHand.findIndex(c => c.uid === uid);
             const card = pHand[idx];
@@ -545,21 +567,21 @@
                     swapSourceIdx = idx;
                     gameState = 'SWAP_TARGET';
                     log("PADDLE FULL. Select a beer on your paddle to REPLACE.");
-                    renderGame(); // Re-render to show selection highlighting
+                    renderGame();
                     return;
                 }
             } else {
                 // Face Cards
-                if(card.r==='A' && (cFlight.length===0 || pFlight.length===4)) { alert("Cannot steal (Opp empty or You full)."); return; }
+                if(card.r==='A' && cFlight.length===0) { alert("Nothing to steal."); return; }
                 if(card.r==='Q' && cFlight.length===0) { alert("Nothing to remove."); return; }
                 handlePatron(card, idx);
             }
         }
-        // DISCARD INTERACTION
+        // 4. DISCARD INTERACTION (Jack)
         else if(loc==='HAND' && gameState==='DISCARD') {
             pHand.splice(pHand.findIndex(c=>c.uid===uid),1); log("Discarded."); nextTurn();
         }
-        // TARGETING (Opponent Flight)
+        // 5. TARGETING (Opponent Flight)
         else if(loc==='CPU' && gameState==='TARGET') {
             if(pendingAction) pendingAction(cFlight.findIndex(c=>c.uid===uid));
         }
@@ -579,8 +601,24 @@
             pendingAction=(t)=>{ cFlight.splice(t,1); log("Removed beer."); nextTurn(); }; renderGame();
         }
         else if(c.r==='A') {
-            pHand.splice(i,1); log("Select beer to Steal."); gameState='TARGET';
-            pendingAction=(t)=>{ pFlight.push(cFlight.splice(t,1)[0]); log("Stole beer."); nextTurn(); }; renderGame();
+            // Ace Logic
+            pHand.splice(i,1); 
+            log("Select beer to Steal."); 
+            gameState='TARGET';
+            pendingAction=(t)=>{ 
+                let stolen = cFlight.splice(t,1)[0];
+                if(pFlight.length < 4) {
+                    pFlight.push(stolen); 
+                    log("Stole beer."); 
+                    nextTurn(); 
+                } else {
+                    tempStolenCard = stolen;
+                    gameState = 'STEAL_SWAP';
+                    log(`Paddle Full! Select one of YOUR beers to discard for the ${stolen.r}.`);
+                    renderGame();
+                }
+            }; 
+            renderGame();
         }
     }
 
@@ -598,13 +636,13 @@
             return `<div class="card ${['♥','♦'].includes(c.s)?'red':'black'} ${isSelected?'selected':''}" 
                     onclick="cardAction('HAND','${c.uid}')">
                     <div class="card-corner">${c.r}<br>${c.s}</div>
-                    <div class="card-hint">${c.getEffectName()}</div>
+                    <div class="card-corner bottom">${c.r}<br>${c.s}</div>
                     </div>`;
         };
         
         const rBeer = (c, loc) => {
             // Highlight for Swap Target or Attack Target
-            const clk = (loc==='CPU' && gameState==='TARGET') || (loc==='P_FLIGHT' && gameState==='SWAP_TARGET');
+            const clk = (loc==='CPU' && gameState==='TARGET') || (loc==='P_FLIGHT' && (gameState==='SWAP_TARGET' || gameState==='STEAL_SWAP'));
             const beerColor = getBeerColor(c.r);
             const isDark = parseInt(c.r) >= 8;
             return `<div class="beer-glass" 
