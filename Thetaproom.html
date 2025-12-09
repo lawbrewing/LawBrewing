@@ -3,16 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Taproom: Law Brewing Edition</title>
+    <title>The Taproom: Law Brewing v13</title>
     <style>
         :root {
             --bg-color: #000000;
             --text-color: #ffffff;
-            --wood-dark: #3e2723;
-            --wood-light: #5d4037;
-            --accent: #ffffff;
-            --danger: #b71c1c;
-            --highlight: #00bcd4; /* Cyan for selection */
+            --highlight: #00bcd4;
             --gold: #ffb300;
         }
 
@@ -57,7 +53,6 @@
         .btn-secondary { width: auto; font-size: 0.9em; padding: 10px 20px; }
         .btn-small { background: #222; color: white; border: 1px solid white; padding: 5px 10px; font-weight: bold; cursor: pointer; }
         
-        /* LAST CALL BUTTON */
         #last-call-btn {
             background: var(--gold); color: black; border: 2px solid white;
             font-family: 'Rye', serif; font-size: 1.2em; padding: 10px 20px;
@@ -85,10 +80,9 @@
         }
         .hole { width: 10px; height: 10px; background: #000; border-radius: 50%; box-shadow: inset 0 0 3px white;}
 
-        /* SCORE DISPLAY ON PADDLE */
         .flight-score-display {
             font-family: 'Rye', serif; color: var(--gold); font-size: 1.2em;
-            margin-left: 10px; text-align: left;
+            text-align: right; min-width: 80px;
         }
 
         /* BEER GLASS VISUALS */
@@ -104,7 +98,16 @@
             box-shadow: inset -5px 0 10px rgba(0,0,0,0.2);
         }
         .beer-glass::before { content: ''; position: absolute; top: -5px; left: 0; right: 0; height: 10px; background: white; border-radius: 5px 5px 0 0; }
-        .beer-label { background: white; padding: 2px 5px; border-radius: 3px; border: 1px solid black; font-size: 0.9em; }
+        
+        .beer-label { 
+            background: white; padding: 2px 4px; border-radius: 3px; border: 1px solid black; 
+            font-size: 1.2em; line-height: 1; position: absolute; bottom: 5px;
+            width: 30px; text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        .suit-red { color: #d32f2f; text-shadow: none; }
+        .suit-black { color: #212121; text-shadow: none; }
+
         .beer-glass:hover { transform: scale(1.1); }
         .beer-glass.selected { border: 3px solid var(--highlight); box-shadow: 0 0 15px var(--highlight); transform: translateY(-10px); }
 
@@ -237,7 +240,10 @@
             </div>
         </div>
 
-        <div style="margin-top:10px; font-size:0.8em; text-align: left; padding-left: 20px;">HOUSE FLIGHT</div>
+        <div style="display:flex; justify-content: space-between; align-items: flex-end; padding: 0 20px; margin-top:10px;">
+            <div style="font-size:0.8em;">HOUSE FLIGHT</div>
+            <div class="flight-score-display">Score: <span id="cpu-current-score">0</span></div>
+        </div>
         <div class="paddle-container">
             <div class="paddle" id="cpu-flight"></div>
             <div class="paddle-handle"><div class="hole"></div></div>
@@ -376,26 +382,21 @@
 
     function startTurn(who) {
         turn = who;
-        
-        // Resolution Check
         if(lastCallCaller !== null && turn === lastCallCaller) {
             let flight = (turn==='PLAYER') ? pFlight : cFlight;
             if(flight.length===4) { endShift(); return; }
             else { log(`🚫 Last Call Broken! Play continues.`); lastCallCaller=null; }
         }
 
-        // Setup UI
         document.getElementById('turn-indicator').innerText = `${who==='PLAYER'?'YOUR':"HOUSE"} TURN`;
         document.getElementById('turn-indicator').style.color = who==='PLAYER'?'white':'#aaa';
         document.getElementById('last-call-btn').style.display = 'none';
 
-        // Draw
         if(deck.length) {
             let c = deck.pop();
             if(who==='PLAYER') pHand.push(c); else cHand.push(c);
         }
 
-        // Manual Last Call
         if(who === 'PLAYER' && pFlight.length === 4 && lastCallCaller === null) {
             document.getElementById('last-call-btn').style.display = 'inline-block';
         }
@@ -422,7 +423,7 @@
         }
     }
 
-    // --- SMART AI ---
+    // --- SMART AI WITH BONUS LOGIC ---
     function cpuTurn() {
         let played = false;
 
@@ -442,93 +443,96 @@
             }
         }
 
-        // 2. Decide: Call Last Call? (SMARTER LOGIC)
+        // 2. Decide: Call Last Call?
         if(cFlight.length === 4 && lastCallCaller === null) {
             let score = calcScore(cFlight);
-            // AI Confidence: Only call if > 30 (Flush) or > 25 (Solid High Cards)
-            // If between 20-25, only call if opponent flight is weak/empty
+            // Only call if score > 25 (likely flush/high cards) or if opponent is weak
             let opponentWeak = pFlight.length < 2 || calcScore(pFlight) < 15;
-            
-            if(score >= 30 || score >= 26 || (score >= 20 && opponentWeak)) {
+            if(score >= 25 || opponentWeak) {
                 lastCallCaller = 'CPU';
                 log(`🔔 House yells "LAST CALL!" (Score: ${score})`);
                 renderGame();
                 setTimeout(()=>startTurn('PLAYER'), 1500);
                 return;
-            } else {
-                log("🤖 House is full but hesitates... tries to upgrade.");
             }
         }
 
-        // 3. Smart Steal (A)
+        // 3. DEFENSE (Queen/Barmaid) - Break Player Bonuses
         if(!played) {
-            let aIdx = cHand.findIndex(c => c.r === 'A');
-            if(aIdx !== -1 && pFlight.length > 0) {
-                let bestVal = 0; let target = -1;
-                pFlight.forEach((c, i) => { if(c.val > bestVal) { bestVal = c.val; target = i; } });
+            let qIdx = cHand.findIndex(c => c.r === 'Q');
+            if(qIdx !== -1 && pFlight.length >= 3) {
+                // Check for Flush Threat
+                let pSuits = pFlight.map(c => c.s);
+                let dominantSuit = pSuits.sort((a,b) => pSuits.filter(v => v===a).length - pSuits.filter(v => v===b).length).pop();
+                let count = pSuits.filter(s => s === dominantSuit).length;
                 
-                // If Paddle NOT Full
-                if(cFlight.length < 4 && bestVal >= 7) {
-                    cHand.splice(aIdx, 1); cFlight.push(pFlight.splice(target, 1)[0]);
-                    log(`🤖 House steals your ${bestVal} with Ace!`); played = true;
-                }
-                // If Paddle FULL - Steal & Swap
-                else if (cFlight.length === 4) {
-                    let lowestVal = 99; let lowIdx = -1;
-                    cFlight.forEach((c, i) => { if(c.val < lowestVal) { lowestVal = c.val; lowIdx = i; } });
-                    
-                    if(bestVal > lowestVal) {
-                        cHand.splice(aIdx, 1); // Play Ace
-                        let stolen = pFlight.splice(target, 1)[0]; // Steal
-                        let dumped = cFlight.splice(lowIdx, 1, stolen)[0]; // Swap
-                        log(`🤖 House steals ${stolen.r}, discards ${dumped.r}!`);
-                        played = true;
-                    }
+                if(count >= 3) {
+                    // Destroy one of them
+                    let target = pFlight.findIndex(c => c.s === dominantSuit);
+                    cHand.splice(qIdx, 1); pFlight.splice(target, 1);
+                    log(`🤖 House breaks your Flush with Queen!`); played = true;
                 }
             }
         }
 
-        // 4. Upgrade Flight
+        // 4. OFFENSE (Play Brew) - Chase Bonuses
+        if(!played && cFlight.length < 4) {
+            // Find Dominant Suit in Hand + Flight
+            let mySuits = [...cFlight, ...cHand.filter(c=>c.isBrew)].map(c => c.s);
+            if(mySuits.length > 0) {
+                 let domSuit = mySuits.sort((a,b) => mySuits.filter(v => v===a).length - mySuits.filter(v => v===b).length).pop();
+                 
+                 // Look for match in hand
+                 let matchIdx = cHand.findIndex(c => c.isBrew && c.s === domSuit);
+                 
+                 // Prioritize playing matching suit (even if low value)
+                 if(matchIdx !== -1) {
+                     let c = cHand.splice(matchIdx, 1)[0];
+                     cFlight.push(c);
+                     log(`🤖 House pours ${c.r}${c.s} (Building Bonus)`); played = true;
+                 }
+            }
+        }
+
+        // 5. Upgrade Flight (Swap low card for better)
         if(!played && cFlight.length === 4) {
             let lowestVal = 99; let lowIdx = -1;
             cFlight.forEach((c, i) => { if(c.val < lowestVal) { lowestVal = c.val; lowIdx = i; } });
             
-            let bestHandVal = 0; let handIdx = -1;
-            cHand.forEach((c, i) => { if(c.isBrew && c.val > bestHandVal) { bestHandVal = c.val; handIdx = i; } });
+            // Check hand for improvement matching suit
+            let domSuit = cFlight[0].s; 
+            let flushCount = cFlight.filter(c => c.s === domSuit).length;
+            
+            let bestIdx = -1;
+            
+            // If flush active, only swap for same suit higher value
+            if(flushCount === 4) {
+                 bestIdx = cHand.findIndex(c => c.isBrew && c.s === domSuit && c.val > lowestVal);
+            } else {
+                 // Swap for higher value
+                 bestIdx = cHand.findIndex(c => c.isBrew && c.val > lowestVal);
+            }
 
-            if(handIdx !== -1 && bestHandVal > lowestVal) {
-                let newC = cHand.splice(handIdx, 1)[0];
+            if(bestIdx !== -1) {
+                let newC = cHand.splice(bestIdx, 1)[0];
                 let oldC = cFlight.splice(lowIdx, 1, newC)[0];
                 log(`🤖 House upgrades: Swaps ${oldC.r} for ${newC.r}.`);
                 played = true;
             }
         }
 
-        // 5. Play Brew
-        if(!played && cFlight.length < 4) {
-            let brews = cHand.map((c,i)=>({c,i})).filter(o=>o.c.isBrew).sort((a,b)=>b.c.val - a.c.val);
-            for(let item of brews) {
-                if(item.c.val >= 6) {
-                    cHand.splice(item.i, 1); cFlight.push(item.c);
-                    log(`🤖 House pours ${item.c.r}${item.c.s}`); played = true; break;
-                }
-                if(item.c.val < 6) {
-                    if(cFlight.length === 0 || cFlight.some(fc => fc.s === item.c.s)) {
-                        cHand.splice(item.i, 1); cFlight.push(item.c);
-                        log(`🤖 House pours ${item.c.r}${item.c.s}`); played = true; break;
-                    }
-                }
-            }
-        }
-
-        // 6. Waste
+        // 6. Fallback (Play High or Waste)
         if(!played) {
-            let junkIdx = cHand.findIndex(c => c.isBrew && c.val <= 5);
-            if(junkIdx !== -1) {
-                let w = cHand.splice(junkIdx, 1)[0];
-                log(`🤖 House wastes weak beer (${w.r}).`); played = true;
-            } else if (cHand.length > 0) {
-                 let w = cHand.shift(); log(`🤖 House wastes ${w.r}${w.s}`); played = true;
+            // Play any high brew
+            let bIdx = cHand.findIndex(c => c.isBrew && c.val >= 6 && cFlight.length < 4);
+            if(bIdx !== -1) {
+                let c = cHand.splice(bIdx, 1)[0]; cFlight.push(c);
+                log(`🤖 House pours ${c.r}${c.s}`); played = true;
+            } 
+            else if (cHand.length > 0) {
+                // Waste
+                let w = cHand.shift(); 
+                log(`🤖 House wastes ${w.r}${w.s}`); played = true;
             }
         }
 
@@ -594,7 +598,6 @@
         }
         else if(c.r==='K') {
             pHand.splice(i,1); 
-            // FIXED KING LOGIC: Randomly remove 2 from CPU hand
             let discardedCount = 0;
             while(discardedCount < 2 && cHand.length > 0) {
                 cHand.splice(Math.floor(Math.random() * cHand.length), 1);
@@ -633,11 +636,12 @@
             const clk = (loc==='CPU' && gameState==='TARGET') || (loc==='P_FLIGHT' && (gameState==='SWAP_TARGET' || gameState==='STEAL_SWAP'));
             const beerColor = getBeerColor(c.r);
             const isDark = parseInt(c.r) >= 8;
+            const isRed = ['♥','♦'].includes(c.s);
             return `<div class="beer-glass" 
                     style="--beer-color:${beerColor}; color:${isDark?'white':'black'}; text-shadow:${isDark?'0 0 2px black':'0 0 2px white'}; ${clk?'border-color:cyan; box-shadow:0 0 10px cyan':''}"
                     onclick="cardAction('${loc}','${c.uid}')">
                     ${c.r}
-                    <div class="beer-label" style="position:absolute; bottom:5px;">${c.s}</div>
+                    <div class="beer-label ${isRed?'suit-red':'suit-black'}">${c.s}</div>
                     </div>`;
         };
 
@@ -646,6 +650,7 @@
         document.getElementById('player-hand').innerHTML = pHand.map((c,i)=>rCard(c,i)).join('');
         document.getElementById('cpu-hand-count').innerText = cHand.length;
         document.getElementById('current-score').innerText = calcScore(pFlight);
+        document.getElementById('cpu-current-score').innerText = calcScore(cFlight);
     }
 
     // --- SCORING ---
