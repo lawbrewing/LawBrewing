@@ -39,23 +39,12 @@
             margin: 10px 0;
         }
 
-        h1 { font-size: 2em; border-bottom: 2px solid white; display: inline-block; padding-bottom: 10px; line-height: 1.2; }
+        h1 { font-size: 2em; border-bottom: 2px solid white; display: inline-block; padding-bottom: 10px; line-height: 1.2; margin-top: 30px;}
 
         /* CONTAINERS */
         .screen { width: 100%; max-width: 600px; padding: 10px; box-sizing: border-box; display: none; animation: fadeIn 0.5s; }
         .active-screen { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        /* LOGO BADGE */
-        .sheriff-star {
-            width: 80px; height: 80px; background: #000;
-            border: 3px solid white; display: inline-flex;
-            align-items: center; justify-content: center;
-            border-radius: 50%; margin-bottom: 10px;
-            position: relative;
-            box-shadow: 0 0 0 4px black, 0 0 0 6px white;
-        }
-        .sheriff-star::after { content: '★'; font-size: 40px; color: white; }
 
         /* BUTTONS */
         .btn-main {
@@ -165,7 +154,6 @@
     </div>
 
     <div id="landing-screen" class="screen active-screen">
-        <div class="sheriff-star"></div>
         <h1>THE TAPROOM</h1>
         <h3 style="font-size: 1em; margin-top: -10px;">A Beer Flight Card Game</h3>
         <br><br>
@@ -567,9 +555,11 @@
                 handlePatron(card, idx);
             }
         }
+        // DISCARD INTERACTION
         else if(loc==='HAND' && gameState==='DISCARD') {
             pHand.splice(pHand.findIndex(c=>c.uid===uid),1); log("Discarded."); nextTurn();
         }
+        // TARGETING (Opponent Flight)
         else if(loc==='CPU' && gameState==='TARGET') {
             if(pendingAction) pendingAction(cFlight.findIndex(c=>c.uid===uid));
         }
@@ -637,7 +627,7 @@
         let s=f.reduce((a,b)=>a+b.val,0);
         if(f.length===4) {
             if(new Set(f.map(c=>c.s)).size===1) s+=20; // Suit Bonus
-            else { let r=f.filter(c=>['♥','♦'].includes(c.s)).length; if(r===0||r===4) s+=10; } // Color Bonus
+            else { let r=f.filter(c=>['♥','♦'].includes(c.s)).length; if(r===0||r===4) s+=10; // Color Bonus
         }
         return s;
     }
