@@ -627,7 +627,7 @@
         let s=f.reduce((a,b)=>a+b.val,0);
         if(f.length===4) {
             if(new Set(f.map(c=>c.s)).size===1) s+=20; // Suit Bonus
-            else { let r=f.filter(c=>['♥','♦'].includes(c.s)).length; if(r===0||r===4) s+=10; // Color Bonus
+            else { let r=f.filter(c=>['♥','♦'].includes(c.s)).length; if(r===0||r===4) s+=10; } // Color Bonus
         }
         return s;
     }
