@@ -58,12 +58,21 @@ def assign_tap():
 @app.route('/update_weight', methods=['POST'])
 def update_weight():
     data = request.json
+    tap_name = data.get('tap')   # e.g., "Law Tap"
+    new_percent = data.get('percent')
+    
     all_data = load_data()
-    beer_name = all_data['active_taps'].get(data['tap'])
-    if beer_name and beer_name in all_data['library']:
-        all_data['library'][beer_name]['percent'] = data['percent']
-        save_data(all_data)
+    
+    # 1. Find which beer is currently on that tap
+    active_beer = all_data['active_taps'].get(tap_name)
+    
+    # 2. Update that beer's weight in the library
+    if active_beer and active_beer in all_data['library']:
+        # Only update and deploy if the weight actually changed
+        if all_data['library'][active_beer]['percent'] != new_percent:
+            all_data['library'][active_beer]['percent'] = new_percent
+            save_data(all_data)
+            run_deploy()
+            print(f"⚖️ Updated {active_beer} on {tap_name} to {new_percent}%")
+            
     return jsonify({"status": "success"})
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
