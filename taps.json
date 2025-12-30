@@ -3,21 +3,30 @@
         "beer_name": "Home Alone",
         "abv": "6.5%",
         "desc": "Rich and malty holiday ale.",
-        "percent": 90,
-        "rating": "4.9"
+        "percent": 42,
+        "rating": "4.9",
+        "pints": 15,
+        "growlers": 3,
+        "weight_lbs": 26.01
     },
     "Wisco Tap": {
         "beer_name": "Empty Tap",
         "abv": "0.0%",
         "desc": "Coming soon...",
-        "percent": 0,
-        "rating": "0.0"
+        "percent": 18,
+        "rating": "0.0",
+        "pints": 6,
+        "growlers": 1,
+        "weight_lbs": 17.01
     },
     "Nitro Tap": {
         "beer_name": "Empty Tap",
         "abv": "0.0%",
         "desc": "Coming soon...",
-        "percent": 0,
-        "rating": "0.0"
+        "percent": 6,
+        "rating": "0.0",
+        "pints": 2,
+        "growlers": 0,
+        "weight_lbs": 12.4
     }
 }
