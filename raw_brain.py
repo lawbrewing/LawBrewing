@@ -1,80 +1,91 @@
-import socket
-import json
-import os
+import socket, json, os, re, subprocess
 
-# --- CONFIG ---
+# --- CONFIGURATION ---
 PORT = 1234
 DATA_FILE = "/home/lawmj04/law-brewing/taps.json"
 
-SMOOTHING_FACTOR = 0.05  
-KEG_FULL_LBS = 58.0   # Standard full 1/6 bbl is ~58-60 lbs
-KEG_EMPTY_LBS = 9.0    # Empty steel corny keg is ~9-10 lbs
+# [Divisor, Empty Keg Weight]
+CONFIG = {
+    "Nitro Tap": [20816.0, 9.9], 
+    "Law Tap": [165.0, 9.9], 
+    "Wisco Tap": [513000.0, 9.9]
+}
 
 IP_MAP = {
-    "192.168.86.45": "Nitro Tap",
-    "192.168.86.47": "Law Tap",
+    "192.168.86.45": "Nitro Tap", 
+    "192.168.86.47": "Law Tap", 
     "192.168.86.116": "Wisco Tap"
 }
 
-tap_data = {k: {"weight_lbs": 0.0, "percent": 0, "temp_f": 38.0} for k in IP_MAP.values()}
-
-def save_to_json():
+def sync_to_github():
     try:
-        with open(DATA_FILE, 'w') as f:
-            json.dump(tap_data, f, indent=4)
-    except Exception: pass
+        os.chdir("/home/lawmj04/law-brewing")
+        # Stage the json file
+        subprocess.run(["git", "add", "taps.json"], check=True)
+        
+        # Check if there are actual changes before committing
+        status = subprocess.run(["git", "diff", "--cached", "--exit-code"], capture_output=True)
+        if status.returncode != 0:
+            subprocess.run(["git", "commit", "-m", "Auto-update weights"], check=True)
+            subprocess.run(["git", "push", "origin", "main"], check=True)
+            print("🚀 GitHub Updated")
+    except Exception as e:
+        print(f"❌ Git Sync Failed: {e}")
 
 def start_hub():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         s.bind(('0.0.0.0', PORT))
-        s.listen(5)
-        print("🍺 HUB STARTING (LBS/FAHRENHEIT MODE)")
-
+        s.listen(10)
+        print(f"🍺 LAW BREWING HUB ONLINE ON PORT {PORT}")
+        
         while True:
             conn, addr = s.accept()
-            ip = addr[0]
-            name = IP_MAP.get(ip)
-            
-            if name:
-                with conn:
-                    conn.sendall(b'\x00\x00\x01\x00\xc8')
-                    try:
-                        while True:
-                            data = conn.recv(1024)
-                            if not data: break
+            with conn:
+                try:
+                    data = conn.recv(1024)
+                    if not data: continue
+                    
+                    # Send Blynk Heartbeat
+                    conn.sendall(b'\x00' + data[1:3] + b'\x00\xc8')
+                    
+                    # Extract the raw scale value
+                    found_numbers = re.findall(r'\d+\.\d+|\d+', data.decode('latin-1', 'ignore'))
+                    if found_numbers:
+                        val = float(max(found_numbers, key=len))
+                        name = IP_MAP.get(addr[0], "Unknown")
+                        
+                        if name != "Unknown":
+                            divisor, empty_weight = CONFIG[name]
                             
-                            # WEIGHT LOGIC (vw)
-                            if b'vw' in data:
-                                chunk = data.split(b'vw')[1][:10]
-                                raw_str = "".join([chr(b) for b in chunk if chr(b) in "0123456789."])
-                                if raw_str and "." in raw_str:
-                                    val_kg = float(raw_str)
-                                    if 0 < val_kg < 100:
-                                        val_lbs = round(val_kg * 2.20462, 2)
-                                        
-                                        # Smoothing lbs
-                                        prev = tap_data[name]["weight_lbs"]
-                                        if prev == 0 or abs(val_lbs - prev) > 5:
-                                            tap_data[name]["weight_lbs"] = val_lbs
-                                        else:
-                                            tap_data[name]["weight_lbs"] = round((val_lbs * 0.05) + (prev * 0.95), 2)
-                                        
-                                        # Percent Calculation
-                                        rem = max(0, tap_data[name]["weight_lbs"] - KEG_EMPTY_LBS)
-                                        tap_data[name]["percent"] = min(100, round((rem / (KEG_FULL_LBS - KEG_EMPTY_LBS)) * 100))
-                                        save_to_json()
-                                        print(f"📊 {name}: {tap_data[name]['weight_lbs']} lbs")
+                            # Calculate Weight and Percent
+                            lbs = round(val / divisor, 2)
+                            # Full keg ~48.1lbs, Empty ~9.9lbs
+                            percent = max(0, min(100, int(((lbs - empty_weight) / (48.1 - empty_weight)) * 100)))
+                            
+                            # Load current data
+                            if os.path.exists(DATA_FILE):
+                                with open(DATA_FILE, 'r') as f:
+                                    current_data = json.load(f)
+                            else:
+                                current_data = {}
 
-                            # TEMP LOGIC (vt) - Only if scale sends it
-                            if b'vt' in data:
-                                t_chunk = data.split(b'vt')[1][:10]
-                                t_str = "".join([chr(b) for b in t_chunk if chr(b) in "0123456789."])
-                                if t_str:
-                                    temp_c = float(t_str)
-                                    tap_data[name]["temp_f"] = round((temp_c * 9/5) + 32, 1)
+                            # Update entry
+                            current_data[name] = {
+                                "weight_lbs": lbs,
+                                "percent": percent,
+                                "temp_f": 38.0
+                            }
 
-                    except Exception: continue
+                            # Save to file
+                            with open(DATA_FILE, 'w') as f:
+                                json.dump(current_data, f, indent=4)
+                            
+                            print(f"✅ {name}: {lbs} lbs ({percent}%)")
+                            sync_to_github()
+                except Exception as e:
+                    print(f"⚠️ Error processing packet: {e}")
+                    continue
 
 if __name__ == "__main__":
     start_hub()
