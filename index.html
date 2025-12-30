@@ -8,124 +8,107 @@
     <style>
         :root { --accent: #ffb400; --bg: #121212; --card: #1e1e1e; --text: #ffffff; }
         body { background: var(--bg); color: var(--text); font-family: 'Roboto', sans-serif; margin: 0; padding-bottom: 50px; }
-        
-        /* Navigation */
         nav { background: #000; padding: 15px; text-align: center; border-bottom: 1px solid #333; }
         nav a { color: var(--accent); text-decoration: none; margin: 0 20px; font-family: 'Oswald'; letter-spacing: 1px; font-weight: bold; }
-        
         .header-container { text-align: center; padding: 40px 0; background: radial-gradient(circle, #2a2a2a 0%, #121212 80%); }
         .backlit-logo { max-width: 250px; filter: drop-shadow(0 0 10px rgba(255,180,0,0.4)); }
-        
         .tap-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 25px; max-width: 1200px; margin: 0 auto; padding: 20px; }
-        
-        .beer-card { background: var(--card); border-radius: 20px; overflow: hidden; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); transition: 0.3s; }
-        .beer-card:hover { border-color: var(--accent); }
-
+        .beer-card { background: var(--card); border-radius: 20px; overflow: hidden; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .label-art { width: 100%; height: 280px; background-size: cover; background-position: center; border-bottom: 3px solid var(--accent); background-color: #222; }
-        
         .details { padding: 20px; text-align: center; }
-        .beer-name { font-family: 'Oswald'; font-size: 2rem; margin: 0; color: var(--accent); text-transform: uppercase; line-height: 1.1; }
-        .abv { font-family: 'Oswald'; font-size: 1rem; color: #888; margin: 10px 0; }
-        
-        /* Progress Bar */
-        .volume-container { background: #000; height: 35px; border-radius: 18px; position: relative; overflow: hidden; border: 1px solid #444; margin: 20px 0; }
+        .beer-name { font-family: 'Oswald'; font-size: 2rem; margin: 0; color: var(--accent); text-transform: uppercase; }
+        .abv { font-family: 'Oswald'; font-size: 1rem; color: #888; margin: 5px 0; }
+        .desc { font-size: 0.85rem; color: #aaa; margin: 15px 0; line-height: 1.4; font-style: italic; }
+        .volume-container { background: #000; height: 30px; border-radius: 15px; position: relative; overflow: hidden; border: 1px solid #444; margin: 15px 0; }
         .volume-bar { background: linear-gradient(90deg, #b8860b, var(--accent)); height: 100%; width: 0%; transition: width 1.5s ease-in-out; }
-        .volume-text { position: absolute; width: 100%; text-align: center; top: 7px; font-weight: bold; font-size: 1rem; color: white; text-shadow: 1px 1px 3px black; }
-        
-        /* Stats Grid */
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; border-top: 1px solid #333; padding-top: 15px; }
-        .stat-box { font-family: 'Oswald'; }
-        .stat-val { font-size: 1.8rem; color: var(--accent); display: block; }
-        .stat-label { font-size: 0.7rem; color: #666; letter-spacing: 1px; text-transform: uppercase; }
-
-        footer { margin-top: 50px; padding: 30px; text-align: center; border-top: 1px solid #222; }
-        footer a { color: #222; text-decoration: none; font-size: 0.7rem; } /* Subtle Admin Link */
+        .volume-text { position: absolute; width: 100%; text-align: center; top: 5px; font-weight: bold; color: white; text-shadow: 1px 1px 2px black; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-top: 1px solid #333; padding-top: 15px; }
+        .stat-val { font-family: 'Oswald'; font-size: 1.5rem; color: var(--accent); display: block; }
+        .stat-label { font-size: 0.7rem; color: #666; text-transform: uppercase; }
+        .stars { font-size: 1.5rem; color: #444; cursor: pointer; margin-top: 10px; }
+        .stars span:hover, .stars span.active { color: var(--accent); }
     </style>
 </head>
 <body>
 
-    <nav>
-        <a href="index.html">LIVE TAPS</a>
-        <a href="archive.html">BEER VAULT</a>
-    </nav>
+<nav>
+    <a href="index.html">LIVE TAPS</a>
+    <a href="archive.html">BEER VAULT</a>
+</nav>
 
-    <div class="header-container">
-        <img src="https://github.com/lawbrewing/LawBrewing/blob/main/LBC%20-%20Black%20Transparent%20(1).png?raw=true" class="backlit-logo" alt="Law Brewing Co">
-    </div>
+<div class="header-container">
+    <img src="https://github.com/lawbrewing/LawBrewing/blob/main/LBC%20-%20Black%20Transparent%20(1).png?raw=true" class="backlit-logo">
+</div>
 
-    <div class="tap-container" id="tap-display">
-        </div>
+<div class="tap-container" id="tap-display"></div>
 
-    <footer>
-        <p style="color: #444; font-size: 0.8rem;">&copy; 2025 Law Brewing | Liquid Attitude</p>
-        <a href="http://192.168.86.44:5000/admin">ADMIN LOGIN</a>
-    </footer>
+<script>
+    const PI_IP = "192.168.86.44"; // <-- UPDATE THIS TO YOUR PI'S IP
 
-    <script>
-        async function fetchTaps() {
-            // Cache Buster (?t=) ensures we get the newest data from GitHub
-            const url = 'taps.json?t=' + Math.random();
-            
-            try {
-                const response = await fetch(url);
-                const taps = await response.json();
-                
-                const container = document.getElementById('tap-display');
-                container.innerHTML = '';
+    async function fetchTaps() {
+        try {
+            const response = await fetch('taps.json?t=' + Math.random());
+            const taps = await response.json();
+            const container = document.getElementById('tap-display');
+            container.innerHTML = '';
 
-                // Must match the keys in your taps.json exactly
-                const hardwareTaps = ["Law Tap", "Wisco Tap", "Nitro Tap"];
+            const hardwareTaps = ["Law Tap", "Wisco Tap", "Nitro Tap"];
 
-                hardwareTaps.forEach(id => {
-                    const data = taps[id];
-                    
-                    // Only display if a beer is assigned
-                    if (data && data.beer_id !== "none") {
-                        
-                        // Handle the Pints/Growlers (round to 1 decimal)
-                        const pints = data.pints || 0;
-                        const growlers = data.growlers || 0;
-                        const percent = data.percent || 0;
+            hardwareTaps.forEach(id => {
+                const data = taps[id];
+                if (data && data.beer_id !== "none") {
+                    container.innerHTML += `
+                        <div class="beer-card">
+                            <div class="label-art" style="background-image: url('${data.img || 'assets/default.png'}');"></div>
+                            <div class="details">
+                                <h2 class="beer-name">${data.beer_name}</h2>
+                                <div class="abv">${data.abv || 'N/A'} | ${id}</div>
+                                <p class="desc">${data.desc ? data.desc.substring(0, 150) + '...' : 'No description provided.'}</p>
+                                
+                                <div class="volume-container">
+                                    <div class="volume-bar" style="width: ${data.percent}%"></div>
+                                    <div class="volume-text">${data.percent}% REMAINING</div>
+                                </div>
 
-                        container.innerHTML += `
-                            <div class="beer-card">
-                                <div class="label-art" style="background-image: url('${data.img || 'assets/default.png'}');"></div>
-                                <div class="details">
-                                    <h2 class="beer-name">${data.beer_name}</h2>
-                                    <div class="abv">${data.abv || 'N/A'} | ${id}</div>
-                                    
-                                    <div class="volume-container">
-                                        <div class="volume-bar" style="width: ${percent}%"></div>
-                                        <div class="volume-text">${percent}% REMAINING</div>
-                                    </div>
+                                <div class="stats-grid">
+                                    <div class="stat-box"><span class="stat-val">${data.pints || 0}</span><span class="stat-label">PINTS</span></div>
+                                    <div class="stat-box"><span class="stat-val">${data.growlers || 0}</span><span class="stat-label">GROWLERS</span></div>
+                                </div>
 
-                                    <div class="stats-grid">
-                                        <div class="stat-box">
-                                            <span class="stat-val">${pints}</span>
-                                            <span class="stat-label">PINTS LEFT</span>
-                                        </div>
-                                        <div class="stat-box">
-                                            <span class="stat-val">${growlers}</span>
-                                            <span class="stat-label">GROWLERS</span>
-                                        </div>
-                                    </div>
-                                    
-                                    <p style="color: #ffb400; font-family: 'Oswald'; margin-top: 20px; font-size: 1.2rem;">
-                                        Rating: ${data.rating || '5.0'} ⭐
-                                    </p>
+                                <div class="stars" id="stars-${id}">
+                                    <span onclick="submitRating('${id}', 1)">★</span>
+                                    <span onclick="submitRating('${id}', 2)">★</span>
+                                    <span onclick="submitRating('${id}', 3)">★</span>
+                                    <span onclick="submitRating('${id}', 4)">★</span>
+                                    <span onclick="submitRating('${id}', 5)">★</span>
+                                    <div style="font-size: 0.8rem; color: var(--accent); margin-top:5px;">Rating: ${data.rating || '5.0'} ⭐</div>
                                 </div>
                             </div>
-                        `;
-                    }
-                });
-            } catch (e) {
-                console.error("Dashboard failed to update:", e);
-            }
-        }
+                        </div>
+                    `;
+                }
+            });
+        } catch (e) { console.error(e); }
+    }
 
-        // Refresh every 5 seconds
-        setInterval(fetchTaps, 5000);
-        fetchTaps();
-    </script>
+    async function submitRating(tapId, score) {
+        try {
+            const response = await fetch(`http://${PI_IP}:5000/rate`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ tap: tapId, rating: score })
+            });
+            if (response.ok) {
+                alert("Cheers! Rating submitted.");
+                fetchTaps();
+            }
+        } catch (e) {
+            alert("Connection error. Make sure you are on the brewery Wi-Fi!");
+        }
+    }
+
+    setInterval(fetchTaps, 5000);
+    fetchTaps();
+</script>
 </body>
 </html>
