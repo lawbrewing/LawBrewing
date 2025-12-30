@@ -1,84 +1,98 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Law Brewing Taproom</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Law Brewing | Live Taps</title>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Roboto:wght@300;400&display=swap" rel="stylesheet">
     <style>
-        :root { --gold: #d4a017; --bg: #0a0a0a; --card: #161616; }
-        body { background: var(--bg); color: #fff; font-family: 'Arial Black', sans-serif; margin: 0; padding: 0; }
-        
-        /* Restored Cool Header */
-        .header { 
-            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('images/labels/brewery-bg.jpg');
-            background-size: cover; background-position: center;
-            padding: 60px 20px; text-align: center; border-bottom: 5px solid var(--gold);
-        }
-        .header h1 { font-size: 4em; margin: 0; color: var(--gold); letter-spacing: 8px; text-shadow: 3px 3px #000; }
-        .header p { font-size: 1.2em; letter-spacing: 4px; color: #eee; margin-top: 10px; }
-
-        .tap-grid { display: flex; justify-content: center; gap: 40px; padding: 50px; flex-wrap: wrap; }
-        
-        .card { 
-            background: var(--card); border: 2px solid #333; border-radius: 0; 
-            width: 350px; padding: 0; position: relative; box-shadow: 0 20px 40px rgba(0,0,0,0.6);
-        }
-        .tap-num { 
-            position: absolute; top: -20px; left: -20px; background: var(--gold); 
-            color: #000; width: 60px; height: 60px; line-height: 60px; font-size: 2em; font-weight: bold; 
-        }
-        .art { width: 100%; height: 350px; object-fit: cover; filter: grayscale(20%) contrast(1.1); }
-        
-        .info { padding: 25px; text-align: left; }
-        h2 { margin: 0; font-size: 2em; text-transform: uppercase; line-height: 1; }
-        .abv { color: var(--gold); font-size: 1.2em; margin: 10px 0; }
-        .desc { font-family: 'Helvetica', sans-serif; color: #bbb; font-size: 0.9em; height: 50px; overflow: hidden; }
-
-        /* Restored Weight Gauges */
-        .weight-track { background: #222; height: 40px; margin-top: 20px; position: relative; border: 1px solid #444; }
-        .weight-fill { 
-            background: linear-gradient(90deg, #800000 0%, var(--gold) 100%); 
-            height: 100%; transition: width 2s cubic-bezier(0.4, 0, 0.2, 1); 
-        }
-        .weight-label { 
-            position: absolute; width: 100%; text-align: center; top: 0; 
-            line-height: 40px; font-weight: bold; font-size: 0.9em; text-shadow: 1px 1px #000; 
-        }
+        :root { --accent: #ffb400; --bg: #121212; --card: #1e1e1e; --text: #ffffff; }
+        body { background: var(--bg); color: var(--text); font-family: 'Roboto', sans-serif; margin: 0; padding-bottom: 50px; }
+        nav { background: #000; padding: 15px; text-align: center; border-bottom: 1px solid #333; }
+        nav a { color: var(--accent); text-decoration: none; margin: 0 20px; font-family: 'Oswald'; font-weight: bold; }
+        .header-container { text-align: center; padding: 40px 0; background: radial-gradient(circle, #2a2a2a 0%, #121212 80%); }
+        .backlit-logo { max-width: 250px; filter: drop-shadow(0 0 10px rgba(255,180,0,0.4)); }
+        .tap-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 25px; max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .beer-card { background: var(--card); border-radius: 20px; overflow: hidden; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .label-art { width: 100%; height: 280px; background-size: cover; background-position: center; border-bottom: 3px solid var(--accent); background-color: #222; }
+        .details { padding: 20px; text-align: center; }
+        .beer-name { font-family: 'Oswald'; font-size: 2rem; margin: 0; color: var(--accent); text-transform: uppercase; }
+        .desc { font-size: 0.85rem; color: #aaa; margin: 15px 0; line-height: 1.4; font-style: italic; min-height: 3em; }
+        .volume-container { background: #000; height: 30px; border-radius: 15px; position: relative; overflow: hidden; border: 1px solid #444; margin: 15px 0; }
+        .volume-bar { background: linear-gradient(90deg, #b8860b, var(--accent)); height: 100%; width: 0%; transition: width 1.5s ease-in-out; }
+        .volume-text { position: absolute; width: 100%; text-align: center; top: 5px; font-weight: bold; color: white; text-shadow: 1px 1px 2px black; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-top: 1px solid #333; padding-top: 15px; }
+        .stat-val { font-family: 'Oswald'; font-size: 1.5rem; color: var(--accent); display: block; }
+        .stat-label { font-size: 0.7rem; color: #666; text-transform: uppercase; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>LAW BREWING</h1>
-        <p>EST 2024 • FOX CROSSING, WI</p>
-    </div>
 
-    <div class="tap-grid" id="display"></div>
+<nav>
+    <a href="index.html">LIVE TAPS</a>
+    <a href="archive.html">BEER VAULT</a>
+</nav>
 
-    <script>
-        async function load() {
-            const r = await fetch('taps.json?t=' + Date.now());
-            const d = await r.json();
-            const grid = document.getElementById('display');
-            grid.innerHTML = '';
+<div class="header-container">
+    <img src="https://github.com/lawbrewing/LawBrewing/blob/main/LBC%20-%20Black%20Transparent%20(1).png?raw=true" class="backlit-logo">
+</div>
 
-            Object.entries(d.active_taps).forEach(([tap, beerName], index) => {
-                const beer = d.library[beerName] || { abv: '0%', desc: '', artwork: 'logo.png', percent: 0 };
-                grid.innerHTML += `
-                    <div class="card">
-                        <div class="tap-num">${index + 1}</div>
-                        <img src="images/labels/${beer.artwork}" class="art">
-                        <div class="info">
-                            <h2>${beerName}</h2>
-                            <div class="abv">${beer.abv} ABV</div>
-                            <p class="desc">${beer.desc}</p>
-                            <div class="weight-track">
-                                <div class="weight-fill" style="width: ${beer.percent}%"></div>
-                                <div class="weight-label">${beer.percent}% REMAINING</div>
+<div class="tap-container" id="tap-display">
+    <p style="text-align:center; width:100%; color:#666;">Loading Taps...</p>
+</div>
+
+<script>
+    async function fetchTaps() {
+        try {
+            const response = await fetch('taps.json?t=' + Date.now());
+            if (!response.ok) throw new Error("File not found");
+            const data = await response.json();
+            
+            const container = document.getElementById('tap-display');
+            container.innerHTML = '';
+
+            // We look at active_taps to see what is pouring
+            for (const [tapId, beerName] of Object.entries(data.active_taps)) {
+                
+                // Pull details from the Library
+                const beer = data.library[beerName];
+                
+                if (beer && beerName !== "Off Tap") {
+                    // Calculate roughly how many pints are left based on weight %
+                    // (Assuming a standard 5gal keg = ~40 pints)
+                    const pintsLeft = Math.round((beer.percent / 100) * 40);
+                    const growlersLeft = Math.round((beer.percent / 100) * 10);
+
+                    container.innerHTML += `
+                        <div class="beer-card">
+                            <div class="label-art" style="background-image: url('images/labels/${beer.artwork}');"></div>
+                            <div class="details">
+                                <h2 class="beer-name">${beerName}</h2>
+                                <div style="font-family: 'Oswald'; color: #888;">${beer.abv} | ${tapId}</div>
+                                <p class="desc">${beer.desc}</p>
+                                
+                                <div class="volume-container">
+                                    <div class="volume-bar" style="width: ${beer.percent}%"></div>
+                                    <div class="volume-text">${beer.percent}% REMAINING</div>
+                                </div>
+
+                                <div class="stats-grid">
+                                    <div class="stat-box"><span class="stat-val">~${pintsLeft}</span><span class="stat-label">PINTS</span></div>
+                                    <div class="stat-box"><span class="stat-val">~${growlersLeft}</span><span class="stat-label">GROWLERS</span></div>
+                                </div>
                             </div>
                         </div>
-                    </div>`;
-            });
+                    `;
+                }
+            }
+        } catch (err) {
+            console.error("Dashboard error:", err);
+            document.getElementById('tap-display').innerHTML = "<p style='color:red;'>Error Loading Taps. Check taps.json!</p>";
         }
-        load();
-        setInterval(load, 30000);
-    </script>
+    }
+
+    setInterval(fetchTaps, 10000);
+    fetchTaps();
+</script>
 </body>
 </html>

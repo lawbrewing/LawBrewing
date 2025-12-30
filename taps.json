@@ -1,13 +1,19 @@
 {
     "active_taps": {
-        "Law Tap": "Off Tap",
+        "Law Tap": "Hacker-Pschorr",
         "Wisco Tap": "Off Tap",
         "Nitro Tap": "Off Tap"
     },
     "library": {
+        "Hacker-Pschorr": {
+            "abv": "5.8%",
+            "desc": "A classic Oktoberfest lager.",
+            "artwork": "hacker.png",
+            "percent": 85
+        },
         "Off Tap": {
             "abv": "0%",
-            "desc": "Nothing currently pouring.",
+            "desc": "Tap closed.",
             "artwork": "logo.png",
             "percent": 0
         }
