@@ -1,149 +1,51 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Law Brewing Tap List</title>
+    <title>Law Brewing Taproom</title>
     <style>
-        :root {
-            --gold: #d4a017;
-            --dark: #1a1a1a;
-        }
-        body { 
-            background-color: var(--dark); 
-            color: white; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            margin: 0; 
-            padding: 20px;
-        }
-        h1 { text-align: center; color: var(--gold); text-transform: uppercase; letter-spacing: 2px; }
-        
-        .tap-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .tap-card {
-            background: #2a2a2a;
-            border: 1px solid #444;
-            border-radius: 15px;
-            padding: 20px;
-            text-align: center;
-            transition: transform 0.3s ease;
-        }
-
-        .tap-label {
-            color: var(--gold);
-            font-size: 0.8rem;
-            font-weight: bold;
-            text-transform: uppercase;
-            margin-bottom: 10px;
-            display: block;
-        }
-
-        .beer-art {
-            width: 150px;
-            height: 150px;
-            object-fit: contain;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            background: #222;
-        }
-
-        h2 { margin: 10px 0; font-size: 1.8rem; }
-        .abv { color: var(--gold); font-weight: bold; margin-bottom: 10px; }
-        .desc { font-size: 0.9rem; color: #ccc; line-height: 1.4; min-height: 60px; }
-
-        /* Progress Bar Styles */
-        .progress-container {
-            background: #444;
-            border-radius: 10px;
-            height: 25px;
-            width: 100%;
-            margin-top: 20px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .progress-bar {
-            height: 100%;
-            background: linear-gradient(90deg, #8b0000, #d4a017);
-            transition: width 1s ease-in-out;
-            width: 0%;
-        }
-
-        .percent-text {
-            position: absolute;
-            width: 100%;
-            text-align: center;
-            top: 0;
-            left: 0;
-            line-height: 25px;
-            font-size: 0.8rem;
-            font-weight: bold;
-            text-shadow: 1px 1px 2px black;
-        }
+        body { background: #121212; color: #e0e0e0; font-family: 'Helvetica Neue', sans-serif; margin: 0; padding: 40px; }
+        h1 { text-align: center; color: #d4a017; letter-spacing: 4px; font-size: 3em; margin-bottom: 50px; text-transform: uppercase; }
+        .tap-grid { display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; }
+        .card { background: #1e1e1e; border: 1px solid #333; border-radius: 12px; width: 320px; padding: 25px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .tap-id { color: #d4a017; font-weight: bold; font-size: 0.9em; margin-bottom: 15px; display: block; }
+        .art { width: 100%; height: 200px; object-fit: cover; border-radius: 8px; margin-bottom: 20px; border: 1px solid #444; }
+        h2 { margin: 10px 0; font-size: 1.8em; color: #fff; }
+        .abv { background: #d4a017; color: #000; display: inline-block; padding: 2px 10px; border-radius: 4px; font-weight: bold; margin-bottom: 15px; }
+        .desc { font-size: 0.95em; color: #aaa; line-height: 1.5; height: 70px; overflow: hidden; }
+        .gauge-bg { background: #333; height: 12px; border-radius: 6px; margin-top: 25px; position: relative; }
+        .gauge-fill { background: linear-gradient(90deg, #d4a017, #f4d03f); height: 100%; border-radius: 6px; transition: 1s; }
+        .percent { display: block; margin-top: 8px; font-size: 0.8em; color: #d4a017; font-weight: bold; }
     </style>
 </head>
 <body>
-
-    <h1>Law Brewing Co.</h1>
-    
-    <div class="tap-container" id="tap-display">
-        </div>
+    <h1>LAW BREWING CO.</h1>
+    <div class="tap-grid" id="display"></div>
 
     <script>
-        async function updateTapList() {
-            try {
-                // Fetch the latest JSON from your GitHub Pages
-                const response = await fetch('taps.json?t=' + new Date().getTime());
-                const data = await response.json();
-                
-                const display = document.getElementById('tap-display');
-                display.innerHTML = ''; // Clear current display
+        async function load() {
+            const r = await fetch('taps.json?t=' + Date.now());
+            const d = await r.json();
+            const grid = document.getElementById('display');
+            grid.innerHTML = '';
 
-                // Loop through the 3 active taps defined in your JSON
-                for (const [tapSlot, beerName] of Object.entries(data.active_taps)) {
-                    
-                    // Look up this beer's details in the library
-                    const details = data.library[beerName] || {
-                        abv: "0%",
-                        desc: "Information coming soon.",
-                        artwork: "logo.png",
-                        percent: 0
-                    };
-
-                    const card = document.createElement('div');
-                    card.className = 'tap-card';
-                    
-                    card.innerHTML = `
-                        <span class="tap-label">${tapSlot}</span>
-                        <img src="images/labels/${details.artwork}" class="beer-art" onerror="this.src='images/labels/logo.png'">
-                        <h2>${beerName}</h2>
-                        <div class="abv">ABV: ${details.abv}</div>
-                        <p class="desc">${details.desc}</p>
-                        
-                        <div class="progress-container">
-                            <div class="progress-bar" style="width: ${details.percent}%"></div>
-                            <div class="percent-text">${details.percent}% REMAINING</div>
+            Object.entries(d.active_taps).forEach(([tap, beer]) => {
+                const b = d.library[beer] || { abv: '0%', desc: '', artwork: 'logo.png', percent: 0 };
+                grid.innerHTML += `
+                    <div class="card">
+                        <span class="tap-id">${tap}</span>
+                        <img src="images/labels/${b.artwork}" class="art">
+                        <h2>${beer}</h2>
+                        <div class="abv">${b.abv}</div>
+                        <p class="desc">${b.desc}</p>
+                        <div class="gauge-bg">
+                            <div class="gauge-fill" style="width: ${b.percent}%"></div>
                         </div>
-                    `;
-                    
-                    display.appendChild(card);
-                }
-            } catch (error) {
-                console.error("Error loading tap data:", error);
-            }
+                        <span class="percent">${b.percent}% REMAINING</span>
+                    </div>`;
+            });
         }
-
-        // Initial load
-        updateTapList();
-
-        // Refresh the page every 2 minutes to show scale updates
-        setInterval(updateTapList, 120000);
+        load();
+        setInterval(load, 30000);
     </script>
 </body>
 </html>

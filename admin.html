@@ -31,8 +31,7 @@
     </div>
 
     <script>
-        const API = "http://YOUR_PI_IP:5000";
-
+const API = window.location.origin; // This automatically detects the Pi's IP
         async function loadAdmin() {
             const res = await fetch(`${API}/get_data`);
             const data = await res.json();
