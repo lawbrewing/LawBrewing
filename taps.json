@@ -25,11 +25,11 @@
     "Wisco Tap": {
         "weight_lbs": 17.01,
         "percent": 18,
-        "temp_f": 38.0,
-        "beer_id": "none",
+        "pints": 6,
+        "growlers": 1,
         "beer_name": "Off Tap",
-        "desc": "",
-        "img": ""
+        "rating": 5.0,
+        "temp_f": 38.0
     },
     "Nitro Tap": {
         "weight_lbs": 12.4,
