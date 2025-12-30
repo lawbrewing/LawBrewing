@@ -3,299 +3,129 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Law Brewing - Liquid Attitude</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@700&family=Bebas+Neue&family=Roboto:wght@400&display=swap" rel="stylesheet">
-    
+    <title>Law Brewing | Live Taproom</title>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Roboto:wght@300;400&display=swap" rel="stylesheet">
     <style>
-        /* --- Embedded CSS Styling (Updated for Redesign) --- */
+        :root { --accent: #ffb400; --bg: #121212; --card: #1e1e1e; --text: #ffffff; }
+        body { background: var(--bg); color: var(--text); font-family: 'Roboto', sans-serif; margin: 0; padding-bottom: 50px; }
         
-        /* General Styling */
-        body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #0d0d0d;
-            color: #f0f0f0;
-            margin: 0;
-            padding: 0;
-            line-height: 1.6;
-        }
-
-        /* Header/Hero Section */
-        .hero {
-            position: relative;
-            /* UPDATED: Removed fixed height, added min-height and padding */
-            min-height: 350px; 
-            padding-top: 50px; 
-            padding-bottom: 50px; 
-            /* END UPDATED */
-            background-color: #2a2a2a;
-            background-image: url('rustic-wood-planks.jpg'); 
-            background-size: cover;
-            background-position: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            text-align: center;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-            margin-bottom: 50px;
-        }
-
-        .hero::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.6);
-        }
+        /* Navigation */
+        nav { background: #000; padding: 15px; text-align: center; border-bottom: 1px solid #333; }
+        nav a { color: var(--accent); text-decoration: none; margin: 0 20px; font-family: 'Oswald'; letter-spacing: 1px; font-weight: bold; }
         
-        .logo {
-            position: relative;
-            z-index: 10;
-            max-width: 150px;
-            height: auto;
-            margin-bottom: 20px;
-            filter: drop-shadow(0 0 10px #ffcc00);
-        }
-
-        .site-title {
-            position: relative;
-            z-index: 10;
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: 5em;
-            letter-spacing: 15px;
-            margin: 0;
-            color: #ffcc00;
-            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.8);
-        }
-
-        .tagline {
-            position: relative;
-            z-index: 10;
-            font-family: 'Roboto Slab', serif;
-            font-size: 1.5em;
-            margin-top: 5px;
-            color: #f0f0f0;
-            border-bottom: 2px solid #ffcc00;
-            padding-bottom: 5px;
-        }
-
-        /* Section Titles (Games & Untappd) */
-        .section-title {
-            text-align: center;
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: 3em;
-            color: #ffcc00;
-            margin-bottom: 40px;
-            text-transform: uppercase;
-            letter-spacing: 5px;
-        }
-
-        /* Games Section - Uses Grid for controlled layout */
-        .games-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 40px; 
-            padding: 0 5%;
-            max-width: 1400px;
-            margin: 0 auto 80px auto;
-        }
-
-        .game-card {
-            background-color: #202020;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.6);
-            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-            display: flex;
-            flex-direction: column;
-            border: 1px solid #444; 
-        }
-
-        .game-card:hover {
-            transform: translateY(-10px) rotateZ(-1deg);
-            box-shadow: 0 15px 30px rgba(255, 204, 0, 0.4); 
-        }
-
-        .game-image-container {
-            height: 200px; 
-            background-color: #000;
-            padding: 15px;
-        }
+        .header-container { text-align: center; padding: 40px 0; background: radial-gradient(circle, #2a2a2a 0%, #121212 80%); }
+        .backlit-logo { max-width: 250px; filter: drop-shadow(0 0 10px rgba(255,180,0,0.4)); }
         
-        .game-image {
-            width: 100%;
-            height: 100%;
-            border-radius: 8px;
-            object-fit: contain; 
-            background-color: #000;
-        }
-
-        .card-content {
-            padding: 20px 25px 30px;
-            text-align: center;
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
+        .tap-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 25px; max-width: 1200px; margin: 0 auto; padding: 20px; }
         
-        .game-title {
-            font-family: 'Roboto Slab', serif;
-            font-size: 1.4em;
-            height: 3em; 
-            overflow: hidden;
-            margin-top: 0;
-            margin-bottom: 20px;
-            color: #ffffff;
-            line-height: 1.2;
-        }
+        .beer-card { background: var(--card); border-radius: 20px; overflow: hidden; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); transition: 0.3s; }
+        .beer-card:hover { border-color: var(--accent); }
 
-        /* Button Styling */
-        .game-button {
-            display: block; 
-            background-color: #ffcc00; 
-            color: #1a1a1a; 
-            padding: 15px 25px;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: bold;
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: 1.4em;
-            letter-spacing: 2px;
-            transition: background-color 0.2s ease, transform 0.1s ease;
-            border: none;
-            text-transform: uppercase;
-        }
-
-        .game-button:hover {
-            background-color: #e5b800;
-            transform: scale(0.98);
-        }
-
-        /* Untappd Section */
-        .untappd-section {
-            text-align: center;
-            padding: 50px 20px;
-            background-color: #121212;
-            box-shadow: inset 0 5px 15px rgba(0, 0, 0, 0.4);
-            margin-top: 50px;
-            border-top: 3px solid #ffcc00;
-        }
-
-        .untappd-link {
-            display: inline-block;
-            margin-top: 30px;
-            transition: transform 0.3s ease-in-out;
-        }
-
-        .untappd-link:hover {
-            transform: scale(1.05);
-        }
-
-        .untappd-image {
-            max-width: 600px;
-            width: 100%;
-            height: auto;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.7);
-        }
+        .label-art { width: 100%; height: 280px; background-size: cover; background-position: center; border-bottom: 3px solid var(--accent); background-color: #222; }
         
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-            .site-title {
-                font-size: 3.5em;
-                letter-spacing: 10px;
-            }
-            .hero {
-                /* Reduced min-height for small screens */
-                min-height: 250px; 
-                padding-top: 40px; 
-                padding-bottom: 40px;
-            }
-            .games-container {
-                padding: 0 20px;
-            }
-            .section-title {
-                font-size: 2.5em;
-            }
-        }
+        .details { padding: 20px; text-align: center; }
+        .beer-name { font-family: 'Oswald'; font-size: 2rem; margin: 0; color: var(--accent); text-transform: uppercase; line-height: 1.1; }
+        .abv { font-family: 'Oswald'; font-size: 1rem; color: #888; margin: 10px 0; }
+        
+        /* Progress Bar */
+        .volume-container { background: #000; height: 35px; border-radius: 18px; position: relative; overflow: hidden; border: 1px solid #444; margin: 20px 0; }
+        .volume-bar { background: linear-gradient(90deg, #b8860b, var(--accent)); height: 100%; width: 0%; transition: width 1.5s ease-in-out; }
+        .volume-text { position: absolute; width: 100%; text-align: center; top: 7px; font-weight: bold; font-size: 1rem; color: white; text-shadow: 1px 1px 3px black; }
+        
+        /* Stats Grid */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; border-top: 1px solid #333; padding-top: 15px; }
+        .stat-box { font-family: 'Oswald'; }
+        .stat-val { font-size: 1.8rem; color: var(--accent); display: block; }
+        .stat-label { font-size: 0.7rem; color: #666; letter-spacing: 1px; text-transform: uppercase; }
+
+        footer { margin-top: 50px; padding: 30px; text-align: center; border-top: 1px solid #222; }
+        footer a { color: #222; text-decoration: none; font-size: 0.7rem; } /* Subtle Admin Link */
     </style>
 </head>
 <body>
 
-    <header class="hero">
-        <img src="https://github.com/lawbrewing/LawBrewing/blob/main/LBC%20-%20Black%20Transparent%20(1).png?raw=true" alt="Law Brewing Logo" class="logo">
-        <h1 class="site-title">LAW BREWING</h1>
-        <p class="tagline">Liquid Attitude.</p>
-    </header>
+    <nav>
+        <a href="index.html">LIVE TAPS</a>
+        <a href="archive.html">BEER VAULT</a>
+    </nav>
 
-    <h2 class="section-title">The Game Collection</h2>
+    <div class="header-container">
+        <img src="https://github.com/lawbrewing/LawBrewing/blob/main/LBC%20-%20Black%20Transparent%20(1).png?raw=true" class="backlit-logo" alt="Law Brewing Co">
+    </div>
 
-    <section class="games-container">
-        
-        <div class="game-card">
-            <div class="game-image-container">
-                <img src="https://github.com/lawbrewing/LawBrewing/blob/main/Gemini_Generated_Image_f46i9af46i9af46i.png?raw=true" alt="Law Brewing Defender Game Preview" class="game-image">
-            </div>
-            <div class="card-content">
-                <h3 class="game-title">Law Brewing Defender: The Sheriff of Taps</h3>
-                <a href="https://lawbrewing.github.io/LawBrewing/defender.html" class="game-button">Play Defender</a>
-            </div>
+    <div class="tap-container" id="tap-display">
         </div>
 
-        <div class="game-card">
-            <div class="game-image-container">
-                <img src="https://lawbrewing.github.io/LawBrewing/1766341219164~2.jpg" alt="The Taproom Preview" class="game-image">
-            </div>
-            <div class="card-content">
-                <h3 class="game-title">The Taproom: A Beer Flight Card Game</h3>
-                <a href="https://lawbrewing.github.io/LawBrewing/Thetaproom.html" class="game-button">Play Taproom</a>
-            </div>
-        </div>
-
-        <div class="game-card">
-            <div class="game-image-container">
-                <img src="https://github.com/lawbrewing/LawBrewing/blob/main/bardice%20(2).png?raw=true" alt="Law Brewing Bar Dice Game Preview" class="game-image">
-            </div>
-            <div class="card-content">
-                <h3 class="game-title">Law Brewing: Bar Dice</h3>
-                <a href="https://lawbrewing.github.io/LawBrewing/bardice.html" class="game-button">Play Bar Dice</a>
-            </div>
-        </div>
-
-        <div class="game-card">
-            <div class="game-image-container">
-                <img src="https://github.com/lawbrewing/LawBrewing/blob/main/ttt.png?raw=true" alt="Tactical Tic Tac Toe Game Preview" class="game-image">
-            </div>
-            <div class="card-content">
-                <h3 class="game-title">Law Brewing: Tactical Tic Tac Toe</h3>
-                <a href="https://lawbrewing.github.io/LawBrewing/tictactoe.html" class="game-button">Play Tic Tac Toe</a>
-            </div>
-        </div>
-
-        <div class="game-card">
-            <div class="game-image-container">
-                <img src="https://github.com/lawbrewing/LawBrewing/blob/main/taproomchaos.png?raw=true" alt="Law Brewing Taproom Chaos Game Preview" class="game-image">
-            </div>
-            <div class="card-content">
-                <h3 class="game-title">Law Brewing: Taproom Chaos</h3>
-                <a href="https://lawbrewing.github.io/LawBrewing/taproomchaosgame.html" class="game-button">Play Taproom Chaos</a>
-            </div>
-        </div>
-
-    </section>
-
-    <section class="untappd-section">
-        <h2 class="section-title">Track Our Taps on Untappd</h2>
-        <a href="https://untappd.com/LawBrewing/beer" target="_blank" class="untappd-link">
-            <img src="https://github.com/lawbrewing/LawBrewing/blob/main/Gemini_Generated_Image_om9twmom9twmom9t.png?raw=true" alt="Check out Law Brewing on Untappd" class="untappd-image">
-        </a>
-    </section>
-<footer style="margin-top: 50px; padding: 30px; text-align: center; border-top: 1px solid #222;">
-        <p style="color: #444; font-size: 0.8rem;">&copy; 2025 Law Brewing</p>
-        <a href="http://192.168.86.XX:5000/admin" style="color: #222; text-decoration: none; font-size: 0.7rem;">ADMIN LOGIN</a>
+    <footer>
+        <p style="color: #444; font-size: 0.8rem;">&copy; 2025 Law Brewing | Liquid Attitude</p>
+        <a href="http://192.168.86.44:5000/admin">ADMIN LOGIN</a>
     </footer>
+
+    <script>
+        async function fetchTaps() {
+            // Cache Buster (?t=) ensures we get the newest data from GitHub
+            const url = 'taps.json?t=' + Math.random();
+            
+            try {
+                const response = await fetch(url);
+                const taps = await response.json();
+                
+                const container = document.getElementById('tap-display');
+                container.innerHTML = '';
+
+                // Must match the keys in your taps.json exactly
+                const hardwareTaps = ["Law Tap", "Wisco Tap", "Nitro Tap"];
+
+                hardwareTaps.forEach(id => {
+                    const data = taps[id];
+                    
+                    // Only display if a beer is assigned
+                    if (data && data.beer_id !== "none") {
+                        
+                        // Handle the Pints/Growlers (round to 1 decimal)
+                        const pints = data.pints || 0;
+                        const growlers = data.growlers || 0;
+                        const percent = data.percent || 0;
+
+                        container.innerHTML += `
+                            <div class="beer-card">
+                                <div class="label-art" style="background-image: url('${data.img || 'assets/default.png'}');"></div>
+                                <div class="details">
+                                    <h2 class="beer-name">${data.beer_name}</h2>
+                                    <div class="abv">${data.abv || 'N/A'} | ${id}</div>
+                                    
+                                    <div class="volume-container">
+                                        <div class="volume-bar" style="width: ${percent}%"></div>
+                                        <div class="volume-text">${percent}% REMAINING</div>
+                                    </div>
+
+                                    <div class="stats-grid">
+                                        <div class="stat-box">
+                                            <span class="stat-val">${pints}</span>
+                                            <span class="stat-label">PINTS LEFT</span>
+                                        </div>
+                                        <div class="stat-box">
+                                            <span class="stat-val">${growlers}</span>
+                                            <span class="stat-label">GROWLERS</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <p style="color: #ffb400; font-family: 'Oswald'; margin-top: 20px; font-size: 1.2rem;">
+                                        Rating: ${data.rating || '5.0'} ⭐
+                                    </p>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+            } catch (e) {
+                console.error("Dashboard failed to update:", e);
+            }
+        }
+
+        // Refresh every 5 seconds
+        setInterval(fetchTaps, 5000);
+        fetchTaps();
+    </script>
 </body>
 </html>
