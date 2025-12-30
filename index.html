@@ -17,7 +17,7 @@
         .label-art { width: 100%; height: 280px; background-size: cover; background-position: center; border-bottom: 3px solid var(--accent); background-color: #222; }
         .details { padding: 20px; text-align: center; flex-grow: 1; }
         .beer-name { font-family: 'Oswald'; font-size: 2.2rem; margin: 0; color: var(--accent); text-transform: uppercase; }
-        .beer-meta { font-family: 'Oswald'; color: #888; font-size: 1.1rem; margin-top: 5px; }
+        .beer-meta { font-family: 'Oswald'; color: #888; font-size: 1.2rem; margin-top: 5px; }
         .desc { font-size: 0.95rem; color: #ccc; margin: 15px 0; line-height: 1.5; font-style: italic; min-height: 4.5em; }
         .volume-container { background: #000; height: 35px; border-radius: 18px; position: relative; overflow: hidden; border: 1px solid #444; margin: 15px 0; }
         .volume-bar { background: linear-gradient(90deg, #b8860b, var(--accent)); height: 100%; transition: width 1.5s ease-in-out; }
@@ -27,6 +27,8 @@
         .stat-label { font-size: 0.75rem; color: #666; text-transform: uppercase; letter-spacing: 1px; }
         .rate-btn { background: none; border: 1px solid var(--accent); color: var(--accent); padding: 10px; border-radius: 8px; cursor: pointer; font-family: 'Oswald'; width: 100%; margin-top: 15px; transition: 0.3s; }
         .rate-btn:hover { background: var(--accent); color: #000; }
+        footer { text-align: center; margin-top: 50px; padding: 20px; opacity: 0.5; }
+        footer a { color: #666; text-decoration: none; font-size: 0.8rem; }
     </style>
 </head>
 <body>
@@ -40,17 +42,17 @@
     <img src="https://github.com/lawbrewing/LawBrewing/blob/main/LBC%20-%20Black%20Transparent%20(1).png?raw=true" class="backlit-logo" alt="Law Brewing Co.">
 </div>
 
-<div class="tap-container" id="tap-display">
-    <p style="text-align:center; width:100%;">Connecting to Taproom...</p>
-</div>
+<div class="tap-container" id="tap-display"></div>
+
+<footer>
+    <a href="login.html">Admin Login</a>
+</footer>
 
 <script>
-    // YOUR UNIQUE TUNNEL URL
     const TUNNEL_URL = "https://surround-civilization-constraint-graphic.trycloudflare.com"; 
 
     async function fetchTaps() {
         try {
-            // Fetch the tap list from the GitHub file
             const response = await fetch('taps.json?t=' + Date.now());
             const taps = await response.json();
             const container = document.getElementById('tap-display');
@@ -60,15 +62,13 @@
 
             hardwareTaps.forEach(id => {
                 const data = taps[id];
-                // Only show tap if a beer is assigned
-                if (!data || data.beer_id === "none") return;
+                if (!data || data.beer_name === "Off Tap" || data.beer_id === "none") return;
 
-                // DATA HUNTER Logic: Ensures we find the fields even if names vary
-                const name = data.beer_name || "Unknown Brew";
-                const abv  = data.abv || data.beer_abv || "TBD";
-                const description = data.desc || data.description || "A fresh Law Brewing Co. creation.";
-                const img  = data.img || data.art || "assets/default.png";
-                const pct  = data.percent || 0;
+                // DATA HUNTER: Tries every common naming convention for ABV and Description
+                const name = data.beer_name || "New Brew";
+                const abv  = data.abv || data.beer_abv || data.ABV || data.Abv || "TBD";
+                const desc = data.desc || data.description || data.beer_desc || "No description available.";
+                const img  = data.img || data.art || data.beer_img || "assets/default.png";
                 const rate = data.rating || "5.0";
 
                 container.innerHTML += `
@@ -76,13 +76,12 @@
                         <div class="label-art" style="background-image: url('${img}');"></div>
                         <div class="details">
                             <h2 class="beer-name">${name}</h2>
-                            <div class="beer-meta">${abv} | ${id}</div>
-                            
-                            <p class="desc">${description}</p>
+                            <div class="beer-meta">${abv} ABV | ${id}</div>
+                            <p class="desc">${desc}</p>
                             
                             <div class="volume-container">
-                                <div class="volume-bar" style="width: ${pct}%"></div>
-                                <div class="volume-text">${pct}% REMAINING</div>
+                                <div class="volume-bar" style="width: ${data.percent || 0}%"></div>
+                                <div class="volume-text">${data.percent || 0}% REMAINING</div>
                             </div>
 
                             <div class="stats-grid">
@@ -98,7 +97,7 @@
                 `;
             });
         } catch (e) {
-            console.error("Taproom error:", e);
+            console.error("Fetch error:", e);
         }
     }
 
@@ -109,16 +108,10 @@
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ tap: tapId, rating: score })
             });
-            if (res.ok) { 
-                alert("Cheers! Rating saved."); 
-                fetchTaps(); 
-            }
-        } catch (e) { 
-            alert("Rating failed. Is the Cloudflare Tunnel running on the Pi?"); 
-        }
+            if (res.ok) { alert("Cheers! Rating saved."); fetchTaps(); }
+        } catch (e) { alert("Rating failed. Check tunnel!"); }
     }
 
-    // Auto-refresh every 10 seconds
     setInterval(fetchTaps, 10000);
     fetchTaps();
 </script>
