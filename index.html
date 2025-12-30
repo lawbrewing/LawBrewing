@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Law Brewing | Live Taproom</title>
+    <title>Law Brewing | Live Taps</title>
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Roboto:wght@300;400&display=swap" rel="stylesheet">
     <style>
         :root { --accent: #ffb400; --bg: #121212; --card: #1e1e1e; --text: #ffffff; }
         body { background: var(--bg); color: var(--text); font-family: 'Roboto', sans-serif; margin: 0; padding-bottom: 50px; }
         nav { background: #000; padding: 15px; text-align: center; border-bottom: 1px solid #333; }
-        nav a { color: var(--accent); text-decoration: none; margin: 0 20px; font-family: 'Oswald'; letter-spacing: 1px; font-weight: bold; }
+        nav a { color: var(--accent); text-decoration: none; margin: 0 20px; font-family: 'Oswald'; font-weight: bold; }
         .header-container { text-align: center; padding: 40px 0; background: radial-gradient(circle, #2a2a2a 0%, #121212 80%); }
         .backlit-logo { max-width: 250px; filter: drop-shadow(0 0 10px rgba(255,180,0,0.4)); }
         .tap-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 25px; max-width: 1200px; margin: 0 auto; padding: 20px; }
@@ -17,16 +17,13 @@
         .label-art { width: 100%; height: 280px; background-size: cover; background-position: center; border-bottom: 3px solid var(--accent); background-color: #222; }
         .details { padding: 20px; text-align: center; }
         .beer-name { font-family: 'Oswald'; font-size: 2rem; margin: 0; color: var(--accent); text-transform: uppercase; }
-        .abv { font-family: 'Oswald'; font-size: 1rem; color: #888; margin: 5px 0; }
-        .desc { font-size: 0.85rem; color: #aaa; margin: 15px 0; line-height: 1.4; font-style: italic; }
+        .desc { font-size: 0.85rem; color: #aaa; margin: 15px 0; line-height: 1.4; font-style: italic; min-height: 3em; }
         .volume-container { background: #000; height: 30px; border-radius: 15px; position: relative; overflow: hidden; border: 1px solid #444; margin: 15px 0; }
         .volume-bar { background: linear-gradient(90deg, #b8860b, var(--accent)); height: 100%; width: 0%; transition: width 1.5s ease-in-out; }
         .volume-text { position: absolute; width: 100%; text-align: center; top: 5px; font-weight: bold; color: white; text-shadow: 1px 1px 2px black; }
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-top: 1px solid #333; padding-top: 15px; }
         .stat-val { font-family: 'Oswald'; font-size: 1.5rem; color: var(--accent); display: block; }
         .stat-label { font-size: 0.7rem; color: #666; text-transform: uppercase; }
-        .stars { font-size: 1.5rem; color: #444; cursor: pointer; margin-top: 10px; }
-        .stars span:hover, .stars span.active { color: var(--accent); }
     </style>
 </head>
 <body>
@@ -40,16 +37,20 @@
     <img src="https://github.com/lawbrewing/LawBrewing/blob/main/LBC%20-%20Black%20Transparent%20(1).png?raw=true" class="backlit-logo">
 </div>
 
-<div class="tap-container" id="tap-display"></div>
+<div class="tap-container" id="tap-display">
+    <p style="text-align:center; width:100%; color:#666;">Loading Taps...</p>
+</div>
 
 <script>
-    const PI_IP = "192.168.86.XX"; // YOUR PI IP HERE
+    // Replace with your actual Pi IP
+    const PI_IP = "192.168.86.44"; 
 
     async function fetchTaps() {
         try {
-            // Adding a timestamp to prevent the browser from showing old cached data
             const response = await fetch('taps.json?t=' + Date.now());
+            if (!response.ok) throw new Error("File not found");
             const taps = await response.json();
+            
             const container = document.getElementById('tap-display');
             container.innerHTML = '';
 
@@ -57,61 +58,62 @@
 
             hardwareTaps.forEach(id => {
                 const data = taps[id];
-                
-                // Only build the card if a beer is actually assigned
-                if (data && data.beer_id && data.beer_id !== "none") {
+                // Check if data exists OR if it's assigned to a beer
+                if (data && data.beer_name && data.beer_name !== "Off Tap") {
                     
-                    // FALLBACK LOGIC: If a piece of data is missing, use these defaults
-                    const beerName = data.beer_name || "Unknown Brew";
-                    const abv = data.abv || "TBD";
-                    const description = data.desc || "A Law Brewing original. Cheers!";
-                    const image = data.img || "assets/default.png";
-                    const rating = data.rating || "5.0";
+                    // Direct mappings based on your 'cat' output
+                    const bName = data.beer_name || "Unknown";
+                    const bAbv  = data.abv || "TBD";
+                    const bDesc = data.desc || "No description available.";
+                    const bImg  = data.img || "assets/default.png";
+                    const bPct  = data.percent || 0;
+                    const bRate = data.rating || "5.0";
 
                     container.innerHTML += `
                         <div class="beer-card">
-                            <div class="label-art" style="background-image: url('${image}');"></div>
+                            <div class="label-art" style="background-image: url('${bImg}');"></div>
                             <div class="details">
-                                <h2 class="beer-name">${beerName}</h2>
-                                <div class="abv">${abv} | ${id}</div>
+                                <h2 class="beer-name">${bName}</h2>
+                                <div style="font-family: 'Oswald'; color: #888;">${bAbv} | ${id}</div>
+                                <p class="desc">${bDesc}</p>
                                 
-                                <p class="desc" style="color: #bbb; font-size: 0.85rem; line-height: 1.4; margin: 15px 0; font-style: italic;">
-                                    ${description}
-                                </p>
-                                
-                                <div class="volume-container" style="background:#000; height:30px; border-radius:15px; position:relative; overflow:hidden; border:1px solid #444;">
-                                    <div class="volume-bar" style="width: ${data.percent}%; background: linear-gradient(90deg, #b8860b, #ffb400); height:100%;"></div>
-                                    <div class="volume-text" style="position:absolute; width:100%; text-align:center; top:5px; font-weight:bold; color:white;">${data.percent}% REMAINING</div>
+                                <div class="volume-container">
+                                    <div class="volume-bar" style="width: ${bPct}%"></div>
+                                    <div class="volume-text">${bPct}% REMAINING</div>
                                 </div>
 
-                                <div class="stats-grid" style="display:grid; grid-template-columns: 1fr 1fr; margin-top:15px; border-top:1px solid #333; padding-top:10px;">
-                                    <div><span style="font-size:1.5rem; color:#ffb400; display:block;">${data.pints || 0}</span><span style="font-size:0.7rem; color:#666;">PINTS</span></div>
-                                    <div><span style="font-size:1.5rem; color:#ffb400; display:block;">${data.growlers || 0}</span><span style="font-size:0.7rem; color:#666;">GROWLERS</span></div>
+                                <div class="stats-grid">
+                                    <div class="stat-box"><span class="stat-val">${data.pints || 0}</span><span class="stat-label">PINTS</span></div>
+                                    <div class="stat-box"><span class="stat-val">${data.growlers || 0}</span><span class="stat-label">GROWLERS</span></div>
                                 </div>
 
-                                <div class="stars" style="margin-top:15px; cursor:pointer; color:#ffb400; font-size:1.2rem;">
-                                    <span onclick="submitRating('${id}', 5)">★★★★★</span>
-                                    <div style="font-size:0.8rem; color:#888;">Avg Rating: ${rating} ⭐</div>
+                                <div style="margin-top:15px; color:#ffb400; font-size:1.2rem; cursor:pointer;" onclick="submitRating('${id}', 5)">
+                                    ★★★★★
+                                    <div style="font-size:0.8rem; color:#888;">Avg Rating: ${bRate} ⭐</div>
                                 </div>
                             </div>
                         </div>
                     `;
                 }
             });
-        } catch (e) {
-            console.error("Critical Taproom Error:", e);
+        } catch (err) {
+            console.error("Dashboard error:", err);
+            document.getElementById('tap-display').innerHTML = "<p style='color:red;'>Error Loading Taps. Check taps.json!</p>";
         }
     }
 
     async function submitRating(tapId, score) {
         try {
-            const response = await fetch(`http://${PI_IP}:5000/rate`, {
+            await fetch(`http://${PI_IP}:5000/rate`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ tap: tapId, rating: score })
             });
-            if (response.ok) { alert("Rating Recorded!"); fetchTaps(); }
-        } catch (e) { alert("Please connect to Law Brewing Wi-Fi to rate."); }
+            alert("Rating Recorded!");
+            fetchTaps();
+        } catch (e) {
+            alert("Connect to Home Wi-Fi to rate!");
+        }
     }
 
     setInterval(fetchTaps, 5000);
