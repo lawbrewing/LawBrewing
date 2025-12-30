@@ -3,32 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Law Brewing Co. | Taproom</title>
+    <title>Law Brewing Co. | Live Taproom</title>
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Roboto:wght@300;400&display=swap" rel="stylesheet">
     <style>
         :root { --accent: #ffb400; --bg: #121212; --card: #1e1e1e; --text: #ffffff; }
-        body { background: var(--bg); color: var(--text); font-family: 'Roboto', sans-serif; margin: 0; padding-bottom: 50px; }
+        body { background: var(--bg); color: var(--text); font-family: 'Roboto', sans-serif; margin: 0; padding-bottom: 80px; }
         nav { background: #000; padding: 15px; text-align: center; border-bottom: 1px solid #333; }
         nav a { color: var(--accent); text-decoration: none; margin: 0 20px; font-family: 'Oswald'; font-weight: bold; }
         .header-container { text-align: center; padding: 40px 0; background: radial-gradient(circle, #2a2a2a 0%, #121212 80%); }
         .backlit-logo { max-width: 250px; filter: drop-shadow(0 0 10px rgba(255,180,0,0.4)); }
         .tap-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 25px; max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .beer-card { background: var(--card); border-radius: 20px; overflow: hidden; border: 1px solid #333; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .beer-card { background: var(--card); border-radius: 20px; overflow: hidden; border: 1px solid #333; display: flex; flex-direction: column; }
         .label-art { width: 100%; height: 280px; background-size: cover; background-position: center; border-bottom: 3px solid var(--accent); background-color: #222; }
         .details { padding: 20px; text-align: center; flex-grow: 1; }
         .beer-name { font-family: 'Oswald'; font-size: 2.2rem; margin: 0; color: var(--accent); text-transform: uppercase; }
         .beer-meta { font-family: 'Oswald'; color: #888; font-size: 1.2rem; margin-top: 5px; }
         .desc { font-size: 0.95rem; color: #ccc; margin: 15px 0; line-height: 1.5; font-style: italic; min-height: 4.5em; }
         .volume-container { background: #000; height: 35px; border-radius: 18px; position: relative; overflow: hidden; border: 1px solid #444; margin: 15px 0; }
-        .volume-bar { background: linear-gradient(90deg, #b8860b, var(--accent)); height: 100%; transition: width 1.5s ease-in-out; }
+        .volume-bar { background: linear-gradient(90deg, #b8860b, var(--accent)); height: 100%; transition: width 1s ease-in-out; }
         .volume-text { position: absolute; width: 100%; text-align: center; top: 7px; font-weight: bold; color: white; text-shadow: 1px 1px 2px black; }
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-top: 1px solid #333; padding-top: 15px; margin-top: auto; }
-        .stat-val { font-family: 'Oswald'; font-size: 1.8rem; color: var(--accent); display: block; }
-        .stat-label { font-size: 0.75rem; color: #666; text-transform: uppercase; letter-spacing: 1px; }
-        .rate-btn { background: none; border: 1px solid var(--accent); color: var(--accent); padding: 10px; border-radius: 8px; cursor: pointer; font-family: 'Oswald'; width: 100%; margin-top: 15px; transition: 0.3s; }
-        .rate-btn:hover { background: var(--accent); color: #000; }
-        footer { text-align: center; margin-top: 50px; padding: 20px; opacity: 0.5; }
-        footer a { color: #666; text-decoration: none; font-size: 0.8rem; }
+        .rate-btn { background: none; border: 1px solid var(--accent); color: var(--accent); padding: 12px; border-radius: 8px; cursor: pointer; font-family: 'Oswald'; width: 100%; margin-top: 15px; font-size: 1rem; }
+        footer { text-align: center; margin-top: 40px; }
+        footer a { color: #444; text-decoration: none; font-size: 0.9rem; font-family: 'Oswald'; border: 1px solid #333; padding: 5px 15px; border-radius: 5px; }
     </style>
 </head>
 <body>
@@ -39,16 +35,17 @@
 </nav>
 
 <div class="header-container">
-    <img src="https://github.com/lawbrewing/LawBrewing/blob/main/LBC%20-%20Black%20Transparent%20(1).png?raw=true" class="backlit-logo" alt="Law Brewing Co.">
+    <img src="https://github.com/lawbrewing/LawBrewing/blob/main/LBC%20-%20Black%20Transparent%20(1).png?raw=true" class="backlit-logo">
 </div>
 
 <div class="tap-container" id="tap-display"></div>
 
 <footer>
-    <a href="login.html">Admin Login</a>
+    <a href="admin.html">Brewery Login</a>
 </footer>
 
 <script>
+    // Ensure this matches the tunnel terminal on your Pi!
     const TUNNEL_URL = "https://surround-civilization-constraint-graphic.trycloudflare.com"; 
 
     async function fetchTaps() {
@@ -58,18 +55,18 @@
             const container = document.getElementById('tap-display');
             container.innerHTML = '';
 
+            // We force these 3 to always show
             const hardwareTaps = ["Law Tap", "Wisco Tap", "Nitro Tap"];
 
             hardwareTaps.forEach(id => {
-                const data = taps[id];
-                if (!data || data.beer_name === "Off Tap" || data.beer_id === "none") return;
-
-                // DATA HUNTER: Tries every common naming convention for ABV and Description
-                const name = data.beer_name || "New Brew";
-                const abv  = data.abv || data.beer_abv || data.ABV || data.Abv || "TBD";
-                const desc = data.desc || data.description || data.beer_desc || "No description available.";
-                const img  = data.img || data.art || data.beer_img || "assets/default.png";
-                const rate = data.rating || "5.0";
+                const data = taps[id] || {};
+                
+                const name = data.beer_name || "Empty Tap";
+                const abv  = data.abv || data.beer_abv || "TBD";
+                const desc = data.desc || data.description || "Fresh brew coming soon...";
+                const img  = data.img || "assets/default.png";
+                const pct  = data.percent || 0;
+                const rate = data.rating || "0.0";
 
                 container.innerHTML += `
                     <div class="beer-card">
@@ -80,13 +77,8 @@
                             <p class="desc">${desc}</p>
                             
                             <div class="volume-container">
-                                <div class="volume-bar" style="width: ${data.percent || 0}%"></div>
-                                <div class="volume-text">${data.percent || 0}% REMAINING</div>
-                            </div>
-
-                            <div class="stats-grid">
-                                <div><span class="stat-val">${data.pints || 0}</span><span class="stat-label">PINTS</span></div>
-                                <div><span class="stat-val">${data.growlers || 0}</span><span class="stat-label">GROWLERS</span></div>
+                                <div class="volume-bar" style="width: ${pct}%"></div>
+                                <div class="volume-text">${pct}% REMAINING</div>
                             </div>
 
                             <button class="rate-btn" onclick="submitRating('${id}', 5)">
@@ -96,20 +88,27 @@
                     </div>
                 `;
             });
-        } catch (e) {
-            console.error("Fetch error:", e);
-        }
+        } catch (e) { console.error(e); }
     }
 
     async function submitRating(tapId, score) {
+        console.log("Attempting to rate tap:", tapId);
         try {
             const res = await fetch(`${TUNNEL_URL}/rate`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ tap: tapId, rating: score })
             });
-            if (res.ok) { alert("Cheers! Rating saved."); fetchTaps(); }
-        } catch (e) { alert("Rating failed. Check tunnel!"); }
+            if (res.ok) { 
+                alert("Cheers! Rating saved."); 
+                fetchTaps(); 
+            } else {
+                alert("Error: Server responded but failed to save.");
+            }
+        } catch (e) { 
+            console.error("Tunnel Error:", e);
+            alert("Rating failed. Make sure the Tunnel terminal is open on the Pi!"); 
+        }
     }
 
     setInterval(fetchTaps, 10000);
