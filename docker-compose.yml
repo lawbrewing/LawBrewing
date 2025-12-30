@@ -1,0 +1,12 @@
+services:
+  plaato-keg:
+    build: .
+    container_name: brewery-brain
+    network_mode: "host"
+    restart: unless-stopped
+    environment:
+      - BREWFATHER_USER_ID=B6rdbKBju1MFVpxQZ9EADVBLIRb2
+      - BREWFATHER_API_KEY=bVIr4dwguRJ0pBbdlQv7Yx1MIG1216ZOnx0FAaCV4tGS9xIywXkAytKxgVM0CZwz
+      # Adding these back in case you want to use your custom dashboard script later
+      - GITHUB_TOKEN=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
+      - GITHUB_REPO=lawmj04/brewery-dashboard
