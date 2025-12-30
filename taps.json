@@ -16,6 +16,12 @@
             "desc": "\u200b\"Acey tells me you\u2019re sniffin' around for a winter warmer...\"\n\n\u200bIs that a fact? Well, Acey ain\u2019t in charge no more.\n\n\u200bWhat you\u2019re gonna get is a glass full of the heavy stuff. We\u2019re talkin\u2019 a deep garnet pour with a hit of orange peel sharp enough to wake the neighbors. It\u2019s a full-bodied pillar of ale, see? But don\u2019t let the looks fool ya. She comes to you with a filthy soul, packing a heater of Tomahawk hops that roughs up the holiday spice right at center stage.\n\u200bSo I\u2019m gonna give you to the count of 10 to get your ugly, yella, no-good belly chocked-full of Angels with Filthy Souls.\n\n\u200b1... 2... 10!",
             "artwork": "https://lawbrewing.github.io/LawBrewing/Angels.png",
             "percent": 0
+        },
+        "Gutless Rusty": {
+            "abv": "6.0%",
+            "desc": "Gutless Rusty is a bold, brooding vanilla pumpkin spiced porter aged on bourbon-soaked oak, brewed in defiance of convention and in honor of the legendary XFL coach Rusty Tillman\u2014the man who stood his ground when Jesse \u201cThe Body\u201d Ventura tried to play puppetmaster. This beer is a rich, smoldering rebellion in a glass: layers of roasted malt and velvety pumpkin glide over a backbone of warm spice and smooth vanilla, while hints of charred oak and bourbon remind you that even when you\u2019re called \u201cgutless,\u201d standing firm still leaves a hell of a legacy. Sip it like Rusty coached\u2014without compromise.",
+            "artwork": "https://lawbrewing.github.io/LawBrewing/1000001977.png",
+            "percent": 100
         }
     }
 }
