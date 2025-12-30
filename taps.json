@@ -15,5 +15,10 @@
         "weight_lbs": 26.01,
         "percent": 33,
         "temp_f": 38.0
+    },
+    "Wisco Tap": {
+        "weight_lbs": 17.01,
+        "percent": 14,
+        "temp_f": 38.0
     }
 }
