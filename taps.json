@@ -20,5 +20,10 @@
         "weight_lbs": 17.01,
         "percent": 14,
         "temp_f": 38.0
+    },
+    "Nitro Tap": {
+        "weight_lbs": 12.4,
+        "percent": 5,
+        "temp_f": 38.0
     }
 }
