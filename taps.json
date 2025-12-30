@@ -14,13 +14,11 @@
     "Law Tap": {
         "weight_lbs": 26.01,
         "percent": 42,
-        "temp_f": 38.0,
-        "beer_id": "angels_with_filthy_souls",
+        "pints": 15,
+        "growlers": 3,
         "beer_name": "Angels With Filthy Souls",
-        "desc": "\u200b\"Acey tells me you\u2019re sniffin' around for a winter warmer...\"\r\n\r\n\u200bIs that a fact? Well, Acey ain\u2019t in charge no more.\r\n\r\n\u200bWhat you\u2019re gonna get is a glass full of the heavy stuff. We\u2019re talkin\u2019 a deep garnet pour with a hit of orange peel sharp enough to wake the neighbors. It\u2019s a full-bodied pillar of ale, see? But don\u2019t let the looks fool ya. She comes to you with a filthy soul, packing a heater of Tomahawk hops that roughs up the holiday spice right at center stage.\r\n\u200bSo I\u2019m gonna give you to the count of 10 to get your ugly, yella, no-good belly chocked-full of Angels with Filthy Souls.\r\n\r\n\u200b1... 2... 10!",
-        "img": "https://untappd.com/b/law-brewing-angels-with-filthy-souls/5657071",
-        "abv": "6.4%",
-        "rating": 5.0
+        "rating": 5.0,
+        "temp_f": 38.0
     },
     "Wisco Tap": {
         "weight_lbs": 17.01,
