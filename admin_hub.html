@@ -1,55 +1,136 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>LBC Admin Control</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LBC Admin | Tap Management</title>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        body { background: #121212; color: white; font-family: sans-serif; padding: 20px; }
-        .card { background: #1e1e1e; padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #333; }
-        input, textarea { width: 100%; background: #000; color: #ffb400; border: 1px solid #444; padding: 10px; margin: 5px 0; box-sizing: border-box; }
-        button { background: #ffb400; color: black; border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; width: 100%; }
-        h2 { color: #ffb400; margin-top: 0; }
+        :root { --accent: #ffb400; --bg: #121212; --card: #1e1e1e; }
+        body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        h1 { font-family: 'Oswald'; color: var(--accent); text-align: center; text-transform: uppercase; letter-spacing: 2px; }
+        
+        .card { background: var(--card); border: 1px solid #333; border-radius: 15px; padding: 20px; margin-bottom: 25px; box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+        h2 { font-family: 'Oswald'; margin-top: 0; border-bottom: 1px solid #444; padding-bottom: 10px; color: #eee; }
+        
+        label { display: block; margin-top: 15px; font-size: 0.8rem; color: #888; text-transform: uppercase; font-weight: bold; }
+        input, textarea, select { 
+            width: 100%; background: #000; color: var(--accent); border: 1px solid #444; 
+            padding: 12px; margin-top: 5px; border-radius: 8px; box-sizing: border-box; font-size: 1rem;
+        }
+        
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+        button { 
+            padding: 15px; border-radius: 8px; border: none; font-family: 'Oswald'; 
+            font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.2s;
+        }
+        .update-btn { background: var(--accent); color: black; }
+        .archive-btn { background: #444; color: white; }
+        button:hover { opacity: 0.8; transform: translateY(-2px); }
+        button:active { transform: translateY(0); }
+
+        .status-msg { text-align: center; margin-top: 10px; font-size: 0.9rem; min-height: 1.2em; }
     </style>
 </head>
 <body>
-    <h1>Law Brewing Admin</h1>
-    
-    <div id="taps">
+
+<div class="container">
+    <h1>Law Brewing Control</h1>
+
+    <div class="card" id="card-Law-Tap">
+        <h2>Law Tap</h2>
+        <label>Beer Name</label>
+        <input type="text" id="Law-Tap-name" placeholder="e.g. Home Alone">
+        
+        <label>ABV (%)</label>
+        <input type="text" id="Law-Tap-abv" placeholder="e.g. 6.5%">
+        
+        <label>Description</label>
+        <textarea id="Law-Tap-desc" rows="3" placeholder="Tasting notes..."></textarea>
+        
+        <label>Keg Level (%)</label>
+        <input type="number" id="Law-Tap-pct" value="100">
+
+        <div class="btn-group">
+            <button class="update-btn" onclick="sendAction('Law Tap', 'update')">Update</button>
+            <button class="archive-btn" onclick="sendAction('Law Tap', 'archive')">Archive</button>
         </div>
+    </div>
 
-    <script>
-        const taps = ["Law Tap", "Wisco Tap", "Nitro Tap"];
-        const container = document.getElementById('taps');
+    <div class="card" id="card-Wisco-Tap">
+        <h2>Wisco Tap</h2>
+        <input type="text" id="Wisco-Tap-name" placeholder="Beer Name">
+        <input type="text" id="Wisco-Tap-abv" placeholder="ABV">
+        <textarea id="Wisco-Tap-desc" rows="3" placeholder="Description"></textarea>
+        <input type="number" id="Wisco-Tap-pct" value="100">
 
-        taps.forEach(tap => {
-            container.innerHTML += `
-                <div class="card">
-                    <h2>${tap}</h2>
-                    <input type="text" id="${tap}-name" placeholder="Beer Name">
-                    <input type="text" id="${tap}-abv" placeholder="ABV (e.g. 6.5%)">
-                    <textarea id="${tap}-desc" placeholder="Description"></textarea>
-                    <input type="number" id="${tap}-pct" placeholder="Percent Left">
-                    <button onclick="saveTap('${tap}')">UPDATE ${tap}</button>
-                </div>
-            `;
-        });
+        <div class="btn-group">
+            <button class="update-btn" onclick="sendAction('Wisco Tap', 'update')">Update</button>
+            <button class="archive-btn" onclick="sendAction('Wisco Tap', 'archive')">Archive</button>
+        </div>
+    </div>
 
-        async function saveTap(tapId) {
-            const data = {
-                tap: tapId,
-                beer_name: document.getElementById(tapId + '-name').value,
-                abv: document.getElementById(tapId + '-abv').value,
-                desc: document.getElementById(tapId + '-desc').value,
-                percent: document.getElementById(tapId + '-pct').value
-            };
+    <div class="card" id="card-Nitro-Tap">
+        <h2>Nitro Tap</h2>
+        <input type="text" id="Nitro-Tap-name" placeholder="Beer Name">
+        <input type="text" id="Nitro-Tap-abv" placeholder="ABV">
+        <textarea id="Nitro-Tap-desc" rows="3" placeholder="Description"></textarea>
+        <input type="number" id="Nitro-Tap-pct" value="100">
 
-            const res = await fetch('http://localhost:5000/update', {
+        <div class="btn-group">
+            <button class="update-btn" onclick="sendAction('Nitro Tap', 'update')">Update</button>
+            <button class="archive-btn" onclick="sendAction('Nitro Tap', 'archive')">Archive</button>
+        </div>
+    </div>
+
+    <div id="status" class="status-msg"></div>
+</div>
+
+<script>
+    // Point this to your Raspberry Pi's local IP or localhost since you run this on the Pi
+    const API_URL = "http://localhost:5000";
+
+    async function sendAction(tapId, action) {
+        const statusDiv = document.getElementById('status');
+        statusDiv.innerText = "Processing...";
+        statusDiv.style.color = "var(--accent)";
+
+        const data = {
+            tap: tapId,
+            beer_name: document.getElementById(`${tapId.replace(' ', '-')}-name`).value,
+            abv: document.getElementById(`${tapId.replace(' ', '-')}-abv`).value,
+            desc: document.getElementById(`${tapId.replace(' ', '-')}-desc`).value,
+            percent: document.getElementById(`${tapId.replace(' ', '-')}-pct`).value
+        };
+
+        try {
+            const endpoint = action === 'update' ? '/update' : '/archive';
+            const response = await fetch(`${API_URL}${endpoint}`, {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             });
-            
-            if(res.ok) alert(tapId + " Updated! Run 'deploy' to push live.");
+
+            const result = await response.json();
+
+            if (response.ok) {
+                statusDiv.innerText = "Success! GitHub is updating...";
+                statusDiv.style.color = "#4caf50";
+                if(action === 'archive') {
+                    // Clear fields if archived
+                    document.getElementById(`${tapId.replace(' ', '-')}-name`).value = "";
+                    document.getElementById(`${tapId.replace(' ', '-')}-abv`).value = "";
+                    document.getElementById(`${tapId.replace(' ', '-')}-desc`).value = "";
+                }
+            } else {
+                throw new Error(result.message);
+            }
+        } catch (err) {
+            statusDiv.innerText = "Error: " + err.message;
+            statusDiv.style.color = "#ff5252";
         }
-    </script>
+    }
+</script>
 </body>
 </html>
