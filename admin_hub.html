@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>LBC Admin Control</title>
+    <style>
+        body { background: #121212; color: white; font-family: sans-serif; padding: 20px; }
+        .card { background: #1e1e1e; padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #333; }
+        input, textarea { width: 100%; background: #000; color: #ffb400; border: 1px solid #444; padding: 10px; margin: 5px 0; box-sizing: border-box; }
+        button { background: #ffb400; color: black; border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; width: 100%; }
+        h2 { color: #ffb400; margin-top: 0; }
+    </style>
+</head>
+<body>
+    <h1>Law Brewing Admin</h1>
+    
+    <div id="taps">
+        </div>
+
+    <script>
+        const taps = ["Law Tap", "Wisco Tap", "Nitro Tap"];
+        const container = document.getElementById('taps');
+
+        taps.forEach(tap => {
+            container.innerHTML += `
+                <div class="card">
+                    <h2>${tap}</h2>
+                    <input type="text" id="${tap}-name" placeholder="Beer Name">
+                    <input type="text" id="${tap}-abv" placeholder="ABV (e.g. 6.5%)">
+                    <textarea id="${tap}-desc" placeholder="Description"></textarea>
+                    <input type="number" id="${tap}-pct" placeholder="Percent Left">
+                    <button onclick="saveTap('${tap}')">UPDATE ${tap}</button>
+                </div>
+            `;
+        });
+
+        async function saveTap(tapId) {
+            const data = {
+                tap: tapId,
+                beer_name: document.getElementById(tapId + '-name').value,
+                abv: document.getElementById(tapId + '-abv').value,
+                desc: document.getElementById(tapId + '-desc').value,
+                percent: document.getElementById(tapId + '-pct').value
+            };
+
+            const res = await fetch('http://localhost:5000/update', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            
+            if(res.ok) alert(tapId + " Updated! Run 'deploy' to push live.");
+        }
+    </script>
+</body>
+</html>

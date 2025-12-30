@@ -1,41 +1,23 @@
 {
-    "Nitro Stout": {
-        "weight": 24.5,
-        "percent": 45
-    },
-    "Law IPA": {
-        "weight": 12.2,
-        "percent": 15
-    },
-    "Wisco Pils": {
-        "weight": 52.0,
-        "percent": 98
-    },
     "Law Tap": {
-        "weight_lbs": 26.01,
-        "percent": 42,
-        "pints": 15,
-        "growlers": 3,
-        "beer_name": "Angels With Filthy Souls",
-        "rating": 5.0,
-        "temp_f": 38.0
+        "beer_name": "Home Alone",
+        "abv": "6.5%",
+        "desc": "Rich and malty holiday ale.",
+        "percent": 90,
+        "rating": "4.9"
     },
     "Wisco Tap": {
-        "weight_lbs": 17.01,
-        "percent": 18,
-        "pints": 6,
-        "growlers": 1,
-        "beer_name": "Off Tap",
-        "rating": 5.0,
-        "temp_f": 38.0
+        "beer_name": "Empty Tap",
+        "abv": "0.0%",
+        "desc": "Coming soon...",
+        "percent": 0,
+        "rating": "0.0"
     },
     "Nitro Tap": {
-        "weight_lbs": 12.4,
-        "percent": 6,
-        "pints": 2,
-        "growlers": 0,
-        "beer_name": "Off Tap",
-        "rating": 5.0,
-        "temp_f": 38.0
+        "beer_name": "Empty Tap",
+        "abv": "0.0%",
+        "desc": "Coming soon...",
+        "percent": 0,
+        "rating": "0.0"
     }
 }

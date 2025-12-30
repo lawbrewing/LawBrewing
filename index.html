@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Law Brewing Co. | Live Taproom</title>
+    <title>Law Brewing Co. | Live Taps</title>
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Roboto:wght@300;400&display=swap" rel="stylesheet">
     <style>
         :root { --accent: #ffb400; --bg: #121212; --card: #1e1e1e; --text: #ffffff; }
@@ -23,8 +23,8 @@
         .volume-bar { background: linear-gradient(90deg, #b8860b, var(--accent)); height: 100%; transition: width 1s ease-in-out; }
         .volume-text { position: absolute; width: 100%; text-align: center; top: 7px; font-weight: bold; color: white; text-shadow: 1px 1px 2px black; }
         .rate-btn { background: none; border: 1px solid var(--accent); color: var(--accent); padding: 12px; border-radius: 8px; cursor: pointer; font-family: 'Oswald'; width: 100%; margin-top: 15px; font-size: 1rem; }
-        footer { text-align: center; margin-top: 40px; }
-        footer a { color: #444; text-decoration: none; font-size: 0.9rem; font-family: 'Oswald'; border: 1px solid #333; padding: 5px 15px; border-radius: 5px; }
+        footer { text-align: center; margin-top: 50px; }
+        footer a { color: #444; text-decoration: none; font-size: 0.8rem; border: 1px solid #333; padding: 5px 15px; border-radius: 5px; }
     </style>
 </head>
 <body>
@@ -41,11 +41,11 @@
 <div class="tap-container" id="tap-display"></div>
 
 <footer>
-    <a href="admin.html">Brewery Login</a>
+    <a href="admin_hub.html">Brewery Admin Login</a>
 </footer>
 
 <script>
-    // Ensure this matches the tunnel terminal on your Pi!
+    // Note: Update this if the tunnel restarts!
     const TUNNEL_URL = "https://surround-civilization-constraint-graphic.trycloudflare.com"; 
 
     async function fetchTaps() {
@@ -55,15 +55,17 @@
             const container = document.getElementById('tap-display');
             container.innerHTML = '';
 
-            // We force these 3 to always show
             const hardwareTaps = ["Law Tap", "Wisco Tap", "Nitro Tap"];
 
             hardwareTaps.forEach(id => {
                 const data = taps[id] || {};
                 
+                // Logic to show "Empty" instead of hiding the card
                 const name = data.beer_name || "Empty Tap";
-                const abv  = data.abv || data.beer_abv || "TBD";
-                const desc = data.desc || data.description || "Fresh brew coming soon...";
+                
+                // DATA HUNTER: Looking for any version of ABV/Description in your JSON
+                const abv  = data.abv || data.beer_abv || data.ABV || "0.0%";
+                const desc = data.desc || data.description || "Tapping something new soon...";
                 const img  = data.img || "assets/default.png";
                 const pct  = data.percent || 0;
                 const rate = data.rating || "0.0";
@@ -75,12 +77,10 @@
                             <h2 class="beer-name">${name}</h2>
                             <div class="beer-meta">${abv} ABV | ${id}</div>
                             <p class="desc">${desc}</p>
-                            
                             <div class="volume-container">
                                 <div class="volume-bar" style="width: ${pct}%"></div>
                                 <div class="volume-text">${pct}% REMAINING</div>
                             </div>
-
                             <button class="rate-btn" onclick="submitRating('${id}', 5)">
                                 RATE 5★ (Avg: ${rate})
                             </button>
@@ -92,23 +92,14 @@
     }
 
     async function submitRating(tapId, score) {
-        console.log("Attempting to rate tap:", tapId);
         try {
             const res = await fetch(`${TUNNEL_URL}/rate`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ tap: tapId, rating: score })
             });
-            if (res.ok) { 
-                alert("Cheers! Rating saved."); 
-                fetchTaps(); 
-            } else {
-                alert("Error: Server responded but failed to save.");
-            }
-        } catch (e) { 
-            console.error("Tunnel Error:", e);
-            alert("Rating failed. Make sure the Tunnel terminal is open on the Pi!"); 
-        }
+            if (res.ok) { alert("Cheers! Rating saved."); fetchTaps(); }
+        } catch (e) { alert("Rating failed. Tunnel URL might have changed!"); }
     }
 
     setInterval(fetchTaps, 10000);
