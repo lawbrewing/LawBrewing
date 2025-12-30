@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Law Brewing Admin</title>
+    <style>
+        body { font-family: sans-serif; display: flex; gap: 40px; padding: 20px; background: #f4f4f4; }
+        .box { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); flex: 1; }
+        input, textarea, select { width: 100%; margin-bottom: 10px; padding: 8px; }
+        button { background: #d4a017; border: none; padding: 10px; width: 100%; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="box">
+        <h2>1. Beer Library (Archive)</h2>
+        <input id="name" placeholder="Beer Name">
+        <input id="abv" placeholder="ABV (e.g. 5.2%)">
+        <input id="artwork" placeholder="Artwork Filename (e.g. stout.png)">
+        <textarea id="desc" placeholder="Description"></textarea>
+        <button onclick="saveBeer()">Save to Library</button>
+    </div>
+
+    <div class="box">
+        <h2>2. Assign to Taps</h2>
+        <div id="tap-assigners">
+            <p>Law Tap: <select id="Law-Tap-Select"></select></p>
+            <p>Wisco Tap: <select id="Wisco-Tap-Select"></select></p>
+            <p>Nitro Tap: <select id="Nitro-Tap-Select"></select></p>
+        </div>
+        <button onclick="updateTaps()">Update Active Taps</button>
+    </div>
+
+    <script>
+        const API = "http://YOUR_PI_IP:5000";
+
+        async function loadAdmin() {
+            const res = await fetch(`${API}/get_data`);
+            const data = await res.json();
+            const library = Object.keys(data.library);
+            
+            ['Law Tap', 'Wisco Tap', 'Nitro Tap'].forEach(tap => {
+                const sel = document.getElementById(`${tap.replace(' ', '-')}-Select`);
+                sel.innerHTML = library.map(beer => `<option value="${beer}" ${data.active_taps[tap] === beer ? 'selected' : ''}>${beer}</option>`).join('');
+            });
+        }
+
+        async function saveBeer() {
+            const payload = {
+                beer_name: document.getElementById('name').value,
+                abv: document.getElementById('abv').value,
+                artwork: document.getElementById('artwork').value,
+                desc: document.getElementById('desc').value
+            };
+            await fetch(`${API}/save_to_library`, {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+            location.reload();
+        }
+
+        async function updateTaps() {
+            const taps = ['Law Tap', 'Wisco Tap', 'Nitro Tap'];
+            for (let tap of taps) {
+                const beer = document.getElementById(`${tap.replace(' ', '-')}-Select`).value;
+                await fetch(`${API}/assign_tap`, {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ tap, beer_name: beer })
+                });
+            }
+            alert("Taps Updated!");
+        }
+
+        loadAdmin();
+    </script>
+</body>
+</html>
