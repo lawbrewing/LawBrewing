@@ -34,10 +34,10 @@
     "Nitro Tap": {
         "weight_lbs": 12.4,
         "percent": 6,
-        "temp_f": 38.0,
-        "beer_id": "none",
+        "pints": 2,
+        "growlers": 0,
         "beer_name": "Off Tap",
-        "desc": "",
-        "img": ""
+        "rating": 5.0,
+        "temp_f": 38.0
     }
 }
