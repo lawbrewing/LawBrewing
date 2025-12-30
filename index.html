@@ -43,11 +43,12 @@
 <div class="tap-container" id="tap-display"></div>
 
 <script>
-    const PI_IP = "192.168.86.44"; // <-- UPDATE THIS TO YOUR PI'S IP
+    const PI_IP = "192.168.86.XX"; // YOUR PI IP HERE
 
     async function fetchTaps() {
         try {
-            const response = await fetch('taps.json?t=' + Math.random());
+            // Adding a timestamp to prevent the browser from showing old cached data
+            const response = await fetch('taps.json?t=' + Date.now());
             const taps = await response.json();
             const container = document.getElementById('tap-display');
             container.innerHTML = '';
@@ -56,39 +57,50 @@
 
             hardwareTaps.forEach(id => {
                 const data = taps[id];
-                if (data && data.beer_id !== "none") {
+                
+                // Only build the card if a beer is actually assigned
+                if (data && data.beer_id && data.beer_id !== "none") {
+                    
+                    // FALLBACK LOGIC: If a piece of data is missing, use these defaults
+                    const beerName = data.beer_name || "Unknown Brew";
+                    const abv = data.abv || "TBD";
+                    const description = data.desc || "A Law Brewing original. Cheers!";
+                    const image = data.img || "assets/default.png";
+                    const rating = data.rating || "5.0";
+
                     container.innerHTML += `
                         <div class="beer-card">
-                            <div class="label-art" style="background-image: url('${data.img || 'assets/default.png'}');"></div>
+                            <div class="label-art" style="background-image: url('${image}');"></div>
                             <div class="details">
-                                <h2 class="beer-name">${data.beer_name}</h2>
-                                <div class="abv">${data.abv || 'N/A'} | ${id}</div>
-                                <p class="desc">${data.desc ? data.desc.substring(0, 150) + '...' : 'No description provided.'}</p>
+                                <h2 class="beer-name">${beerName}</h2>
+                                <div class="abv">${abv} | ${id}</div>
                                 
-                                <div class="volume-container">
-                                    <div class="volume-bar" style="width: ${data.percent}%"></div>
-                                    <div class="volume-text">${data.percent}% REMAINING</div>
+                                <p class="desc" style="color: #bbb; font-size: 0.85rem; line-height: 1.4; margin: 15px 0; font-style: italic;">
+                                    ${description}
+                                </p>
+                                
+                                <div class="volume-container" style="background:#000; height:30px; border-radius:15px; position:relative; overflow:hidden; border:1px solid #444;">
+                                    <div class="volume-bar" style="width: ${data.percent}%; background: linear-gradient(90deg, #b8860b, #ffb400); height:100%;"></div>
+                                    <div class="volume-text" style="position:absolute; width:100%; text-align:center; top:5px; font-weight:bold; color:white;">${data.percent}% REMAINING</div>
                                 </div>
 
-                                <div class="stats-grid">
-                                    <div class="stat-box"><span class="stat-val">${data.pints || 0}</span><span class="stat-label">PINTS</span></div>
-                                    <div class="stat-box"><span class="stat-val">${data.growlers || 0}</span><span class="stat-label">GROWLERS</span></div>
+                                <div class="stats-grid" style="display:grid; grid-template-columns: 1fr 1fr; margin-top:15px; border-top:1px solid #333; padding-top:10px;">
+                                    <div><span style="font-size:1.5rem; color:#ffb400; display:block;">${data.pints || 0}</span><span style="font-size:0.7rem; color:#666;">PINTS</span></div>
+                                    <div><span style="font-size:1.5rem; color:#ffb400; display:block;">${data.growlers || 0}</span><span style="font-size:0.7rem; color:#666;">GROWLERS</span></div>
                                 </div>
 
-                                <div class="stars" id="stars-${id}">
-                                    <span onclick="submitRating('${id}', 1)">★</span>
-                                    <span onclick="submitRating('${id}', 2)">★</span>
-                                    <span onclick="submitRating('${id}', 3)">★</span>
-                                    <span onclick="submitRating('${id}', 4)">★</span>
-                                    <span onclick="submitRating('${id}', 5)">★</span>
-                                    <div style="font-size: 0.8rem; color: var(--accent); margin-top:5px;">Rating: ${data.rating || '5.0'} ⭐</div>
+                                <div class="stars" style="margin-top:15px; cursor:pointer; color:#ffb400; font-size:1.2rem;">
+                                    <span onclick="submitRating('${id}', 5)">★★★★★</span>
+                                    <div style="font-size:0.8rem; color:#888;">Avg Rating: ${rating} ⭐</div>
                                 </div>
                             </div>
                         </div>
                     `;
                 }
             });
-        } catch (e) { console.error(e); }
+        } catch (e) {
+            console.error("Critical Taproom Error:", e);
+        }
     }
 
     async function submitRating(tapId, score) {
@@ -98,13 +110,8 @@
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ tap: tapId, rating: score })
             });
-            if (response.ok) {
-                alert("Cheers! Rating submitted.");
-                fetchTaps();
-            }
-        } catch (e) {
-            alert("Connection error. Make sure you are on the brewery Wi-Fi!");
-        }
+            if (response.ok) { alert("Rating Recorded!"); fetchTaps(); }
+        } catch (e) { alert("Please connect to Law Brewing Wi-Fi to rate."); }
     }
 
     setInterval(fetchTaps, 5000);
