@@ -42,55 +42,55 @@
 </div>
 
 <script>
-    async function fetchTaps() {
-        try {
-            const response = await fetch('taps.json?t=' + Date.now());
-            if (!response.ok) throw new Error("File not found");
-            const data = await response.json();
+async function fetchTaps() {
+    try {
+        const response = await fetch('taps.json?t=' + Date.now());
+        const data = await response.json();
+        
+        const container = document.getElementById('tap-display');
+        container.innerHTML = '';
+
+        // This ensures we check all three taps every time
+        const hardwareTaps = ["Law Tap", "Wisco Tap", "Nitro Tap"];
+
+        hardwareTaps.forEach(tapId => {
+            // 1. Find what beer name is assigned to this tap (e.g., "Hacker-Pschorr")
+            const beerName = data.active_taps[tapId];
             
-            const container = document.getElementById('tap-display');
-            container.innerHTML = '';
+            // 2. Get that beer's details from the library
+            const beer = data.library[beerName];
+            
+            // Only show the card if the tap is NOT "Off Tap"
+            if (beer && beerName !== "Off Tap") {
+                const pintsLeft = Math.round((beer.percent / 100) * 40);
+                const growlersLeft = Math.round((beer.percent / 100) * 10);
 
-            // We look at active_taps to see what is pouring
-            for (const [tapId, beerName] of Object.entries(data.active_taps)) {
-                
-                // Pull details from the Library
-                const beer = data.library[beerName];
-                
-                if (beer && beerName !== "Off Tap") {
-                    // Calculate roughly how many pints are left based on weight %
-                    // (Assuming a standard 5gal keg = ~40 pints)
-                    const pintsLeft = Math.round((beer.percent / 100) * 40);
-                    const growlersLeft = Math.round((beer.percent / 100) * 10);
+                container.innerHTML += `
+                    <div class="beer-card">
+                        <div class="label-art" style="background-image: url('images/labels/${beer.artwork}');"></div>
+                        <div class="details">
+                            <h2 class="beer-name">${beerName}</h2>
+                            <div style="font-family: 'Oswald'; color: #888;">${beer.abv} | ${tapId}</div>
+                            <p class="desc">${beer.desc}</p>
+                            
+                            <div class="volume-container">
+                                <div class="volume-bar" style="width: ${beer.percent}%"></div>
+                                <div class="volume-text">${beer.percent}% REMAINING</div>
+                            </div>
 
-                    container.innerHTML += `
-                        <div class="beer-card">
-                            <div class="label-art" style="background-image: url('images/labels/${beer.artwork}');"></div>
-                            <div class="details">
-                                <h2 class="beer-name">${beerName}</h2>
-                                <div style="font-family: 'Oswald'; color: #888;">${beer.abv} | ${tapId}</div>
-                                <p class="desc">${beer.desc}</p>
-                                
-                                <div class="volume-container">
-                                    <div class="volume-bar" style="width: ${beer.percent}%"></div>
-                                    <div class="volume-text">${beer.percent}% REMAINING</div>
-                                </div>
-
-                                <div class="stats-grid">
-                                    <div class="stat-box"><span class="stat-val">~${pintsLeft}</span><span class="stat-label">PINTS</span></div>
-                                    <div class="stat-box"><span class="stat-val">~${growlersLeft}</span><span class="stat-label">GROWLERS</span></div>
-                                </div>
+                            <div class="stats-grid">
+                                <div class="stat-box"><span class="stat-val">~${pintsLeft}</span><span class="stat-label">PINTS</span></div>
+                                <div class="stat-box"><span class="stat-val">~${growlersLeft}</span><span class="stat-label">GROWLERS</span></div>
                             </div>
                         </div>
-                    `;
-                }
+                    </div>
+                `;
             }
-        } catch (err) {
-            console.error("Dashboard error:", err);
-            document.getElementById('tap-display').innerHTML = "<p style='color:red;'>Error Loading Taps. Check taps.json!</p>";
-        }
+        });
+    } catch (err) {
+        console.error("Dashboard error:", err);
     }
-
+}
     setInterval(fetchTaps, 10000);
     fetchTaps();
 </script>
