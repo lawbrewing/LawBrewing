@@ -1,13 +1,15 @@
 {
-    "Nitro Tap": {
-        "weight_lbs": 12.4,
-        "percent": 5,
-        "temp_f": 38.0
+    "Nitro Stout": {
+        "weight": 24.5,
+        "percent": 45
     },
-    "Wisco Tap": {
-        "weight_lbs": 17.01,
-        "percent": 14,
-        "temp_f": 38.0
+    "Law IPA": {
+        "weight": 12.2,
+        "percent": 15
+    },
+    "Wisco Pils": {
+        "weight": 52.0,
+        "percent": 98
     },
     "Law Tap": {
         "weight_lbs": 26.01,

@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Taproom: A Beer Flight Card Game</title>
+    <style>
+        :root {
+            --bg-color: #000000;
+            --text-color: #ffffff;
+            --highlight: #00bcd4;
+            --gold: #ffb300;
+            --danger: #ff4444;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Rye&family=Courier+Prime:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Courier Prime', monospace;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            text-align: center;
+            padding-bottom: 80px;
+            user-select: none;
+        }
+
+        h1, h2, h3 { 
+            font-family: 'Rye', serif;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 10px 0;
+        }
+
+        h1 { font-size: 2em; border-bottom: 2px solid white; display: inline-block; padding-bottom: 10px; line-height: 1.2; margin-top: 30px;}
+
+        /* CONTAINERS */
+        .screen { width: 100%; max-width: 600px; padding: 10px; box-sizing: border-box; display: none; animation: fadeIn 0.5s; }
+        .active-screen { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* BUTTONS */
+        .btn-main {
+            background: #000; color: #fff; border: 2px solid #fff;
+            padding: 15px 25px; font-family: 'Rye', serif; font-size: 1.1em;
+            cursor: pointer; border-radius: 5px; margin: 10px; width: 80%;
+            transition: all 0.2s; text-transform: uppercase;
+        }
+        .btn-main:hover { background: #fff; color: #000; transform: scale(1.02); }
+        
+        .btn-action {
+            background: var(--highlight); color: black; border: 2px solid white;
+            padding: 10px 15px; font-weight: bold; cursor: pointer; margin: 5px;
+            font-family: 'Courier Prime', monospace;
+        }
+        
+        .btn-small { background: #222; color: white; border: 1px solid white; padding: 5px 10px; font-weight: bold; cursor: pointer; }
+
+        select {
+            background: black; color: white; border: 2px solid white; padding: 10px; 
+            font-family: 'Courier Prime'; font-size: 1.1em; margin-bottom: 15px;
+        }
+        
+        #last-call-btn {
+            background: var(--gold); color: black; border: 2px solid white;
+            font-family: 'Rye', serif; font-size: 1.2em; padding: 10px 20px;
+            animation: pulse 1.5s infinite; cursor: pointer; display: none;
+            margin-bottom: 10px; width: 90%;
+        }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+
+        /* OPPONENTS GRID */
+        #opponents-container {
+            display: flex; flex-wrap: wrap; justify-content: center; gap: 5px;
+            margin-bottom: 10px; width: 100%;
+        }
+        
+        .opponent-zone {
+            border: 1px solid #444; padding: 5px; border-radius: 5px;
+            width: 48%; /* Fits 2 per row */
+            transition: border 0.3s;
+        }
+        .opponent-zone.active-turn { border: 2px solid var(--gold); background: #111; }
+        .opponent-zone.targetable { border: 2px solid var(--danger); cursor: pointer; animation: flashRed 1s infinite; }
+        @keyframes flashRed { 0% { border-color: var(--danger); } 50% { border-color: black; } 100% { border-color: var(--danger); } }
+
+        /* PADDLE & FLIGHT VISUALS */
+        .paddle-container {
+            display: flex; align-items: center; justify-content: center;
+            margin: 5px 0; transform-origin: center;
+        }
+        .paddle {
+            background: repeating-linear-gradient(90deg, #5d4037, #5d4037 10px, #4e342e 10px, #4e342e 20px);
+            border: 2px solid #222; border-radius: 10px 0 0 10px;
+            padding: 5px; display: flex; gap: 5px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+            min-height: 60px; min-width: 180px; justify-content: center;
+        }
+        .player-paddle { min-height: 90px; gap: 10px; padding: 10px; min-width: 260px; } /* Larger for player */
+
+        .paddle-handle {
+            width: 20px; height: 30px; background: #4e342e;
+            border-radius: 0 10px 10px 0; border: 2px solid #222; border-left: none;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .hole { width: 6px; height: 6px; background: #000; border-radius: 50%; box-shadow: inset 0 0 3px white;}
+
+        /* BEER GLASS VISUALS */
+        .beer-glass {
+            width: 35px; height: 55px; /* Small default for CPUs */
+            background: var(--beer-color, #f4c542);
+            border: 1px solid rgba(255,255,255,0.6); border-top: none;
+            border-radius: 0 0 6px 6px; position: relative;
+            cursor: pointer; transition: transform 0.2s;
+            display: flex; align-items: center; justify-content: center;
+            color: #000; font-weight: bold; font-family: 'Rye', serif;
+            text-shadow: 0 0 2px white; font-size: 0.8em;
+            box-shadow: inset -3px 0 5px rgba(0,0,0,0.2);
+        }
+        .beer-glass.player-size { width: 50px; height: 80px; font-size: 1.1em; border-width: 2px;} 
+        
+        .beer-glass::before { content: ''; position: absolute; top: -3px; left: 0; right: 0; height: 6px; background: white; border-radius: 5px 5px 0 0; }
+        
+        .beer-label { 
+            background: white; padding: 1px 2px; border-radius: 3px; border: 1px solid black; 
+            font-size: 0.8em; line-height: 1; position: absolute; bottom: 3px;
+            width: 20px; text-align: center;
+        }
+        .suit-red { color: #d32f2f; text-shadow: none; }
+        .suit-black { color: #212121; text-shadow: none; }
+
+        .beer-glass:hover { transform: scale(1.1); }
+        .beer-glass.selected { border: 3px solid var(--highlight); box-shadow: 0 0 15px var(--highlight); transform: translateY(-10px); }
+
+        /* CARDS */
+        .card-container { display: flex; justify-content: center; gap: 5px; flex-wrap: wrap; margin-top: 5px;}
+        .card {
+            width: 60px; height: 90px; background: white; color: black;
+            border-radius: 5px; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; font-weight: bold;
+            cursor: pointer; position: relative; border: 2px solid #ccc;
+        }
+        .card.red { color: #b71c1c; }
+        .card.black { color: #000; }
+        .card.selected { border: 3px solid var(--highlight); box-shadow: 0 0 10px var(--highlight); }
+        .card:hover { transform: translateY(-5px); border-color: black; }
+        
+        .card-corner { position: absolute; top: 2px; left: 4px; font-size: 0.7em; font-family: 'Courier Prime', monospace; line-height: 1; text-align: center; }
+        .card-corner.bottom { top: auto; bottom: 2px; left: auto; right: 4px; transform: rotate(180deg); }
+        
+        /* MODALS & LOG */
+        #log { height: 70px; overflow-y: auto; background: #111; border: 1px solid #fff; padding: 5px; font-size: 0.75em; text-align: left; margin: 5px 0; color: #ccc; }
+        #log div { border-bottom: 1px solid #333; padding: 2px; }
+
+        #king-modal {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: #000; border: 4px solid var(--gold); padding: 20px;
+            z-index: 200; display: none; width: 80%; max-width: 300px;
+            box-shadow: 0 0 50px rgba(0,0,0,0.9);
+        }
+
+        /* SCOREBOARD & FOOTER */
+        #cheat-sheet {
+            position: fixed; bottom: 0; left: 0; right: 0; background: #000;
+            border-top: 2px solid white; padding: 10px; display: none;
+            justify-content: space-around; font-size: 0.7em; z-index: 100;
+        }
+        .legend-item b { color: white; margin-right: 3px; font-family: 'Rye', serif;}
+        .legend-item { color: #ccc; }
+
+        /* MANUAL PAGE */
+        .ref-card { background: white; color: black; padding: 15px; border: 2px solid #ccc; text-align: left; }
+        .ref-table { width: 100%; border-collapse: collapse; margin-top: 5px; font-size: 0.9em; }
+        .ref-table th { border-bottom: 2px solid black; text-align: left; padding: 5px 0;}
+        .ref-table td { border-bottom: 1px solid #ccc; padding: 4px 0; }
+
+        #match-score-board {
+            font-family: 'Rye', serif; color: var(--highlight); font-size: 0.8em;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="cheat-sheet">
+        <div class="legend-item"><b>J</b>Draw2/Disc1</div>
+        <div class="legend-item"><b>Q</b>Rmv Opp</div>
+        <div class="legend-item"><b>K</b>Peek&Swap</div>
+        <div class="legend-item"><b>A</b>Steal</div>
+    </div>
+
+    <div id="landing-screen" class="screen active-screen">
+        <h1>THE TAPROOM</h1>
+        <h3 style="font-size: 1em; margin-top: -10px;">A Beer Flight Card Game</h3>
+        <br><br>
+        <div style="margin: 20px 0;">
+            <label>OPPONENTS:</label><br>
+            <select id="num-opponents">
+                <option value="1">1 CPU (Mara Lawson)</option>
+                <option value="2">2 CPUs (Mara & James)</option>
+                <option value="3">3 CPUs (Mara, James & Pete)</option>
+            </select>
+        </div>
+        <button class="btn-main" onclick="goToManualMode()">Rules & Tools</button>
+        <button class="btn-main" onclick="startNewMatch()">START NEW MATCH</button>
+    </div>
+
+    <div id="manual-screen" class="screen">
+        <button class="btn-main btn-secondary" onclick="goHome()">Back</button>
+        <h2>The Rules</h2>
+        <div class="ref-card">
+            <h3>OBJECTIVE</h3>
+            <p>Win 3 shifts (rounds) to win the match. To win a shift, have the highest scoring flight when Last Call ends.</p>
+            
+            <h3>THE TURN</h3>
+            <ol style="padding-left:20px; margin:5px;">
+                <li><b>1. The Serve:</b> Start with 4 cards. Do ONE:
+                    <ul>
+                        <li><b>Play a Brew (2-10):</b> Place in Flight (Max 4).</li>
+                        <li><b>Play a Patron (J, Q, K, A):</b> Discard for effect.</li>
+                        <li><b>Waste:</b> Discard 1 card from hand.</li>
+                    </ul>
+                </li>
+                <li><b>2. The Pour:</b> Draw cards until you have 4 again.</li>
+            </ol>
+            
+            <h3>THE MENU (Discard for Effect)</h3>
+            <table class="ref-table">
+                <tr><th>Card</th><th>Effect</th></tr>
+                <tr><td><b>Jack</b></td><td>Draw 2, Discard 1.</td></tr>
+                <tr><td><b>Queen</b></td><td>Remove 1 card from opp. Flight.</td></tr>
+                <tr><td><b>King</b></td><td>Peek at random opp card. Keep it or Return it.</td></tr>
+                <tr><td><b>Ace</b></td><td>Steal 1 Brew from opp. Flight.</td></tr>
+            </table>
+        </div>
+    </div>
+
+    <div id="game-screen" class="screen">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <button class="btn-small" onclick="if(confirm('Abandon Match?')) goHome()">EXIT</button>
+            <div id="match-score-board"></div>
+        </div>
+
+        <div id="opponents-container">
+            </div>
+
+        <div id="log"></div>
+        
+        <div id="controls-area" style="background:#000; border: 1px solid white; padding:5px; margin:5px 0;">
+            <div id="turn-indicator" style="font-weight:bold; font-family: 'Rye'; font-size: 1.1em; color: var(--gold);">Starting...</div>
+            <button id="last-call-btn" onclick="triggerLastCall()">🔔 CALL LAST CALL</button>
+            <div id="player-options" style="display:none; margin-top:5px;">
+                <label style="cursor:pointer;"><input type="checkbox" id="waste-mode"> 🗑️ WASTE MODE</label>
+            </div>
+        </div>
+
+        <div style="display:flex; justify-content: space-between; align-items: flex-end; padding: 0 10px;">
+            <div style="font-size:0.8em;">YOUR FLIGHT</div>
+            <div style="font-family:'Rye'; color:var(--gold);">Score: <span id="player-score-val">0</span></div>
+        </div>
+        <div class="paddle-container">
+            <div class="paddle player-paddle" id="player-flight"></div>
+            <div class="paddle-handle"><div class="hole"></div></div>
+        </div>
+
+        <div class="zone" style="border:none; background:transparent;">
+            <div id="player-hand" class="card-container"></div>
+        </div>
+    </div>
+
+    <div id="king-modal">
+        <h3>THE BOUNCER</h3>
+        <p id="king-msg">You caught an opponent!</p>
+        <div id="king-card-reveal" style="display:flex; justify-content:center; margin:15px;"></div>
+        <div style="display:flex; justify-content:space-between;">
+            <button class="btn-action" onclick="kingAction('RETURN')">RETURN IT</button>
+            <button class="btn-action" style="background:var(--gold)" onclick="kingAction('KEEP')">KEEP & SWAP</button>
+        </div>
+    </div>
+
+<script>
+    // --- VISUAL CONFIG ---
+    const SUITS = ['♥', '♦', '♣', '♠'];
+    const RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+    const CPU_NAMES = ["", "Mara Lawson", "James Roberts", "Pinecone Pete"];
+    
+    function getBeerColor(rank) {
+        const r = parseInt(rank);
+        if(isNaN(r)) return '#fff';
+        const colors = {
+            2: '#faf4d4', 3: '#fff59d', 4: '#ffe082', 5: '#ffca28',
+            6: '#ffb300', 7: '#fb8c00', 8: '#8d6e63', 9: '#5d4037', 10: '#212121'
+        };
+        return colors[r] || '#f4c542';
+    }
+
+    // --- NAVIGATION ---
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
+        document.getElementById(id).classList.add('active-screen');
+        const sheet = document.getElementById('cheat-sheet');
+        sheet.style.display = (id === 'game-screen') ? 'flex' : 'none';
+    }
+    function goHome() { showScreen('landing-screen'); }
+    function goToManualMode() { showScreen('manual-screen'); }
+
+    // --- GAME ENGINE ---
+    let players = []; 
+    let deck = [];
+    let currentPlayerIndex = 0;
+    
+    const WIN_TARGET = 3;
+
+    let gameState = "IDLE"; 
+    let lastCallCaller = -1; 
+    let pendingAction = null; 
+    let swapSourceIdx = null;
+    let tempStolenCard = null; 
+    let kingTargetPlayerIdx = -1;
+    let kingRevealedCard = null;
+    let kingRevealedIdx = -1;
+
+    class Card {
+        constructor(r, s) {
+            this.r = r; this.s = s;
+            this.isBrew = !isNaN(parseInt(r));
+            this.val = this.isBrew ? parseInt(r) : 0;
+            this.uid = Math.random().toString(36).substr(2, 9);
+        }
+    }
+
+    class Player {
+        constructor(id, type, name) {
+            this.id = id;
+            this.type = type;
+            this.name = name;
+            this.hand = [];
+            this.flight = [];
+            this.matchWins = 0; // INDIVIDUAL SCORE TRACKING
+        }
+    }
+
+    function startNewMatch() {
+        showScreen('game-screen');
+        const numOpp = parseInt(document.getElementById('num-opponents').value);
+        
+        // Init Players (Reset Match Scores)
+        players = [new Player(0, 'HUMAN', 'You')];
+        for(let i=1; i<=numOpp; i++) {
+            // Assign name based on index
+            let cName = CPU_NAMES[i] || `CPU ${i}`;
+            players.push(new Player(i, 'CPU', cName));
+        }
+
+        updateMatchScoreBoard();
+        startShift();
+    }
+
+    function updateMatchScoreBoard() {
+        // Build dynamic string based on all players
+        let scoreStr = players.map(p => {
+            let label = p.type==='HUMAN' ? 'YOU' : p.name.split(' ')[0].toUpperCase();
+            return `${label}:${p.matchWins}`;
+        }).join(' | ');
+        
+        document.getElementById('match-score-board').innerText = scoreStr;
+    }
+
+    function log(msg) { 
+        const d=document.getElementById('log'); 
+        d.innerHTML += `<div>> ${msg}</div>`; d.scrollTop=d.scrollHeight; 
+    }
+
+    function startShift() {
+        // Deck Re-Init
+        deck=[]; for(let s of SUITS) for(let r of RANKS) deck.push(new Card(r,s));
+        deck.sort(()=>Math.random()-0.5);
+
+        // Deal 4 cards
+        players.forEach(p => {
+            p.hand = []; p.flight = [];
+            for(let i=0; i<4; i++) p.hand.push(deck.pop());
+        });
+
+        lastCallCaller = -1;
+        document.getElementById('log').innerHTML="";
+        log(`Shift Started. First to ${WIN_TARGET} wins.`);
+        
+        renderGame();
+        startTurn(0); 
+    }
+
+    function startTurn(pIdx) {
+        currentPlayerIndex = pIdx;
+        const p = players[pIdx];
+        
+        if(lastCallCaller !== -1 && pIdx === lastCallCaller) {
+            endShift(); return;
+        }
+
+        const turnDiv = document.getElementById('turn-indicator');
+        turnDiv.innerText = p.type === 'HUMAN' ? "YOUR TURN" : `${p.name}'s TURN`;
+        turnDiv.style.color = p.type === 'HUMAN' ? 'var(--gold)' : '#888';
+        
+        document.getElementById('player-options').style.display = 'none';
+        document.getElementById('last-call-btn').style.display = 'none';
+        
+        renderGame();
+
+        if(p.type === 'HUMAN') {
+            gameState = 'PLAY';
+            document.getElementById('player-options').style.display='block';
+            document.getElementById('waste-mode').checked=false;
+            if(p.flight.length === 4 && lastCallCaller === -1) {
+                document.getElementById('last-call-btn').style.display = 'inline-block';
+            }
+        } else {
+            setTimeout(() => cpuAI(pIdx), 1000);
+        }
+    }
+
+    function triggerLastCall() {
+        if(currentPlayerIndex === 0 && players[0].flight.length === 4) {
+            lastCallCaller = 0;
+            log(`🔔 YOU CALLED LAST CALL!`);
+            document.getElementById('last-call-btn').style.display='none';
+            finishTurn();
+        }
+    }
+
+    // --- PLAYER ACTION ---
+    window.cardAction = function(loc, uid) {
+        const human = players[0];
+        if(currentPlayerIndex !== 0) return;
+
+        // SWAP MODE (Hand to Flight)
+        if(loc==='P_FLIGHT' && gameState==='SWAP_TARGET') {
+            const flightIdx = human.flight.findIndex(c => c.uid === uid);
+            const handCard = human.hand[swapSourceIdx];
+            human.hand.splice(swapSourceIdx, 1); 
+            let oldCard = human.flight.splice(flightIdx, 1, handCard)[0];
+            log(`Swapped ${oldCard.r} for ${handCard.r}.`);
+            finishTurn(); return;
+        }
+
+        // ACE SWAP MODE (Stolen Card to Flight)
+        if(loc==='P_FLIGHT' && gameState==='ACE_SWAP_TARGET') {
+            const flightIdx = human.flight.findIndex(c => c.uid === uid);
+            let oldCard = human.flight[flightIdx];
+            human.flight[flightIdx] = tempStolenCard; 
+            log(`Replaced ${oldCard.r} with stolen ${tempStolenCard.r}.`);
+            tempStolenCard = null;
+            finishTurn();
+            return;
+        }
+
+        // TARGET OPPONENT
+        if(loc.startsWith('OPP') && gameState==='TARGET_PLAYER') {
+            let targetId = parseInt(loc.split('_')[1]);
+            if(pendingAction) pendingAction(targetId);
+            return;
+        }
+
+        // TARGET CARD
+        if(loc.startsWith('OPP_CARD') && gameState==='TARGET_CARD') {
+            let parts = loc.split('_');
+            let targetPid = parseInt(parts[2]);
+            let targetCuid = parts[3];
+            if(pendingAction) pendingAction(targetPid, targetCuid);
+            return;
+        }
+
+        // KING GIVE
+        if(loc==='HAND' && gameState==='KING_GIVE') {
+            const idx = human.hand.findIndex(c => c.uid === uid);
+            if(idx === -1) return;
+            let myCard = human.hand.splice(idx, 1)[0];
+            let opp = players[kingTargetPlayerIdx];
+            opp.hand.splice(kingRevealedIdx, 1, myCard); 
+            human.hand.push(kingRevealedCard); 
+            log(`King Trade: Gave ${myCard.r}, took ${kingRevealedCard.r}.`);
+            finishTurn(); return;
+        }
+
+        // NORMAL PLAY
+        if(loc==='HAND' && gameState==='PLAY') {
+            const idx = human.hand.findIndex(c => c.uid === uid);
+            const card = human.hand[idx];
+            
+            if(document.getElementById('waste-mode').checked) {
+                human.hand.splice(idx,1); log(`Wasted ${card.r}${card.s}`); finishTurn(); return;
+            }
+
+            if(card.isBrew) {
+                if(human.flight.length < 4) { 
+                    human.hand.splice(idx,1); human.flight.push(card); 
+                    log(`Poured ${card.r}${card.s}`); finishTurn(); 
+                } else {
+                    swapSourceIdx = idx; gameState = 'SWAP_TARGET';
+                    log("Flight Full. Select beer to REPLACE."); renderGame(); return;
+                }
+            } else {
+                handlePatron(card, idx);
+            }
+        }
+    }
+
+    function handlePatron(c, handIdx) {
+        players[0].hand.splice(handIdx, 1);
+
+        if(c.r==='J') { 
+            if(deck.length) players[0].hand.push(deck.pop());
+            if(deck.length) players[0].hand.push(deck.pop());
+            log("Jack: Draw 2. Discard 1 to finish.");
+            gameState='PLAY'; 
+            document.getElementById('waste-mode').checked = true; 
+            renderGame();
+        }
+        else if(c.r==='Q') {
+            if(getOpponentsWithFlight().length === 0) { log("No targets."); finishTurn(); return; }
+            log("Select an Opponent's Beer to REMOVE.");
+            startTargetingCard((pid, cuid) => {
+                let opp = players[pid];
+                let idx = opp.flight.findIndex(c=>c.uid===cuid);
+                let rem = opp.flight.splice(idx, 1)[0];
+                log(`Barmaid removed ${rem.r} from ${opp.name}.`);
+                finishTurn();
+            });
+        }
+        else if(c.r==='A') {
+             if(getOpponentsWithFlight().length === 0) { log("No targets."); finishTurn(); return; }
+             
+             log("Select an Opponent's Beer to STEAL.");
+             startTargetingCard((pid, cuid) => {
+                let opp = players[pid];
+                let idx = opp.flight.findIndex(c=>c.uid===cuid);
+                let stolen = opp.flight.splice(idx, 1)[0]; // Remove from opp
+
+                if(players[0].flight.length < 4) {
+                    players[0].flight.push(stolen);
+                    log(`Tip Jar stole ${stolen.r} from ${opp.name}.`);
+                    finishTurn();
+                } else {
+                    tempStolenCard = stolen;
+                    gameState = 'ACE_SWAP_TARGET';
+                    log(`Stole ${stolen.r}! Select a card in YOUR flight to replace.`);
+                    renderGame();
+                }
+             });
+        }
+        else if(c.r==='K') {
+            let targets = players.filter(p => p.type === 'CPU');
+            if(targets.length === 1) initKingPeek(targets[0].id);
+            else { log("Select Opponent to Bouncer."); startTargetingPlayer((pid) => initKingPeek(pid)); }
+        }
+    }
+
+    function initKingPeek(pid) {
+        kingTargetPlayerIdx = pid;
+        let opp = players[pid];
+        if(opp.hand.length === 0) { log("Opponent has no hand!"); finishTurn(); return; }
+        kingRevealedIdx = Math.floor(Math.random() * opp.hand.length);
+        kingRevealedCard = opp.hand[kingRevealedIdx];
+        const m = document.getElementById('king-modal');
+        document.getElementById('king-msg').innerText = `You grabbed a card from ${opp.name}...`;
+        document.getElementById('king-card-reveal').innerHTML = renderCardHTML(kingRevealedCard, false);
+        m.style.display = 'block';
+        gameState = 'KING_DECISION';
+    }
+
+    window.kingAction = function(choice) {
+        if(choice === 'RETURN') {
+            log(`Returned the ${kingRevealedCard.r} to ${players[kingTargetPlayerIdx].name}.`);
+            document.getElementById('king-modal').style.display = 'none';
+            finishTurn();
+        } else {
+            gameState = 'KING_GIVE';
+            document.getElementById('king-modal').style.display = 'none';
+            const ind = document.getElementById('turn-indicator');
+            ind.innerText = "SELECT CARD TO GIVE";
+            ind.style.color = "var(--danger)";
+            log("Select a card from your hand to trade.");
+        }
+    }
+
+    function getOpponentsWithFlight() { return players.filter(p => p.type === 'CPU' && p.flight.length > 0); }
+
+    function startTargetingCard(callback) { gameState = 'TARGET_CARD'; pendingAction = callback; renderGame(); }
+    
+    function startTargetingPlayer(callback) { gameState = 'TARGET_PLAYER'; pendingAction = callback; renderGame(); }
+
+    function finishTurn() {
+        const p = players[currentPlayerIndex];
+        while(p.hand.length < 4 && deck.length > 0) {
+            let c = deck.pop(); p.hand.push(c);
+        }
+        gameState = 'IDLE';
+        let nextIdx = (currentPlayerIndex + 1) % players.length;
+        renderGame();
+        startTurn(nextIdx);
+    }
+
+    // --- SMART CPU AI ---
+    function cpuAI(pid) {
+        const cpu = players[pid];
+        let played = false;
+        let myScore = calcScore(cpu.flight);
+        let humanScore = calcScore(players[0].flight);
+
+        if(cpu.flight.length === 4 && lastCallCaller === -1) {
+            let winningScore = 30; 
+            if(myScore >= winningScore && myScore >= humanScore) {
+                lastCallCaller = pid;
+                log(`🔔 ${cpu.name} calls LAST CALL!`);
+                finishTurn();
+                return;
+            }
+        }
+
+        let brewsInHand = cpu.hand.filter(c => c.isBrew).sort((a,b) => b.val - a.val); 
+        let worstInFlight = null;
+        let worstFlightIdx = -1;
+        if(cpu.flight.length > 0) {
+            let sortedFlight = cpu.flight.map((c, i) => ({val: c.val, idx: i})).sort((a,b) => a.val - b.val);
+            worstInFlight = sortedFlight[0]; 
+            worstFlightIdx = sortedFlight[0].idx;
+        }
+
+        if(brewsInHand.length > 0) {
+            let bestBrew = brewsInHand[0];
+            let handIdx = cpu.hand.indexOf(bestBrew);
+
+            if(cpu.flight.length < 4) {
+                cpu.hand.splice(handIdx, 1);
+                cpu.flight.push(bestBrew);
+                log(`${cpu.name} poured ${bestBrew.r}${bestBrew.s}`);
+                played = true;
+            } 
+            else if(worstInFlight && bestBrew.val > worstInFlight.val) {
+                let oldCard = cpu.flight[worstFlightIdx];
+                cpu.flight[worstFlightIdx] = bestBrew;
+                cpu.hand[handIdx] = oldCard; 
+                cpu.hand.splice(handIdx, 1); 
+                log(`${cpu.name} SWAPPED ${oldCard.r} for ${bestBrew.r}`);
+                played = true;
+            }
+        }
+
+        if(!played) {
+            let patronIdx = cpu.hand.findIndex(c => !c.isBrew);
+            if(patronIdx !== -1) {
+                 let pCard = cpu.hand.splice(patronIdx, 1)[0];
+                 if(pCard.r === 'J') { 
+                     if(deck.length) cpu.hand.push(deck.pop());
+                     if(deck.length) cpu.hand.push(deck.pop());
+                     cpu.hand.sort((a,b) => a.val - b.val);
+                     cpu.hand.shift(); 
+                     log(`${cpu.name} played Jack.`);
+                 } else {
+                     log(`${cpu.name} played ${pCard.r} (Effect skipped for speed).`);
+                 }
+                 played = true;
+            }
+        }
+
+        if(!played) {
+            cpu.hand.sort((a,b) => {
+                let vA = a.isBrew ? a.val : 0;
+                let vB = b.isBrew ? b.val : 0;
+                return vA - vB;
+            });
+            let w = cpu.hand.shift();
+            log(`${cpu.name} wasted ${w.r}${w.s}`);
+            played = true;
+        }
+
+        finishTurn();
+    }
+
+    // --- RENDER ---
+    function renderGame() {
+        const human = players[0];
+        const oppContainer = document.getElementById('opponents-container');
+        oppContainer.innerHTML = '';
+        players.forEach(p => {
+            if(p.type === 'HUMAN') return;
+            let isTarget = (gameState === 'TARGET_PLAYER');
+            let html = `
+                <div class="opponent-zone ${currentPlayerIndex===p.id?'active-turn':''} ${isTarget?'targetable':''}" 
+                     onclick="cardAction('OPP_${p.id}', null)">
+                    <div style="font-size:0.8em; display:flex; justify-content:space-between;">
+                        <span>${p.name}</span>
+                        <span style="color:var(--gold)">${calcScore(p.flight)}</span>
+                    </div>
+                    <div class="paddle-container" style="transform:scale(${players.length>2?0.85:1}); margin:0;">
+                        <div class="paddle">
+                            ${p.flight.map(c => renderBeerHTML(c, p.id, true)).join('')}
+                        </div>
+                        <div class="paddle-handle"><div class="hole"></div></div>
+                    </div>
+                </div>`;
+            oppContainer.innerHTML += html;
+        });
+
+        document.getElementById('player-flight').innerHTML = human.flight.map(c => renderBeerHTML(c, 0, false)).join('');
+        document.getElementById('player-hand').innerHTML = human.hand.map((c,i) => renderCardHTML(c, true)).join('');
+        document.getElementById('player-score-val').innerText = calcScore(human.flight);
+    }
+
+    function renderCardHTML(c, interactive) {
+        const isSelected = (gameState==='SWAP_TARGET' && players[0].hand[swapSourceIdx] === c);
+        const click = interactive ? `onclick="cardAction('HAND','${c.uid}')"` : '';
+        return `<div class="card ${['♥','♦'].includes(c.s)?'red':'black'} ${isSelected?'selected':''}" ${click}>
+                    <div class="card-corner">${c.r}<br>${c.s}</div>
+                    <div class="card-corner bottom">${c.r}<br>${c.s}</div>
+                </div>`;
+    }
+
+    function renderBeerHTML(c, pid, isOpp) {
+        const beerColor = getBeerColor(c.r);
+        const isDark = parseInt(c.r) >= 8;
+        const isRed = ['♥','♦'].includes(c.s);
+        let loc = isOpp ? `OPP_CARD_${pid}_${c.uid}` : 'P_FLIGHT';
+        let clickable = false;
+        if(isOpp && gameState === 'TARGET_CARD') clickable = true;
+        
+        // ALLOW CLICKING OWN FLIGHT FOR SWAPPING (HAND) OR ACE UPGRADE
+        if(!isOpp && (gameState === 'SWAP_TARGET' || gameState === 'ACE_SWAP_TARGET')) clickable = true;
+
+        return `<div class="beer-glass ${!isOpp?'player-size':''}" 
+                style="--beer-color:${beerColor}; 
+                       color:${isDark?'white':'black'}; 
+                       text-shadow:${isDark?'0 0 2px black':'0 0 2px white'};
+                       ${clickable ? 'border-color:cyan; box-shadow:0 0 10px cyan;' : ''}"
+                onclick="cardAction('${loc}','${c.uid}')">
+                ${c.r}
+                <div class="beer-label ${isRed?'suit-red':'suit-black'}">${c.s}</div>
+                </div>`;
+    }
+
+    function calcScore(f) {
+        if(!f.length) return 0;
+        let s = f.reduce((a,b)=>a+b.val,0);
+        if(f.length === 4) {
+            const ranks = f.map(c => c.r);
+            if(new Set(ranks).size === 1) s += 20;
+            const suits = f.map(c => c.s);
+            if(new Set(suits).size === 1) s += 10;
+        }
+        return s;
+    }
+
+    function endShift() {
+        players.sort((a,b) => calcScore(b.flight) - calcScore(a.flight));
+        let winner = players[0];
+        
+        // INDIVIDUAL WIN UPDATE
+        winner.matchWins++;
+        updateMatchScoreBoard();
+
+        let msg = `SHIFT OVER\nWinner: ${winner.name} (${calcScore(winner.flight)})\n\n`;
+        msg += `MATCH SCORES:\n`;
+        players.forEach(p => msg += `${p.name}: ${p.matchWins}\n`);
+
+        // CHECK WIN CONDITION
+        if(winner.matchWins >= WIN_TARGET) {
+            setTimeout(() => { 
+                alert(`🏆 MATCH OVER 🏆\n\n${winner.name} WINS THE MATCH!`); 
+                goHome(); 
+            }, 500);
+        } else {
+            // NEXT ROUND
+            setTimeout(() => { 
+                alert(msg + "\n\nClick OK for next shift."); 
+                startShift(); 
+            }, 200);
+        }
+    }
+</script>
+</body>
+</html>

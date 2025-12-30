@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Law Brewing: Tactical Tic Tac Toe</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rye&display=swap" rel="stylesheet">
+    <style>
+        /* --- THEME VARIABLES --- */
+        :root {
+            --law-gold: #cba95d;
+            --law-gold-bright: #ffd700;
+            --law-bg: #0f0f0f;
+            --cell-bg: #141414;
+            --danger: #ff4444;
+            --success: #44ff44;
+            --shop-item-bg: #222;
+            --warning: #ffaa00;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            background-color: var(--law-bg);
+            color: var(--law-gold);
+            font-family: 'Rye', serif;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* --- BACKGROUND SVG --- */
+        #background-logo {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90vmin;
+            height: 90vmin;
+            z-index: 0;
+            opacity: 0.25;
+            pointer-events: none;
+        }
+
+        /* --- UI LAYOUT --- */
+        #game-wrapper {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        .panel {
+            background-color: #1a1a1a;
+            border: 2px solid var(--law-gold);
+            padding: 15px;
+            text-align: center;
+            border-radius: 8px;
+            box-shadow: 0 0 25px rgba(0,0,0,0.8);
+            margin-bottom: 10px;
+            width: 380px;
+        }
+
+        h1 { margin: 0; font-size: 2rem; letter-spacing: 2px; text-shadow: 2px 2px 0 #000; }
+        .subtitle { font-family: 'Georgia', serif; font-size: 0.8rem; color: #888; text-transform: uppercase; margin-bottom: 5px; }
+
+        /* --- HUD --- */
+        #hud-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 10px;
+            font-family: 'Georgia', serif;
+            font-size: 0.85rem;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+        
+        .stat-box { text-align: left; }
+        .stat-box.right { text-align: right; }
+        .currency { color: var(--success); font-weight: bold; font-size: 1.1rem; }
+        .inventory { color: #aaa; font-size: 0.8rem; line-height: 1.4; }
+        .inventory span { color: #fff; font-weight: bold; }
+        .active-buff { color: var(--law-gold); animation: pulse 1s infinite; font-size: 0.8rem; font-weight: bold; margin-top: 2px; }
+
+        #status-text {
+            font-family: 'Georgia', serif;
+            font-size: 1.1rem;
+            color: #ddd;
+            min-height: 1.5em;
+            margin-top: 5px;
+        }
+
+        /* --- BOARD --- */
+        #board {
+            position: relative;
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-template-rows: repeat(3, 100px);
+            gap: 8px;
+            padding: 8px;
+            background-color: #1a1a1a;
+            border: 4px solid var(--law-gold);
+            border-radius: 4px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+        }
+
+        .cell {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            background-color: var(--cell-bg);
+            border: 2px solid #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 4rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            overflow: hidden; 
+            z-index: 1;
+        }
+
+        .cell:hover { background-color: #252525; border-color: var(--law-gold); }
+        .cell.p1 { color: var(--law-gold); text-shadow: 0 0 10px rgba(203, 169, 93, 0.5); }
+        .cell.p2 { color: #888; text-shadow: 0 0 5px rgba(255,255,255,0.2); }
+
+        /* Blocked & Protected Styles */
+        .cell.blocked {
+            background: repeating-linear-gradient(45deg, #222, #222 10px, #b8860b 10px, #b8860b 20px);
+            cursor: not-allowed;
+            opacity: 0.8;
+            border-color: #b8860b;
+        }
+        .cell.blocked::after { content: "BLOCKED"; font-size: 0.8rem; background: #000; color: #fff; padding: 2px 5px; font-weight: bold; }
+
+        .cell.protected { border-color: var(--law-gold-bright); box-shadow: inset 0 0 15px rgba(203, 169, 93, 0.5); }
+        .cell.protected::before {
+            content: ""; position: absolute; width: 80%; height: 80%;
+            border: 2px dashed rgba(255,255,255,0.2); border-radius: 50%; z-index: -1;
+        }
+
+        /* Mode Visuals */
+        .smash-ready .cell[data-occupied="true"]:not(.protected):hover {
+            background-color: rgba(139, 0, 0, 0.6) !important; cursor: crosshair; border-color: #ff4444;
+        }
+        .smash-ready .cell[data-occupied="true"]:not(.protected):hover::after {
+            content: "SMASH!"; position: absolute; font-size: 0.8rem; bottom: 5px; color: #ff4444; background: #000; padding: 2px 4px;
+        }
+        
+        .block-mode-active .cell:not([data-occupied="true"]):not(.blocked):hover {
+            background-color: rgba(255, 170, 0, 0.4) !important; border-color: var(--warning); cursor: alias !important;
+        }
+        .coaster-mode-active .cell:not(.blocked):not(.protected):not(.p2):hover {
+            background-color: rgba(100, 255, 100, 0.2) !important; cursor: copy !important; border-color: #44ff44;
+        }
+
+        /* --- CONTROLS --- */
+        .menu-btn {
+            background: #000;
+            border: 1px solid var(--law-gold);
+            color: var(--law-gold);
+            padding: 8px 12px;
+            font-family: 'Rye', serif;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            transition: 0.2s;
+            margin: 2px;
+            flex-grow: 1;
+        }
+        .menu-btn:hover { background: var(--law-gold); color: #000; }
+        
+        /* Action Button */
+        #action-btn {
+            background: var(--law-gold);
+            color: #000;
+            font-weight: bold;
+            display: none;
+            margin-top: 10px;
+            font-size: 1.1rem;
+            animation: glow 1.5s infinite alternate;
+        }
+        @keyframes glow { from { box-shadow: 0 0 5px var(--law-gold); } to { box-shadow: 0 0 20px var(--law-gold); } }
+
+        .mode-toggle { background: #111; border: 1px solid #444; color: #888; margin-top: 5px; width: 100%; }
+        .mode-toggle.active { background: var(--warning); color: #000; border-color: #fff; box-shadow: 0 0 10px var(--warning); }
+        .mode-toggle.active-blue { background: #4488ff; color: #000; border-color: #fff; box-shadow: 0 0 10px #4488ff; }
+
+        /* --- SHOP MODAL --- */
+        .modal {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.98); z-index: 50; display: flex;
+            flex-direction: column; align-items: center; justify-content: center;
+        }
+        
+        .shop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; max-height: 55vh; overflow-y: auto; padding: 10px; }
+        .shop-item {
+            background: var(--shop-item-bg); border: 1px solid #444; padding: 10px;
+            text-align: center; cursor: pointer; border-radius: 5px; width: 140px;
+            display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+        }
+        .shop-item:hover { border-color: var(--law-gold); }
+        .shop-item h3 { margin: 5px 0; font-size: 0.9rem; }
+        .shop-item .cost { color: var(--success); font-weight: bold; }
+        .shop-item .desc { font-size: 0.7rem; color: #888; font-family: sans-serif; margin-bottom: 5px; }
+        .shop-item.owned { border-color: #666; opacity: 0.7; }
+        
+        /* --- ANIMATIONS --- */
+        .smash-mug { position: absolute; width: 100%; height: 100%; top: 0; left: 0; pointer-events: none; z-index: 10; opacity: 0; }
+        .animate-smash { animation: mugSmash 0.5s ease-out forwards; }
+        @keyframes mugSmash { 0% { transform: scale(3) translateY(-100px) rotate(-20deg); opacity: 0; } 50% { opacity: 1; } 70% { transform: scale(0.9) translateY(0) rotate(5deg); opacity: 1; } 100% { transform: scale(1) rotate(0); opacity: 0; } }
+        .shake-board { animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake { 10%, 90% { transform: translate3d(-2px, 0, 0); } 40%, 60% { transform: translate3d(2px, 0, 0); } }
+        .particle { position: absolute; background: #fff; width: 5px; height: 5px; border-radius: 50%; pointer-events: none; }
+        .splash { animation: splashOut 0.5s ease-out forwards; }
+        @keyframes splashOut { to { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; } }
+        .float-text { position: absolute; font-family: sans-serif; font-weight: bold; font-size: 1.5rem; pointer-events: none; animation: floatUp 1s forwards; z-index: 20; text-shadow: 0 0 3px #000; }
+        @keyframes floatUp { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-50px); opacity: 0; } }
+
+    </style>
+</head>
+<body>
+
+    <svg id="background-logo" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="250" cy="250" r="240" fill="#333" stroke="#000" stroke-width="0" opacity="0.5" />
+        <circle cx="250" cy="250" r="235" fill="none" stroke="#cba95d" stroke-width="2" />
+        <path d="M250,20 L309,198 L490,198 L344,305 L399,480 L250,375 L101,480 L156,305 L10,198 L191,198 Z" fill="none" stroke="#000" stroke-width="8" opacity="0.8"/>
+        <path d="M250,20 L344,305 M250,20 L156,305 M490,198 L156,305 M490,198 L101,480 M399,480 L10,198 M399,480 L191,198 M101,480 L191,198 M10,198 L309,198" fill="none" stroke="#cba95d" stroke-width="3" />
+        <text x="250" y="210" text-anchor="middle" font-family="'Rye', serif" font-size="160" fill="#cba95d" stroke="#000" stroke-width="4" letter-spacing="5">LAW</text>
+        <text x="250" y="340" text-anchor="middle" font-family="'Rye', serif" font-size="65" fill="#cba95d" stroke="#000" stroke-width="2" letter-spacing="8">BREWING</text>
+    </svg>
+
+    <svg style="display: none;">
+        <symbol id="icon-beer-mug" viewBox="0 0 100 100">
+            <path d="M25,20 L30,85 Q30,95 45,95 L65,95 Q80,95 80,85 L85,20 Z" fill="rgba(255, 215, 0, 0.6)" stroke="#cba95d" stroke-width="3" />
+            <path d="M28,30 L31,84 Q31,90 45,90 L65,90 Q79,90 79,84 L82,30 Z" fill="#FFA500" />
+            <path d="M82,35 Q95,35 95,50 Q95,65 80,75" fill="none" stroke="#cba95d" stroke-width="6" stroke-linecap="round" />
+            <path d="M20,20 Q25,10 35,20 Q45,10 55,20 Q65,10 75,20 Q85,10 90,20 L85,25 L25,25 Z" fill="#fff" stroke="#eee" stroke-width="1"/>
+        </symbol>
+    </svg>
+
+    <!-- SHOP MODAL -->
+    <div id="shop-modal" class="modal" style="display: flex;">
+        <div class="panel">
+            <h1>The Bar</h1>
+            <div class="subtitle">Purchase supplies BEFORE the game!</div>
+            <div class="currency" style="margin-bottom: 10px; margin-top:10px;">Wallet: $<span id="shop-cash">50</span></div>
+            <div class="shop-grid" id="shop-container"></div>
+            <button class="menu-btn" style="background: var(--success); color: #000; font-weight: bold; padding: 15px;" onclick="exitShopAndStart()">START GAME</button>
+        </div>
+    </div>
+
+    <div id="game-wrapper">
+        <div class="panel">
+            <h1>Law Brewing</h1>
+            <div class="subtitle">Tactical Tic Tac Toe</div>
+            
+            <div id="hud-grid">
+                <div class="stat-box">
+                    <div>YOU ($<span id="p1-cash">50</span>)</div>
+                    <div class="inventory">
+                        Smash: <span id="p1-smashes">0</span><br>
+                        Block: <span id="p1-blocks">0</span><br>
+                        Coaster: <span id="p1-coasters">0</span>
+                    </div>
+                    <div id="p1-buff" class="active-buff" style="display:none">HAPPY HOUR (<span id="hh-rounds">0</span>)</div>
+                </div>
+                <div class="stat-box right">
+                    <div>CPU ($<span id="p2-cash">50</span>)</div>
+                    <div class="inventory">
+                        <span id="p2-smashes">0</span> :Smash<br>
+                        <span id="p2-blocks">0</span> :Block<br>
+                        <span id="p2-coasters">0</span> :Coaster
+                    </div>
+                </div>
+            </div>
+
+            <div id="status-text">Click Start Game in Bar</div>
+            <button id="action-btn" class="menu-btn" onclick="openBar()">GO TO BAR</button>
+        </div>
+
+        <div id="board">
+            <div class="cell" data-idx="0"></div><div class="cell" data-idx="1"></div><div class="cell" data-idx="2"></div>
+            <div class="cell" data-idx="3"></div><div class="cell" data-idx="4"></div><div class="cell" data-idx="5"></div>
+            <div class="cell" data-idx="6"></div><div class="cell" data-idx="7"></div><div class="cell" data-idx="8"></div>
+        </div>
+        
+        <div style="margin-top: 10px; width: 360px;">
+             <button id="block-toggle-btn" class="menu-btn mode-toggle" onclick="toggleMode('block')">Use Block Token (0)</button>
+             <button id="coaster-toggle-btn" class="menu-btn mode-toggle" onclick="toggleMode('coaster')">Use Coaster (0)</button>
+             
+             <div style="display: flex; gap: 5px; margin-top: 5px;">
+                <button class="menu-btn" onclick="resetGameConfirm()">RESET SAVE</button>
+             </div>
+        </div>
+    </div>
+
+<script>
+    /* --- CONFIGURATION --- */
+    const START_CASH = 50;
+    const WIN_AMT = 5;
+    const LOSE_AMT = 5;
+    const HAPPY_HOUR_ROUNDS = 3;
+    const SKIN_PRICE = 40;
+    
+    const ITEMS = {
+        smash: { id: 'smash', name: "Smash Token", cost: 20, type: 'consumable', desc: "Destroy 1 opponent piece." },
+        coaster: { id: 'coaster', name: "The Coaster", cost: 15, type: 'consumable', desc: "Protect square." },
+        block: { id: 'block', name: "Block Token", cost: 15, type: 'consumable', desc: "Permanently block a square." },
+        happyHour: { id: 'happyHour', name: "Happy Hour", cost: 15, type: 'buff', desc: `Double winnings for ${HAPPY_HOUR_ROUNDS} games.` },
+        skin_snacks: { id: 'skin_snacks', name: "Snacks", cost: SKIN_PRICE, type: 'skin', p1: '🥨', p2: '🥜' },
+        skin_breakfast: { id: 'skin_breakfast', name: "Breakfast", cost: SKIN_PRICE, type: 'skin', p1: '🥓', p2: '🍳' },
+        skin_nature: { id: 'skin_nature', name: "Nature", cost: SKIN_PRICE, type: 'skin', p1: '🌲', p2: '🔥' },
+        skin_elements: { id: 'skin_elements', name: "Elements", cost: SKIN_PRICE, type: 'skin', p1: '☀️', p2: '🌧️' },
+        skin_dinner: { id: 'skin_dinner', name: "Dinner", cost: SKIN_PRICE, type: 'skin', p1: '🍔', p2: '🍕' },
+        skin_law: { id: 'skin_law', name: "The Law", cost: 100, type: 'skin', p1: '⚖️', p2: '👮' }
+    };
+
+    const SKINS_DATA = {};
+    Object.values(ITEMS).forEach(item => { if(item.type === 'skin') SKINS_DATA[item.id] = { p1: item.p1, p2: item.p2 }; });
+    SKINS_DATA['classic'] = { p1: 'X', p2: 'O' };
+
+    // AUDIO
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playTone(freq, type, duration, vol=0.1) {
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+    }
+    const SFX = {
+        clack: () => playTone(300, 'triangle', 0.1, 0.1),
+        smash: () => { playTone(100, 'square', 0.2, 0.2); setTimeout(()=>playTone(50, 'sawtooth', 0.3, 0.2), 50); },
+        block: () => { playTone(150, 'square', 0.4, 0.3); },
+        protect: () => { playTone(600, 'sine', 0.1, 0.1); setTimeout(()=>playTone(800, 'sine', 0.2, 0.1), 100); },
+        win: () => { setTimeout(() => playTone(400, 'sine', 0.2), 0); setTimeout(() => playTone(500, 'sine', 0.2), 150); setTimeout(() => playTone(800, 'square', 0.4), 300); },
+        lose: () => { playTone(200, 'sawtooth', 0.4); setTimeout(() => playTone(150, 'sawtooth', 0.6), 300); },
+        buy: () => { playTone(1200, 'sine', 0.1); setTimeout(()=>playTone(1600, 'sine', 0.1), 80); },
+        error: () => { playTone(150, 'sawtooth', 0.3); }
+    };
+
+    // STATE
+    let state = {
+        board: Array(9).fill(""),
+        protected: Array(9).fill(false),
+        active: false,
+        moves: 0,
+        turn: 'p1',
+        mode: 'normal', 
+        p1: { cash: START_CASH, smashes: 0, blocks: 0, coasters: 0, happyHourRounds: 0, skins: ['classic'], equippedSkin: 'classic' },
+        p2: { cash: START_CASH, smashes: 0, blocks: 0, coasters: 0 } 
+    };
+
+    // DOM
+    const cells = document.querySelectorAll('.cell');
+    const boardEl = document.getElementById('board');
+    const statusTxt = document.getElementById('status-text');
+    const actionBtn = document.getElementById('action-btn');
+    const blockBtn = document.getElementById('block-toggle-btn');
+    const coasterBtn = document.getElementById('coaster-toggle-btn');
+    const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+    let isAnimating = false;
+
+    function init() { 
+        loadData(); 
+        document.getElementById('shop-cash').innerText = state.p1.cash;
+        renderShop();
+        updateHUD();
+    }
+
+    // --- BAR PHASE ---
+    function openBar() {
+        document.getElementById('shop-modal').style.display = 'flex';
+        document.getElementById('shop-cash').innerText = state.p1.cash;
+        renderShop();
+    }
+
+    function exitShopAndStart() {
+        document.getElementById('shop-modal').style.display = 'none';
+        cpuShop();
+        startRound();
+    }
+
+    function cpuShop() {
+        const SAFETY_BUFFER = 25;
+        // CPU Shopping Logic - Conservative buying
+        while (state.p2.cash > SAFETY_BUFFER) {
+            if(Math.random() < 0.3) break; 
+            let available = state.p2.cash - SAFETY_BUFFER;
+            let bought = false;
+            let roll = Math.random();
+
+            if (roll < 0.4 && available >= 20) { state.p2.cash -= 20; state.p2.smashes++; bought = true; } 
+            else if (roll < 0.8 && available >= 15) { state.p2.cash -= 15; state.p2.coasters++; bought = true; } 
+            else if (available >= 15) { state.p2.cash -= 15; state.p2.blocks++; bought = true; }
+
+            if (!bought) break; 
+        }
+    }
+
+    function startRound() {
+        state.board.fill("");
+        state.protected.fill(false);
+        state.active = true;
+        state.moves = 0;
+        state.turn = 'p1';
+        state.mode = 'normal';
+        isAnimating = false;
+        
+        cells.forEach(c => {
+            c.innerText = "";
+            c.className = "cell";
+            c.removeAttribute('data-occupied');
+            c.innerHTML = "";
+        });
+
+        actionBtn.style.display = 'none';
+        updateHUD();
+        
+        statusTxt.innerText = "Your Turn";
+        if(Math.random() > 0.5) {
+            state.turn = 'p2';
+            statusTxt.innerText = "CPU Pouring...";
+            setTimeout(cpuTurn, 800);
+        }
+    }
+
+    // --- GAMEPLAY LOGIC ---
+    function toggleMode(mode) {
+        if (!state.active || state.turn !== 'p1') return;
+        if (state.mode === mode) state.mode = 'normal';
+        else state.mode = mode;
+        updateHUD();
+    }
+
+    function handleCellClick(e) {
+        if (!state.active || state.turn !== 'p1' || isAnimating) return;
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+
+        const idx = parseInt(e.target.getAttribute('data-idx'));
+        if (state.board[idx] === 'blocked') { SFX.error(); return; }
+        const occupied = state.board[idx] !== "";
+        const isMine = state.board[idx] === 'p1';
+
+        if (state.mode === 'block') {
+            if (!occupied) {
+                if (state.p1.blocks > 0) {
+                    state.p1.blocks--;
+                    state.mode = 'normal'; 
+                    executeMove(idx, 'p1', 'block');
+                } else SFX.error();
+            } else SFX.error();
+        } else if (state.mode === 'coaster') {
+            if ((!occupied) || (occupied && isMine)) {
+                if (state.protected[idx]) { SFX.error(); return; }
+                if (state.p1.coasters > 0) {
+                    state.p1.coasters--;
+                    state.mode = 'normal';
+                    executeMove(idx, 'p1', 'protect');
+                } else SFX.error();
+            } else SFX.error();
+        } else {
+            if (!occupied) {
+                executeMove(idx, 'p1', 'place');
+            } else {
+                if (state.p1.smashes > 0 && state.board[idx] === 'p2') {
+                    if (state.protected[idx]) { SFX.error(); return; }
+                    state.p1.smashes--;
+                    executeMove(idx, 'p1', 'smash');
+                } else {
+                    SFX.error();
+                    boardEl.classList.add('shake-board');
+                    setTimeout(()=>boardEl.classList.remove('shake-board'), 300);
+                }
+            }
+        }
+    }
+
+    function executeMove(idx, player, type) {
+        if (type === 'smash') {
+            SFX.smash();
+            showFloatText("SMASH!", idx, '#ff4444');
+            triggerSmashAnim(idx, player);
+        } else if (type === 'block') {
+            SFX.block();
+            showFloatText("BLOCKED!", idx, '#ffaa00');
+            state.board[idx] = 'blocked';
+            const cell = cells[idx];
+            cell.className = 'cell blocked';
+            finalizeMove(idx, player, false);
+        } else if (type === 'protect') {
+            SFX.protect();
+            showFloatText("PROTECTED!", idx, '#ffd700');
+            state.protected[idx] = true;
+            const cell = cells[idx];
+            cell.classList.add('protected');
+            finalizeMove(idx, player, true);
+        } else {
+            SFX.clack();
+            finalizeMove(idx, player, true);
+        }
+        updateHUD();
+    }
+
+    function triggerSmashAnim(idx, player) {
+        isAnimating = true;
+        const cell = cells[idx];
+        const mug = document.createElement('div');
+        mug.className = 'smash-mug animate-smash';
+        mug.innerHTML = `<svg viewBox="0 0 100 100" width="100%" height="100%"><use href="#icon-beer-mug"></use></svg>`;
+        cell.appendChild(mug);
+
+        setTimeout(() => {
+            boardEl.classList.add('shake-board');
+            for(let i=0; i<6; i++) spawnParticle(cell);
+            const visuals = SKINS_DATA[state.p1.equippedSkin];
+            cell.innerText = player === 'p1' ? visuals.p1 : visuals.p2;
+            cell.className = `cell ${player}`;
+        }, 350);
+
+        setTimeout(() => {
+            boardEl.classList.remove('shake-board');
+            cell.innerHTML = "";
+            finalizeMove(idx, player, true);
+        }, 600);
+    }
+
+    function finalizeMove(idx, player, checkWinCondition) {
+        if (state.board[idx] !== 'blocked') {
+            state.board[idx] = player;
+            const cell = cells[idx];
+            const visuals = SKINS_DATA[state.p1.equippedSkin];
+            cell.innerText = player === 'p1' ? visuals.p1 : visuals.p2;
+            cell.className = `cell ${player}`;
+            if (state.protected[idx]) cell.classList.add('protected');
+            cell.setAttribute('data-occupied', 'true');
+        }
+
+        if (checkWinCondition && checkWin(state.board, player)) {
+            endGame(player);
+            return;
+        }
+        
+        const available = state.board.filter(c => c === "").length;
+        if (available === 0) {
+            endGame('draw');
+            return;
+        }
+
+        state.turn = player === 'p1' ? 'p2' : 'p1';
+        isAnimating = false;
+
+        if (state.turn === 'p2') {
+            statusTxt.innerText = "CPU Pouring...";
+            setTimeout(cpuTurn, 800);
+        } else {
+            statusTxt.innerText = "Your Turn";
+        }
+    }
+
+    function endGame(winner) {
+        state.active = false;
+        isAnimating = false;
+        state.mode = 'normal';
+
+        if (winner === 'p1') {
+            SFX.win();
+            let gain = WIN_AMT;
+            if (state.p1.happyHourRounds > 0) { gain *= 2; }
+            state.p1.cash += gain;
+            state.p2.cash -= LOSE_AMT;
+            statusTxt.innerText = `You Win! (+$${gain})`;
+        } else if (winner === 'p2') {
+            SFX.lose();
+            state.p1.cash -= LOSE_AMT;
+            state.p2.cash += WIN_AMT;
+            statusTxt.innerText = `CPU Wins. You lost $${LOSE_AMT}.`;
+        } else {
+            statusTxt.innerText = "Draw.";
+        }
+        
+        if (state.p1.happyHourRounds > 0) state.p1.happyHourRounds--;
+
+        checkBankrupt();
+        saveData();
+        updateHUD();
+    }
+
+    function checkBankrupt() {
+        if (state.p1.cash <= 0) {
+            statusTxt.innerText = "YOU ARE BANKRUPT!";
+            actionBtn.innerText = "NEW GAME";
+        } else if (state.p2.cash <= 0) {
+            statusTxt.innerText = "CPU BANKRUPT! YOU WIN!";
+            actionBtn.innerText = "NEW GAME";
+        } else {
+            actionBtn.innerText = "GO TO BAR";
+        }
+        actionBtn.style.display = 'block';
+    }
+
+    function handleAction() {
+        if (actionBtn.innerText === "NEW GAME") resetGame();
+        else openBar();
+    }
+
+    /* --- AI LOGIC --- */
+    function cpuTurn() {
+        if (!state.active || state.turn !== 'p2') return;
+
+        try {
+            const tactical = getTacticalMove('p2');
+            
+            // 1. Smash Logic
+            if (tactical.action === 'smash') {
+                if (!state.protected[tactical.index] && state.p2.smashes > 0) {
+                    state.p2.smashes--;
+                    showFloatText("CPU SMASH!", 1, '#ff6666');
+                    executeMove(tactical.index, 'p2', 'smash');
+                    return;
+                }
+            }
+            
+            // 2. Coaster Logic
+            if (state.p2.coasters > 0 && state.board[4] === 'p2' && !state.protected[4] && Math.random() < 0.4) {
+                state.p2.coasters--;
+                showFloatText("CPU COASTER!", 4, '#44ff44');
+                executeMove(4, 'p2', 'protect');
+                return;
+            }
+
+            // Fallback: Place
+            if (state.board[tactical.index] !== "") {
+                const emptyIdx = state.board.findIndex(c => c === "");
+                if (emptyIdx !== -1) executeMove(emptyIdx, 'p2', 'place');
+                else endGame('draw'); 
+            } else {
+                executeMove(tactical.index, 'p2', 'place');
+            }
+        } catch (e) {
+            const emptyIdx = state.board.findIndex(c => c === "");
+            if (emptyIdx !== -1) executeMove(emptyIdx, 'p2', 'place');
+        }
+    }
+
+    function getTacticalMove(p) {
+        let opp = p === 'p2' ? 'p1' : 'p2';
+        
+        // Win Now (Place)
+        for(let i=0; i<9; i++) {
+            if(state.board[i]==="") {
+                state.board[i] = p;
+                if(checkWin(state.board, p)) { state.board[i]=""; return {index:i, action:'place'}; }
+                state.board[i]="";
+            }
+        }
+        
+        // Win Now (Smash)
+        if (state.p2.smashes > 0) {
+            for(let i=0; i<9; i++) {
+                if(state.board[i]===opp && !state.protected[i]) {
+                    let tmp=state.board[i]; state.board[i]=p;
+                    if(checkWin(state.board, p)) { state.board[i]=tmp; return {index:i, action:'smash'}; }
+                    state.board[i]=tmp;
+                }
+            }
+        }
+
+        // Block Win (Place)
+        for(let i=0; i<9; i++) {
+            if(state.board[i]==="") {
+                state.board[i]=opp;
+                if(checkWin(state.board, opp)) { state.board[i]=""; return {index:i, action:'place'}; }
+                state.board[i]="";
+            }
+        }
+
+        // Strategic Random
+        let candidates = [];
+        for(let i=0; i<9; i++) {
+            if(state.board[i]==="") candidates.push({idx:i, action:'place'});
+        }
+        
+        if (candidates.length > 0) {
+            if (state.board[4] === "") return {index:4, action:'place'};
+            return candidates[Math.floor(Math.random()*candidates.length)];
+        }
+        
+        // Desperation Smash
+        if (state.p2.smashes > 0) {
+            for(let i=0; i<9; i++) {
+                if(state.board[i]===opp && !state.protected[i]) return {index:i, action:'smash'};
+            }
+        }
+        
+        return {index:0, action:'place'}; 
+    }
+
+    function checkWin(bd, p) {
+        return wins.some(c => bd[c[0]] === p && bd[c[1]] === p && bd[c[2]] === p);
+    }
+
+    /* --- SHOP UI --- */
+    function renderShop() {
+        const container = document.getElementById('shop-container');
+        container.innerHTML = "";
+        
+        Object.values(ITEMS).forEach(item => {
+            const el = document.createElement('div');
+            let isOwned = false;
+            let isEquipped = false;
+            
+            if (item.type === 'skin') {
+                isOwned = state.p1.skins.includes(item.id);
+                isEquipped = state.p1.equippedSkin === item.id;
+            }
+
+            el.className = `shop-item ${isOwned ? 'owned' : ''}`;
+            let visual = "";
+            if (item.type === 'skin') visual = `<div style="font-size:1.5rem">${item.p1} v ${item.p2}</div>`;
+            else if (item.id === 'smash') visual = `<div style="font-size:1.5rem">🍺</div>`;
+            else if (item.id === 'block') visual = `<div style="font-size:1.5rem">🚧</div>`;
+            else if (item.id === 'happyHour') visual = `<div style="font-size:1.5rem">🎉</div>`;
+            else if (item.id === 'coaster') visual = `<div style="font-size:1.5rem">🛡️</div>`;
+            
+            let costText = `$${item.cost}`;
+            if (item.type === 'skin' && isOwned) costText = isEquipped ? "EQUIPPED" : "OWNED";
+
+            el.innerHTML = `
+                ${visual}
+                <h3>${item.name}</h3>
+                <div class="desc">${item.desc || ""}</div>
+                <div class="cost">${costText}</div>
+            `;
+            el.onclick = () => buyItem(item);
+            container.appendChild(el);
+        });
+    }
+
+    function buyItem(item) {
+        if (item.type === 'skin') {
+            if (state.p1.skins.includes(item.id)) { state.p1.equippedSkin = item.id; SFX.clack(); }
+            else if (state.p1.cash >= item.cost) { state.p1.cash -= item.cost; state.p1.skins.push(item.id); state.p1.equippedSkin = item.id; SFX.buy(); }
+            else { SFX.error(); return; }
+        } else {
+            if (state.p1.cash >= item.cost) {
+                state.p1.cash -= item.cost;
+                if(item.id === 'smash') state.p1.smashes++;
+                if(item.id === 'block') state.p1.blocks++;
+                if(item.id === 'coaster') state.p1.coasters++;
+                if(item.id === 'happyHour') state.p1.happyHourRounds += HAPPY_HOUR_ROUNDS;
+                SFX.buy();
+            } else { SFX.error(); return; }
+        }
+        saveData(); renderShop(); updateHUD(); document.getElementById('shop-cash').innerText = state.p1.cash;
+    }
+
+    /* --- DATA & HUD --- */
+    function updateHUD() {
+        document.getElementById('p1-cash').innerText = state.p1.cash;
+        document.getElementById('p2-cash').innerText = state.p2.cash;
+        
+        document.getElementById('p1-smashes').innerText = state.p1.smashes;
+        document.getElementById('p1-blocks').innerText = state.p1.blocks;
+        document.getElementById('p1-coasters').innerText = state.p1.coasters;
+        
+        document.getElementById('p2-smashes').innerText = state.p2.smashes;
+        document.getElementById('p2-blocks').innerText = state.p2.blocks;
+        document.getElementById('p2-coasters').innerText = state.p2.coasters;
+        
+        const hhEl = document.getElementById('p1-buff');
+        if (state.p1.happyHourRounds > 0) { hhEl.style.display = 'block'; document.getElementById('hh-rounds').innerText = state.p1.happyHourRounds; } else { hhEl.style.display = 'none'; }
+
+        if (state.p1.smashes > 0) boardEl.classList.add('smash-ready'); else boardEl.classList.remove('smash-ready');
+        
+        blockBtn.classList.remove('active', 'active-blue');
+        coasterBtn.classList.remove('active', 'active-blue');
+        boardEl.classList.remove('block-mode-active', 'coaster-mode-active');
+
+        blockBtn.innerText = `USE BLOCK (${state.p1.blocks})`;
+        coasterBtn.innerText = `USE COASTER (${state.p1.coasters})`;
+
+        if (state.mode === 'block') {
+             blockBtn.classList.add('active'); blockBtn.innerText = `CANCEL`; boardEl.classList.add('block-mode-active');
+        } else if (state.mode === 'coaster') {
+             coasterBtn.classList.add('active-blue'); coasterBtn.innerText = `CANCEL`; boardEl.classList.add('coaster-mode-active');
+        }
+    }
+
+    function spawnParticle(parent) {
+        const p = document.createElement('div'); p.className = 'particle splash'; p.style.left = '50%'; p.style.top = '50%';
+        const angle = Math.random() * Math.PI * 2; const dist = 50 + Math.random() * 50;
+        p.style.setProperty('--tx', Math.cos(angle) * dist + '%'); p.style.setProperty('--ty', Math.sin(angle) * dist + '%');
+        parent.appendChild(p); setTimeout(() => p.remove(), 500);
+    }
+    
+    function showFloatText(text, idx, color) {
+        const cell = cells[idx]; const el = document.createElement('div'); el.className = 'float-text'; el.innerText = text; el.style.color = color;
+        cell.appendChild(el); setTimeout(() => el.remove(), 1000);
+    }
+
+    function loadData() {
+        const saved = localStorage.getItem('lawBrewingTycoonV8');
+        if (saved) { const parsed = JSON.parse(saved); state.p1 = parsed.p1; state.p2 = parsed.p2; }
+        else { state.p1 = { cash: START_CASH, smashes: 0, blocks: 0, coasters: 0, happyHourRounds: 0, skins: ['classic'], equippedSkin: 'classic' }; state.p2 = { cash: START_CASH, smashes: 0, blocks: 0, coasters: 0 }; }
+    }
+    function saveData() { localStorage.setItem('lawBrewingTycoonV8', JSON.stringify({ p1: state.p1, p2: state.p2 })); }
+    
+    function resetGame() { 
+        localStorage.removeItem('lawBrewingTycoonV8');
+        // Explicit Reset Logic
+        state.p1 = { cash: START_CASH, smashes: 0, blocks: 0, coasters: 0, happyHourRounds: 0, skins: ['classic'], equippedSkin: 'classic' };
+        state.p2 = { cash: START_CASH, smashes: 0, blocks: 0, coasters: 0 };
+        saveData();
+        updateHUD();
+        statusTxt.innerText = "Welcome Back!";
+        openBar();
+    }
+    
+    function resetGameConfirm() { if(confirm("Reset entire progress?")) resetGame(); }
+
+    cells.forEach(c => c.addEventListener('click', handleCellClick));
+    init();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Open Keg Dashboard</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-main: #e0e0e0;
+            --text-muted: #a0a0a0;
+            --beer-gold: #fbb117;
+            --beer-dark: #8c5e00;
+            --alert-red: #cf6679;
+            --success-green: #03dac6;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        h1 { margin-bottom: 20px; font-weight: 300; letter-spacing: 2px; text-transform: uppercase; }
+
+        /* Controls */
+        .controls {
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 20px;
+        }
+        
+        button.icon-btn {
+            background: none;
+            border: 1px solid var(--text-muted);
+            color: var(--text-muted);
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        button.icon-btn:hover { border-color: var(--beer-gold); color: var(--beer-gold); }
+
+        /* Grid */
+        .keg-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        /* Card */
+        .keg-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .keg-visual {
+            height: 150px;
+            background-color: #333;
+            position: relative;
+            width: 100%;
+        }
+
+        .beer-liquid {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(to top, var(--beer-dark), var(--beer-gold));
+            transition: height 1s ease-in-out;
+            opacity: 0.8;
+        }
+
+        .keg-info { padding: 20px; }
+        .keg-name { font-size: 1.2rem; font-weight: bold; margin-bottom: 5px; color: var(--beer-gold); }
+        .keg-stats { display: flex; justify-content: space-between; margin-top: 15px; }
+        .stat-box { text-align: center; }
+        .stat-val { font-size: 1.4rem; font-weight: bold; }
+        .stat-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; }
+
+        /* Settings Modal */
+        #settings-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+        }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; color: var(--text-muted); }
+        input {
+            width: 100%;
+            padding: 10px;
+            background: #121212;
+            border: 1px solid #333;
+            color: white;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .btn-primary {
+            background: var(--beer-gold);
+            color: black;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-weight: bold;
+            width: 100%;
+            cursor: pointer;
+        }
+        
+        .debug-area {
+            margin-top: 20px;
+            padding: 10px;
+            background: #000;
+            color: #0f0;
+            font-family: monospace;
+            font-size: 10px;
+            height: 100px;
+            overflow-y: scroll;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Open Keg <span style="color:var(--beer-gold)">Dashboard</span></h1>
+
+    <div class="controls">
+        <button class="icon-btn" onclick="toggleSettings()">⚙ Settings</button>
+    </div>
+
+    <div id="keg-container" class="keg-grid">
+        <div class="keg-card" style="padding:40px; text-align:center; color: #666;">
+            Waiting for connection...<br>
+            Check settings if no data appears.
+        </div>
+    </div>
+
+    <div id="settings-modal">
+        <div class="modal-content">
+            <h2 style="margin-top:0">Connection Settings</h2>
+            
+            <div class="input-group">
+                <label>Server URL (e.g. http://192.168.1.50:8085)</label>
+                <input type="text" id="server-url" placeholder="http://localhost:8085">
+            </div>
+            
+            <div class="input-group">
+                <label>API Path (Default: /api/kegs)</label>
+                <input type="text" id="api-path" value="/api/kegs">
+            </div>
+
+            <div class="input-group">
+                <label style="display:flex; align-items:center;">
+                    <input type="checkbox" id="show-debug" style="width:auto; margin-right:10px;"> Show Raw Data (Debug)
+                </label>
+            </div>
+
+            <button class="btn-primary" onclick="saveSettings()">Save & Connect</button>
+            <button class="icon-btn" style="width:100%; margin-top:10px; border:none;" onclick="toggleSettings()">Cancel</button>
+            
+            <div id="debug-log" class="debug-area"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- Configuration ---
+        const STORE_KEY = 'plaato_keg_config';
+        let config = {
+            url: 'http://localhost:8085',
+            path: '/api/kegs',
+            debug: false
+        };
+
+        // --- Init ---
+        function init() {
+            const saved = localStorage.getItem(STORE_KEY);
+            if (saved) {
+                config = JSON.parse(saved);
+            }
+            
+            document.getElementById('server-url').value = config.url;
+            document.getElementById('api-path').value = config.path;
+            document.getElementById('show-debug').checked = config.debug;
+            
+            if(config.debug) document.getElementById('debug-log').style.display = 'block';
+
+            fetchData();
+            setInterval(fetchData, 5000); // Auto-refresh every 5s
+        }
+
+        // --- Logic ---
+        async function fetchData() {
+            const fullUrl = `${config.url}${config.path}`;
+            log(`Fetching: ${fullUrl}`);
+
+            try {
+                // Note: fetch() might fail if CORS is not enabled on the server
+                const response = await fetch(fullUrl);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                const data = await response.json();
+                log("Data received: " + JSON.stringify(data));
+                renderKegs(data);
+
+            } catch (err) {
+                log("Error: " + err.message);
+                if (err.message.includes("Failed to fetch")) {
+                    renderError("Connection Failed. Check URL or CORS settings.");
+                }
+            }
+        }
+
+        function renderKegs(data) {
+            const container = document.getElementById('keg-container');
+            container.innerHTML = '';
+
+            // Handle if data is array or object wrapped
+            let kegs = Array.isArray(data) ? data : (data.kegs || []);
+            
+            // If empty/structure unknown, try to display raw
+            if (kegs.length === 0 && Object.keys(data).length > 0) {
+                 // Fallback for single object return
+                 kegs = [data]; 
+            }
+
+            if (kegs.length === 0) {
+                container.innerHTML = '<div class="keg-card" style="padding:20px;">No kegs found.</div>';
+                return;
+            }
+
+            kegs.forEach(keg => {
+                // Mapping fields - "open-plaato-keg" likely uses specific keys, 
+                // but we add fallbacks to be safe
+                const name = keg.name || keg.keg_name || "Unknown Keg";
+                const percent = keg.percent_full || keg.percent || 0;
+                const temp = keg.temperature || keg.temp || 0;
+                const mass = keg.mass || keg.remaining_mass || 0;
+                const unit = keg.unit || "kg"; // Default to kg
+
+                const html = `
+                    <div class="keg-card">
+                        <div class="keg-visual">
+                            <div class="beer-liquid" style="height: ${percent}%"></div>
+                            <div style="position:absolute; bottom:5px; right:10px; font-weight:bold; text-shadow:0 1px 2px black;">
+                                ${percent.toFixed(1)}%
+                            </div>
+                        </div>
+                        <div class="keg-info">
+                            <div class="keg-name">${name}</div>
+                            <div class="keg-stats">
+                                <div class="stat-box">
+                                    <div class="stat-val">${mass.toFixed(2)}</div>
+                                    <div class="stat-label">${unit} Left</div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-val">${temp.toFixed(1)}°</div>
+                                    <div class="stat-label">Temp</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += html;
+            });
+        }
+
+        function renderError(msg) {
+            const container = document.getElementById('keg-container');
+            container.innerHTML = `<div class="keg-card" style="padding:40px; text-align:center; color: var(--alert-red); border: 1px solid var(--alert-red);">${msg}</div>`;
+        }
+
+        // --- Settings / UI ---
+        function toggleSettings() {
+            const modal = document.getElementById('settings-modal');
+            modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+        }
+
+        function saveSettings() {
+            config.url = document.getElementById('server-url').value.replace(/\/$/, ""); // remove trailing slash
+            config.path = document.getElementById('api-path').value;
+            config.debug = document.getElementById('show-debug').checked;
+            
+            localStorage.setItem(STORE_KEY, JSON.stringify(config));
+            
+            document.getElementById('debug-log').style.display = config.debug ? 'block' : 'none';
+            toggleSettings();
+            fetchData();
+        }
+
+        function log(msg) {
+            const debugEl = document.getElementById('debug-log');
+            if (config.debug) {
+                const time = new Date().toLocaleTimeString();
+                debugEl.innerHTML = `[${time}] ${msg}<br>` + debugEl.innerHTML;
+            }
+            console.log(msg);
+        }
+
+        // Start
+        init();
+
+    </script>
+</body>
+</html>

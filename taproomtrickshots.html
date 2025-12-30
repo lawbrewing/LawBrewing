@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Taproom Trickshots</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rye&family=Roboto:wght@700&display=swap" rel="stylesheet">
+    <style>
+        body { margin: 0; padding: 0; background: #000; overflow: hidden; touch-action: none; font-family: 'Rye', serif; user-select: none; -webkit-user-select: none; }
+        canvas { display: block; width: 100%; height: 100%; }
+        
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; z-index: 5; }
+        
+        /* HUD */
+        .hud-top { padding: 15px; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); color: #f2a900; text-shadow: 2px 2px 4px #000; display: flex; justify-content: space-between; align-items: flex-start; }
+        .score-box { font-size: 32px; }
+        .sub-text { font-size: 14px; color: #ccc; font-family: 'Roboto', sans-serif; letter-spacing: 1px; }
+        .mode-indicator { font-size: 20px; color: #fff; text-align: right; text-transform: uppercase; text-shadow: 0 2px 4px #000; }
+        
+        /* BOTTOM CONTROLS */
+        .hud-bottom { padding: 20px; pointer-events: auto; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; background: linear-gradient(to top, rgba(0,0,0,0.95), transparent); }
+        
+        .mode-group { display: flex; gap: 5px; background: rgba(255,255,255,0.05); padding: 5px; border-radius: 8px; backdrop-filter: blur(4px); }
+        .label-txt { color: #aaa; font-family: 'Roboto', sans-serif; font-size: 10px; text-align: center; width: 100%; margin-bottom: 2px; letter-spacing: 1px;}
+
+        .ammo-btn { 
+            background: rgba(0,0,0,0.6); border: 1px solid #555; color: #aaa; 
+            padding: 8px 12px; border-radius: 4px; cursor: pointer; font-family: 'Roboto', sans-serif; font-weight: bold; text-transform: uppercase; font-size: 11px;
+            transition: all 0.2s; text-align: center; min-width: 50px;
+        }
+        .ammo-btn:hover { background: rgba(255,255,255,0.1); }
+        .ammo-btn.active { background: #f2a900; border-color: #fff; color: #000; box-shadow: 0 0 15px rgba(242, 169, 0, 0.4); transform: scale(1.05); }
+        .ammo-btn i { display: block; font-size: 18px; margin-bottom: 2px; font-style: normal; }
+
+        /* START MENU */
+        #menu { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: auto; z-index: 100; }
+        h1 { color: #f2a900; font-size: 50px; margin: 0; text-transform: uppercase; text-shadow: 0 4px 10px #000; text-align: center; line-height: 1.1; }
+        h2 { color: #fff; font-size: 28px; letter-spacing: 2px; margin-bottom: 40px; font-family: 'Rye', serif; text-shadow: 0 2px 10px #000; }
+        
+        #startBtn { 
+            background: linear-gradient(to bottom, #f2a900, #b87333); 
+            border: 3px solid #fff; padding: 20px 60px; font-size: 24px; color: #3e2723; 
+            font-family: 'Rye', serif; cursor: pointer; border-radius: 8px; 
+            box-shadow: 0 8px 0 #2d1b18; transition: transform 0.1s; 
+            text-transform: uppercase;
+        }
+        #startBtn:active { transform: translateY(8px); box-shadow: none; }
+        
+        .hidden { display: none !important; }
+        #debug { position: absolute; bottom: 120px; right: 10px; color: rgba(255,255,255,0.3); font-size: 10px; pointer-events: auto; cursor: pointer; z-index: 20;}
+    </style>
+</head>
+<body>
+
+<div id="ui-layer">
+    <div class="hud-top">
+        <div class="score-box">
+            <div id="scoreDisplay">0</div>
+            <div class="sub-text">SCORE</div>
+        </div>
+        <div class="mode-indicator" id="modeDisplay">
+            Bar Mode
+        </div>
+    </div>
+    
+    <div id="debug" onclick="toggleDebug()">[DEBUG ZONES]</div>
+
+    <div class="hud-bottom">
+        <div class="mode-group">
+            <div class="label-txt">BAR</div>
+            <div class="ammo-btn active" onclick="setMode('cap', this)"><i>⚪</i>Cap</div>
+            <div class="ammo-btn" onclick="setMode('hop', this)"><i>🌿</i>Hop</div>
+            <div class="ammo-btn" onclick="setMode('towel', this)"><i>📜</i>Towel</div>
+        </div>
+        <div class="mode-group">
+            <div class="label-txt">DARTS</div>
+            <div class="ammo-btn" onclick="setMode('dart', this)"><i>🎯</i>Dart</div>
+        </div>
+        <div class="mode-group">
+            <div class="label-txt">POOL</div>
+            <div class="ammo-btn" onclick="setMode('cue', this)"><i>🎱</i>Break</div>
+        </div>
+    </div>
+</div>
+
+<div id="menu">
+    <h1>Law Brewing</h1>
+    <h2>Taproom Trickshots</h2>
+    <button id="startBtn" onclick="startGame()">Open Taproom</button>
+    <p style="color:#aaa; margin-top: 30px; font-family: 'Roboto', sans-serif; font-size: 14px;">Drag & Release to Shoot. Bounce for Points.</p>
+</div>
+
+<canvas id="gameCanvas"></canvas>
+
+<script>
+    const BG_URL = "https://lawbrewing.github.io/LawBrewing/1766033020425~2.jpg";
+
+    // --- CONFIGURATION ---
+    // x,y = top-left percentage (0.0-1.0). w,h = width/height percentage.
+    // Bounce = energy retained (1.0 = super bouncy, 0.5 = thud)
+    const ZONES = {
+        bouncers: [
+            { name:"Ceiling", x:0.0, y:0.0, w:1.0, h:0.1, bounce: 0.8, pts: 50 },
+            { name:"Left Wall", x:0.0, y:0.0, w:0.08, h:1.0, bounce: 0.7, pts: 25 },
+            { name:"Right Wall", x:0.92, y:0.0, w:0.08, h:1.0, bounce: 0.7, pts: 25 },
+            { name:"Bar Top", x:0.0, y:0.72, w:1.0, h:0.28, bounce: 0.6, pts: 10 },
+            { name:"Lamps", x:0.65, y:0.15, w:0.25, h:0.15, bounce: 1.2, pts: 100 }, // High bounce
+            { name:"Pool Table", x:0.55, y:0.65, w:0.4, h:0.35, bounce: 0.9, pts: 50 }
+        ],
+        targets: [
+            // BAR MODE
+            { id:'kettle', req:'hop', x:0.12, y:0.38, w:0.15, h:0.12, type:'hole' }, // Open Kettle Mouth (Left)
+            { id:'tap', req:'towel', x:0.42, y:0.35, w:0.12, h:0.15, type:'hit' },   // Tap Handles (Center-Left)
+            { id:'barGlass', req:'cap', x:0.25, y:0.65, w:0.08, h:0.1, type:'hole' }, // Glass on bar
+
+            // DART MODE
+            { id:'dartboard', req:'dart', x:0.85, y:0.3, w:0.1, h:0.2, type:'stick', center:{x:0.9, y:0.4} },
+
+            // POOL MODE
+            { id:'poolRack', req:'cue', x:0.65, y:0.68, w:0.2, h:0.15, type:'scatter' } 
+        ],
+        // The interactive glass under the tap
+        tapGlass: { x:0.45, y:0.52, w:0.05, h:0.1, full:false } 
+    };
+
+    // --- ENGINE STATE ---
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    let width, height;
+    let bgImage = new Image(); 
+    bgImage.src = BG_URL;
+
+    let score = 0;
+    let currentMode = 'cap'; 
+    
+    let projectiles = [];
+    let particles = [];
+    let poolBalls = []; 
+
+    let isDragging = false;
+    let dragStart = {x:0, y:0}; let dragCurrent = {x:0, y:0};
+    let debugMode = false;
+    let gameLoopId;
+
+    // --- SETUP ---
+    function resize() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize); resize();
+
+    // --- INPUT ---
+    const getPos = (e) => e.touches ? {x:e.touches[0].clientX, y:e.touches[0].clientY} : {x:e.clientX, y:e.clientY};
+    const inputStart = (e) => {
+        // Only allow drag if menu is hidden
+        if(!document.getElementById('menu').classList.contains('hidden')) return;
+        
+        let pos = getPos(e);
+        // Drag area restriction (bottom 40% of screen)
+        if(pos.y > height*0.6) { isDragging=true; dragStart=pos; dragCurrent=pos; }
+    };
+    const inputMove = (e) => { if(isDragging) dragCurrent=getPos(e); };
+    const inputEnd = () => { if(isDragging) { fire(); isDragging=false; } };
+
+    canvas.addEventListener('mousedown', inputStart);
+    canvas.addEventListener('mousemove', inputMove);
+    window.addEventListener('mouseup', inputEnd);
+    canvas.addEventListener('touchstart', (e)=>{ if(e.cancelable) e.preventDefault(); inputStart(e)}, {passive:false});
+    canvas.addEventListener('touchmove', (e)=>{ if(e.cancelable) e.preventDefault(); inputMove(e)}, {passive:false});
+    window.addEventListener('touchend', inputEnd);
+
+    // --- GAMEPLAY FUNCTIONS ---
+    
+    // Made global to ensure button finds it
+    window.startGame = function() {
+        document.getElementById('menu').classList.add('hidden');
+        score = 0; projectiles = []; particles = []; poolBalls = [];
+        ZONES.tapGlass.full = false;
+        updateHUD();
+        if (gameLoopId) cancelAnimationFrame(gameLoopId);
+        gameLoop();
+    }
+
+    window.setMode = function(mode, btnElement) {
+        currentMode = mode;
+        // Update UI
+        document.querySelectorAll('.ammo-btn').forEach(b => b.classList.remove('active'));
+        if(btnElement) btnElement.classList.add('active');
+        
+        let txt = "Bar Mode";
+        if(mode === 'dart') txt = "Dart Precision";
+        if(mode === 'cue') txt = "Pool Break";
+        document.getElementById('modeDisplay').innerText = txt;
+    }
+    
+    // Explicit call to reset UI on load
+    window.setMode('cap', document.querySelector('.ammo-btn.active'));
+
+    function toggleDebug() { debugMode = !debugMode; }
+    function updateHUD() { document.getElementById('scoreDisplay').innerText = score.toLocaleString(); }
+
+    function spawnFloatingText(x, y, text, color='#fff') {
+        particles.push({ x:x, y:y, vx:0, vy:-2, life:60, text:text, color:color, type:'text' });
+    }
+
+    function fire() {
+        const dx = dragStart.x - dragCurrent.x;
+        const dy = dragStart.y - dragCurrent.y;
+        let power = Math.min(Math.sqrt(dx*dx + dy*dy) * 0.015, 1.2); // Cap power
+
+        let p = {
+            x: dragStart.x, y: dragStart.y,
+            vx: dx * 0.22 * power, vy: dy * 0.22 * power,
+            type: currentMode,
+            active: true, scored: false, stuck: false,
+            rotation: 0, rotSpeed: (Math.random()-0.5)*0.4,
+            bounces: 0
+        };
+
+        // Physics Profiles
+        switch(currentMode) {
+            case 'cap': p.r=16; p.g=0.5; p.drag=0.99; p.bounce=0.75; break;
+            case 'hop': p.r=14; p.g=0.3; p.drag=0.97; p.bounce=0.5; break;
+            case 'towel': p.r=22; p.g=0.6; p.drag=0.95; p.bounce=0.2; p.rotSpeed=0.8; break;
+            case 'dart': p.r=5; p.g=0.15; p.drag=0.998; p.bounce=0.1; break; // Fast, straight
+            case 'cue': p.r=18; p.g=0.7; p.drag=0.99; p.bounce=0.85; break; // Heavy
+        }
+        projectiles.push(p);
+    }
+
+    function update() {
+        projectiles.forEach(p => {
+            if (!p.active || p.stuck) return;
+
+            // Physics
+            p.vy += p.g; p.vx *= p.drag; p.vy *= p.drag;
+            p.x += p.vx; p.y += p.vy; p.rotation += p.rotSpeed;
+
+            // Edge checks
+            if (p.x < 0 || p.x > width) p.vx *= -0.8;
+            if (p.y > height + 100) p.active = false;
+
+            // Environment Bouncing
+            ZONES.bouncers.forEach(z => {
+                let bx=z.x*width, by=z.y*height, bw=z.w*width, bh=z.h*height;
+                if (p.x > bx && p.x < bx+bw && p.y > by && p.y < by+bh) {
+                    // Check if actually moving towards the object to prevent sticky-glitch
+                    // Simple check: is it fast enough?
+                    if(Math.abs(p.vx) > 1 || Math.abs(p.vy) > 1) {
+                        // Determine reflection axis (Horizontal vs Vertical hit)
+                        // This is a rough approximation
+                        let overlapX = Math.min(Math.abs(p.x - bx), Math.abs(p.x - (bx+bw)));
+                        let overlapY = Math.min(Math.abs(p.y - by), Math.abs(p.y - (by+bh)));
+
+                        if(overlapX < overlapY) p.vx *= -z.bounce;
+                        else p.vy *= -z.bounce;
+
+                        // Score logic
+                        p.bounces++;
+                        score += z.pts; updateHUD();
+                        spawnFloatingText(p.x, p.y, `+${z.pts}`, '#aaa');
+                        
+                        // Push out
+                        p.x += p.vx; p.y += p.vy;
+                    }
+                }
+            });
+
+            if(p.scored) return;
+
+            // Targets
+            ZONES.targets.forEach(z => {
+                let zx=z.x*width, zy=z.y*height, zw=z.w*width, zh=z.h*height;
+                if (p.x > zx && p.x < zx+zw && p.y > zy && p.y < zy+zh) {
+                    if (p.type === z.req) handleTargetHit(p, z);
+                }
+            });
+        });
+
+        // Particles & Pool Balls update
+        particles.forEach(p => { p.x+=p.vx; p.y+=p.vy; p.life--; });
+        poolBalls.forEach(p => { p.x+=p.vx; p.y+=p.vy; p.vx*=0.98; p.vy*=0.98; p.life--; });
+        
+        // Cleanup
+        particles = particles.filter(p => p.life > 0);
+        poolBalls = poolBalls.filter(p => p.life > 0);
+    }
+
+    function handleTargetHit(p, target) {
+        p.scored = true;
+        let pts = 0; let txt = ""; let color = "#f2a900";
+
+        if (target.type === 'hole' || target.type === 'hit') {
+             pts = 500 * (1+p.bounces); txt = `+${pts}`;
+             p.active = false; 
+             if(target.id === 'tap') ZONES.tapGlass.full = true;
+        }
+        else if (target.type === 'stick') {
+            p.stuck = true; p.vx = 0; p.vy = 0;
+            let cx = target.center.x * width; let cy = target.center.y * height;
+            let dist = Math.sqrt(Math.pow(p.x - cx, 2) + Math.pow(p.y - cy, 2));
+            let maxDist = (target.w*width)/2;
+            
+            if (dist < maxDist * 0.25) { pts = 1000; txt = "BULLSEYE!"; color="#ff5252"; }
+            else if (dist < maxDist * 0.6) { pts = 500; txt = "Ring Hit"; }
+            else { pts = 200; txt = "Board Hit"; }
+        }
+        else if (target.type === 'scatter') {
+            pts = 100; 
+            p.active = false;
+            triggerPoolScatter(p.x, p.y, p.vx, p.vy);
+            txt = "SMASH!";
+        }
+
+        score += pts; updateHUD();
+        spawnFloatingText(p.x, p.y, txt, color);
+    }
+
+    function triggerPoolScatter(x, y, vx, vy) {
+        let colors = ['#e74c3c', '#f1c40f', '#3498db', '#9b59b6', '#e67e22', '#1abc9c', '#34495e'];
+        for(let i=0; i<8; i++) {
+            let ballVx = vx * 0.4 + (Math.random()-0.5)*12;
+            let ballVy = vy * 0.4 + (Math.random()-0.5)*12;
+            poolBalls.push({
+                x: x + (Math.random()-0.5)*30, y: y + (Math.random()-0.5)*30,
+                vx: ballVx, vy: ballVy, r: 16,
+                color: colors[i%colors.length], number: i+1, life: 150
+            });
+            
+            // Random potting
+            if(Math.random() > 0.7) {
+                setTimeout(() => {
+                    score += 250; updateHUD();
+                    spawnFloatingText(width/2, height/2, `Pocket! +250`, '#3498db');
+                }, 600 + Math.random()*800);
+            }
+        }
+    }
+
+    // --- HYPER REALISTIC VECTORS ---
+    
+    function drawCap(ctx, r) {
+        ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2);
+        // Silver Gradient
+        let grad = ctx.createLinearGradient(-r, -r, r, r);
+        grad.addColorStop(0, '#fff'); grad.addColorStop(0.5, '#bbb'); grad.addColorStop(1, '#666');
+        ctx.fillStyle = grad; ctx.fill();
+        
+        // Ridges
+        ctx.strokeStyle = '#555'; ctx.lineWidth = 2;
+        ctx.beginPath();
+        for(let i=0; i<20; i++) {
+            let ang = (i/20) * Math.PI*2;
+            let sx = Math.cos(ang)*(r-2); let sy = Math.sin(ang)*(r-2);
+            let ex = Math.cos(ang)*(r+1); let ey = Math.sin(ang)*(r+1);
+            ctx.moveTo(sx, sy); ctx.lineTo(ex, ey);
+        }
+        ctx.stroke();
+
+        // Logo text
+        ctx.fillStyle='#333'; ctx.font='bold 9px Roboto'; ctx.textAlign='center'; ctx.textBaseline='middle'; 
+        ctx.fillText('LAW', 0, -3); ctx.fillText('BREW', 0, 5);
+    }
+
+    function drawHop(ctx, r) {
+        // Detailed Layered Leaf Look
+        let layers = ['#33691e', '#558b2f', '#7cb342', '#aed581'];
+        for(let i=0; i<4; i++) {
+            let s = r * (1 - i*0.2);
+            ctx.fillStyle = layers[i];
+            ctx.beginPath();
+            ctx.ellipse(0, i*3, s, s*1.2, 0, 0, Math.PI*2);
+            ctx.fill();
+        }
+        // Veins
+        ctx.strokeStyle = "rgba(255,255,255,0.2)"; ctx.lineWidth=1;
+        ctx.beginPath(); ctx.moveTo(0,-r); ctx.lineTo(0,r); ctx.stroke();
+    }
+
+    function drawTowel(ctx, r) {
+        ctx.save();
+        ctx.rotate(Math.PI/4);
+        // Fabric Texture Gradient
+        let grad = ctx.createLinearGradient(-r, -r, r, r);
+        grad.addColorStop(0, '#f5f5f5'); grad.addColorStop(1, '#e0e0e0');
+        ctx.fillStyle = grad;
+        
+        // Rolled shape
+        ctx.beginPath(); 
+        ctx.moveTo(-r, -r/2); 
+        ctx.bezierCurveTo(-r, -r*1.5, r, -r*1.5, r, -r/2); // Top curve
+        ctx.lineTo(r, r); 
+        ctx.bezierCurveTo(r, r*1.5, -r, r*1.5, -r, r); // Bottom curve
+        ctx.closePath();
+        ctx.fill();
+        
+        // Spiral fold lines
+        ctx.strokeStyle = "#bdbdbd"; ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(-r*0.8, -r*0.2); ctx.lineTo(r*0.8, 0);
+        ctx.moveTo(-r*0.8, r*0.4); ctx.lineTo(r*0.8, r*0.6);
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function drawDart(ctx, r) {
+        // Flight
+        ctx.fillStyle = '#d32f2f';
+        ctx.beginPath(); ctx.moveTo(0, -r*3); ctx.lineTo(r, -r*4); ctx.lineTo(0, -r*4.5); ctx.lineTo(-r, -r*4); ctx.fill();
+        // Barrel
+        let grad = ctx.createLinearGradient(-3, -r*3, 3, 0);
+        grad.addColorStop(0, '#aaa'); grad.addColorStop(0.5, '#fff'); grad.addColorStop(1, '#777');
+        ctx.fillStyle = grad;
+        ctx.fillRect(-3, -r*3, 6, r*3);
+        // Tip
+        ctx.fillStyle = '#111';
+        ctx.beginPath(); ctx.moveTo(-1, 0); ctx.lineTo(1, 0); ctx.lineTo(0, r*2); ctx.fill();
+    }
+
+    function drawPoolBall(ctx, r, color, num) {
+        // Main sphere with lighting
+        ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2);
+        let grad = ctx.createRadialGradient(-r*0.4, -r*0.4, 2, 0, 0, r);
+        grad.addColorStop(0, '#fff'); // Specular Highlight
+        grad.addColorStop(0.1, color);
+        grad.addColorStop(1, '#000'); // Shadow
+        ctx.fillStyle = grad; ctx.fill();
+
+        // White circle
+        if(num) {
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            ctx.beginPath(); ctx.arc(0,0,r*0.45,0,Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#000'; ctx.font = 'bold 10px Arial'; 
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(num, 0, 0);
+        }
+    }
+
+    function drawGlass(ctx, x, y, w, h, isFull) {
+        ctx.save(); ctx.translate(x, y);
+        
+        // Glass Material (Subtle transparency)
+        ctx.fillStyle = "rgba(255,255,255,0.1)";
+        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(w*0.15, h); ctx.lineTo(w*0.85, h); ctx.lineTo(w, 0); ctx.fill();
+
+        if(isFull) {
+            // Beer Liquid
+            let beerGrad = ctx.createLinearGradient(0,0,w,0);
+            beerGrad.addColorStop(0, '#f2a900'); beerGrad.addColorStop(0.5, '#ffca28'); beerGrad.addColorStop(1, '#d35400');
+            ctx.fillStyle = beerGrad;
+            ctx.beginPath(); ctx.moveTo(2, 10); ctx.lineTo(w*0.16, h-2); ctx.lineTo(w*0.84, h-2); ctx.lineTo(w-2, 10); ctx.fill();
+            
+            // Foam Head
+            ctx.fillStyle = '#fff';
+            ctx.beginPath(); ctx.ellipse(w/2, 10, w/2-1, 4, 0, 0, Math.PI*2); ctx.fill();
+            // Bubbles
+            ctx.fillStyle = "rgba(255,255,255,0.5)";
+            for(let i=0; i<3; i++) {
+                ctx.beginPath(); ctx.arc(w*0.3 + i*5, h*0.5 + i*8, 1, 0, Math.PI*2); ctx.fill();
+            }
+        }
+
+        // Highlights/Reflections
+        ctx.strokeStyle = "rgba(255,255,255,0.4)"; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(2, 2); ctx.lineTo(w*0.15, h); ctx.stroke();
+        
+        ctx.restore();
+    }
+
+
+    // --- RENDER ---
+    function draw() {
+        ctx.clearRect(0,0,width,height);
+
+        // BG
+        if(bgImage.complete) {
+            let scale = Math.max(width/bgImage.width, height/bgImage.height);
+            let x = (width/2) - (bgImage.width/2)*scale;
+            let y = (height/2) - (bgImage.height/2)*scale;
+            ctx.drawImage(bgImage, x, y, bgImage.width*scale, bgImage.height*scale);
+        } else {
+            ctx.fillStyle = "#111"; ctx.fillRect(0,0,width,height);
+            ctx.fillStyle = "#fff"; ctx.fillText("Loading...", 50, 50);
+        }
+
+        // Draw Interactive Glass
+        let tg = ZONES.tapGlass;
+        drawGlass(ctx, tg.x*width, tg.y*height, tg.w*width, tg.h*height, tg.full);
+
+        // Debug
+        if (debugMode) {
+            ZONES.bouncers.forEach(z => { ctx.strokeStyle='cyan'; ctx.strokeRect(z.x*width, z.y*height, z.w*width, z.h*height); });
+            ZONES.targets.forEach(z => { ctx.strokeStyle='lime'; ctx.strokeRect(z.x*width, z.y*height, z.w*width, z.h*height); });
+        }
+
+        // Draw Projectiles
+        projectiles.forEach(p => {
+            if(!p.active) return;
+            ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rotation);
+            
+            if (p.type === 'cap') drawCap(ctx, p.r);
+            else if (p.type === 'hop') drawHop(ctx, p.r);
+            else if (p.type === 'towel') drawTowel(ctx, p.r);
+            else if (p.type === 'dart') drawDart(ctx, p.r);
+            else if (p.type === 'cue') drawPoolBall(ctx, p.r, '#eee', null);
+            
+            ctx.restore();
+        });
+
+        // Draw Pool Scatter
+        poolBalls.forEach(p => {
+            drawPoolBall(ctx, p.r, p.color, p.number); // Pass position via translate inside?
+            // Actually drawPoolBall assumes 0,0 center, so wrapper needed:
+            ctx.save(); ctx.translate(p.x, p.y);
+            drawPoolBall(ctx, p.r, p.color, p.number);
+            ctx.restore();
+        });
+
+        // Text
+        particles.forEach(p => {
+            if(p.type === 'text') {
+                ctx.save();
+                ctx.fillStyle = p.color; ctx.font = 'bold 24px Roboto'; 
+                ctx.shadowColor = 'black'; ctx.shadowBlur = 4;
+                ctx.textAlign = 'center'; ctx.fillText(p.text, p.x, p.y);
+                ctx.restore();
+            }
+        });
+
+        // Aim Line
+        if (isDragging) {
+            ctx.beginPath(); ctx.moveTo(dragStart.x, dragStart.y); ctx.lineTo(dragCurrent.x, dragCurrent.y);
+            ctx.strokeStyle='rgba(255,255,255,0.6)'; ctx.lineWidth=3; ctx.setLineDash([6,4]); ctx.stroke(); ctx.setLineDash([]);
+        }
+    }
+
+    function gameLoop() { update(); draw(); gameLoopId = requestAnimationFrame(gameLoop); }
+
+</script>
+</body>
+</html>

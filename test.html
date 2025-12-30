@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Law Brewing Co. | Live Taproom</title>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Roboto:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --accent: #ffb400; 
+            --bg: #121212; 
+            --card: #1e1e1e; 
+            --text: #ffffff;
+        }
+
+        body { 
+            background: var(--bg); 
+            color: var(--text); 
+            font-family: 'Roboto', sans-serif; 
+            margin: 0; 
+            padding-bottom: 50px;
+        }
+
+        /* BACKLIT LOGO HEADER */
+        .header-container {
+            text-align: center;
+            padding: 50px 0 30px;
+            background: radial-gradient(circle, #2a2a2a 0%, #121212 80%);
+        }
+
+        .backlit-logo {
+            max-width: 280px;
+            /* Neon Backlit Effect */
+            filter: drop-shadow(0 0 10px rgba(255, 180, 0, 0.5)) 
+                    drop-shadow(0 0 25px rgba(255, 180, 0, 0.2));
+            transition: filter 0.4s ease-in-out;
+        }
+
+        .backlit-logo:hover {
+            filter: drop-shadow(0 0 15px rgba(255, 180, 0, 0.8)) 
+                    drop-shadow(0 0 35px rgba(255, 180, 0, 0.4));
+        }
+
+        .sub-brand {
+            font-family: 'Oswald', sans-serif;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 6px;
+            margin-top: 15px;
+            font-size: 1.5rem;
+        }
+
+        /* TAP GRID */
+        .tap-container { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); 
+            gap: 25px; 
+            max-width: 1100px; 
+            margin: 0 auto; 
+            padding: 20px;
+        }
+
+        .beer-card { 
+            background: var(--card); 
+            border-radius: 20px; 
+            overflow: hidden; 
+            border: 1px solid #333;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .label-art { 
+            width: 100%; 
+            height: 280px; 
+            background-size: cover; 
+            background-position: center; 
+            border-bottom: 3px solid var(--accent); 
+        }
+
+        .details { padding: 25px; }
+
+        .stats { 
+            font-family: 'Oswald', sans-serif; 
+            color: var(--accent); 
+            font-size: 0.9rem; 
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+        }
+
+        .beer-name { 
+            font-family: 'Oswald', sans-serif; 
+            font-size: 1.8rem; 
+            margin: 0 0 10px 0; 
+            text-transform: uppercase;
+        }
+
+        .description { 
+            font-size: 0.95rem; 
+            color: #ccc; 
+            line-height: 1.5; 
+            margin-bottom: 20px; 
+            height: 4.5em;
+            overflow: hidden;
+        }
+
+        /* PROGRESS BAR */
+        .volume-container { 
+            background: #000; 
+            height: 30px; 
+            border-radius: 15px; 
+            position: relative; 
+            overflow: hidden; 
+            border: 1px solid #444;
+        }
+
+        .volume-bar { 
+            background: linear-gradient(90deg, #b8860b, var(--accent)); 
+            height: 100%; 
+            width: 0%; /* Dynamic */
+            transition: width 1.5s cubic-bezier(0.1, 0.7, 1.0, 0.1); 
+        }
+
+        .volume-text { 
+            position: absolute; 
+            width: 100%; 
+            text-align: center; 
+            top: 5px; 
+            font-weight: bold; 
+            font-size: 0.9rem; 
+            color: white;
+            text-shadow: 1px 1px 3px black;
+        }
+
+        /* RATING SECTION */
+        .rating-box {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stars { color: var(--accent); font-size: 1.2rem; cursor: pointer; }
+        .stars:hover { opacity: 0.7; }
+
+    </style>
+</head>
+<body>
+
+    <div class="header-container">
+        <img src="https://github.com/lawbrewing/LawBrewing/blob/main/LBC%20-%20Black%20Transparent%20(1).png?raw=true" 
+             alt="Law Brewing Logo" 
+             class="backlit-logo">
+        <div class="sub-brand">Liquid Attitude Taps</div>
+    </div>
+
+    <div class="tap-container">
+        
+        <div class="beer-card">
+            <div class="label-art" style="background-image: url('assets/nitro_stout.png');"></div>
+            <div class="details">
+                <div class="stats">ABV: 5.4% | IBU: 25 | SRM: 40</div>
+                <h2 class="beer-name">Nitro Milk Stout</h2>
+                <p class="description">Velvety smooth with notes of roasted coffee and dark chocolate. A creamy, nitrogen-poured classic.</p>
+                
+                <div class="volume-container">
+                    <div id="nitro-bar" class="volume-bar"></div>
+                    <div id="nitro-text" class="volume-text">WAITING FOR SCALE...</div>
+                </div>
+                
+                <div class="rating-box">
+                    <span>Rate Brew:</span>
+                    <div class="stars">★★★★★</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="beer-card">
+            <div class="label-art" style="background-image: url('assets/law_ipa.png');"></div>
+            <div class="details">
+                <div class="stats">ABV: 6.8% | IBU: 65 | SRM: 7</div>
+                <h2 class="beer-name">The Law IPA</h2>
+                <p class="description">A bold, west-coast style IPA featuring heavy citrus and pine notes. The sheriff of our taproom.</p>
+                
+                <div class="volume-container">
+                    <div id="ipa-bar" class="volume-bar"></div>
+                    <div id="ipa-text" class="volume-text">WAITING FOR SCALE...</div>
+                </div>
+                
+                <div class="rating-box">
+                    <span>Rate Brew:</span>
+                    <div class="stars">★★★★★</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Use a cache-buster so the browser doesn't keep old weight data
+        async function fetchWeights() {
+            try {
+                const response = await fetch('taps.json?t=' + new Date().getTime());
+                const data = await response.json();
+                
+                // Update Nitro Tap
+                if(data["Nitro Tap"]) {
+                    const n = data["Nitro Stout"];
+                    document.getElementById('nitro-bar').style.width = n.percent + '%';
+                    document.getElementById('nitro-text').innerText = n.percent + '% REMAINING';
+                }
+
+                // Update IPA Tap
+                if(data["Law Tap"]) {
+                    const i = data["Law IPA"];
+                    document.getElementById('ipa-bar').style.width = i.percent + '%';
+                    document.getElementById('ipa-text').innerText = i.percent + '% REMAINING';
+                }
+            } catch (err) {
+                console.log("Waiting for Pi to upload taps.json...");
+            }
+        }
+
+        // Refresh every 30 seconds
+        setInterval(fetchWeights, 30000);
+        fetchWeights();
+    </script>
+</body>
+</html>

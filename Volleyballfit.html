@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Volleyball Functional Trainer</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --secondary: #1e40af;
+            --bg: #f3f4f6;
+            --card-bg: #ffffff;
+            --text: #1f2937;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 0; /* Remove body padding to allow sticky header to touch edges */
+            padding-bottom: 50px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* STICKY HEADER CONTAINER */
+        .header-container {
+            position: sticky;
+            top: 0;
+            background-color: var(--bg);
+            z-index: 1000;
+            padding: 20px 20px 10px 20px;
+            border-bottom: 1px solid #e5e7eb;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 { 
+            text-align: center; 
+            color: var(--secondary); 
+            margin: 0 0 15px 0; 
+            font-size: 1.5rem;
+        }
+        
+        /* Navigation Tabs */
+        .tabs { display: flex; gap: 10px; justify-content: center; }
+        .tab-btn {
+            padding: 10px 15px;
+            border: none;
+            background: #d1d5db;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            flex: 1;
+            transition: background 0.2s;
+        }
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Content Sections */
+        .content-wrapper { padding: 20px; }
+        .day-section { display: none; }
+        .day-section.active { display: block; animation: fadeIn 0.3s; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Exercise Card */
+        .card {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+            border-left: 5px solid var(--primary);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .ex-name { font-size: 1.1em; font-weight: bold; }
+        .video-link {
+            font-size: 0.8em;
+            color: var(--primary);
+            text-decoration: none;
+            border: 1px solid var(--primary);
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .details { font-size: 0.9em; color: #555; margin-bottom: 10px; }
+        
+        /* Set Counter */
+        .set-tracker {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+            background: #f9fafb;
+            padding: 8px;
+            border-radius: 6px;
+        }
+        .set-bubble {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            border: 2px solid #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 0.9em;
+            background: white;
+            user-select: none;
+            transition: all 0.2s;
+        }
+        .set-bubble.done {
+            background: var(--success);
+            border-color: var(--success);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        /* Timer Section */
+        .timer-box {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .timer-display {
+            font-family: monospace;
+            font-size: 1.3em;
+            font-weight: bold;
+            width: 70px;
+            text-align: center;
+        }
+        .timer-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        .timer-input {
+            width: 50px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        /* Cardio Section */
+        .cardio-box {
+            background: #e0e7ff;
+            border-left: 5px solid #4338ca;
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+        select, textarea {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+
+        /* Reset Button */
+        .reset-btn {
+            display: block;
+            width: 100%;
+            margin-top: 40px;
+            padding: 15px;
+            background: #ef4444; /* Red */
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="header-container">
+        <h1>🏐 Volleyball Fit</h1>
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showDay('day1')">Day 1</button>
+            <button class="tab-btn" onclick="showDay('day2')">Day 2</button>
+            <button class="tab-btn" onclick="showDay('day3')">Day 3</button>
+        </div>
+    </div>
+
+    <div class="content-wrapper">
+        <div id="day1" class="day-section active">
+            <h3>Lower Body Power & Agility</h3>
+            <div id="day1-container"></div>
+            
+            <div class="cardio-box">
+                <h3>🫀 Cardio Finisher</h3>
+                <label><strong>Select Equipment:</strong></label>
+                <select id="cardio1-select" onchange="updateCardioDetails('cardio1')">
+                    <option value="Elliptical">Elliptical (Intervals)</option>
+                    <option value="Hoop">Infinity Hoop (Continuous)</option>
+                    <option value="None">No Equipment (High Knees/Jog)</option>
+                </select>
+                <br><br>
+                <label><strong>Plan (Editable):</strong></label>
+                <textarea id="cardio1-text" rows="3" oninput="saveData('cardio1-text', this.value)">Elliptical: 10 rounds of [30 sec HARD / 30 sec EASY]. Focus on leg drive.</textarea>
+                
+                <div class="timer-box">
+                    <input type="number" id="cardio1-time" class="timer-input" value="30"> sec
+                    <button class="timer-btn" onclick="startTimer('cardio1-timer', 'cardio1-time')">Start</button>
+                    <span id="cardio1-timer" class="timer-display">00:30</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="day2" class="day-section">
+            <h3>Upper Body Stability & Core</h3>
+            <div id="day2-container"></div>
+
+            <div class="cardio-box">
+                <h3>🫀 Cardio Finisher</h3>
+                <label><strong>Select Equipment:</strong></label>
+                <select id="cardio2-select" onchange="updateCardioDetails('cardio2')">
+                    <option value="Elliptical">Elliptical (Steady State)</option>
+                    <option value="Hoop">Infinity Hoop (Rhythm)</option>
+                    <option value="None">No Equipment (Shadow Boxing)</option>
+                </select>
+                <br><br>
+                <label><strong>Plan (Editable):</strong></label>
+                <textarea id="cardio2-text" rows="3" oninput="saveData('cardio2-text', this.value)">Elliptical: 15 minutes at moderate pace. Keep hands on moving handles.</textarea>
+                
+                <div class="timer-box">
+                    <input type="number" id="cardio2-time" class="timer-input" value="900"> sec
+                    <button class="timer-btn" onclick="startTimer('cardio2-timer', 'cardio2-time')">Start</button>
+                    <span id="cardio2-timer" class="timer-display">15:00</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="day3" class="day-section">
+            <h3>Full Body MetCon</h3>
+            <p style="font-size:0.9em; color:#666;">Circuit: No rest between exercises. Rest 90s after full round.</p>
+            <div id="day3-container"></div>
+
+            <div class="cardio-box">
+                <h3>🫀 Cardio Finisher</h3>
+                <label><strong>Select Equipment:</strong></label>
+                <select id="cardio3-select" onchange="updateCardioDetails('cardio3')">
+                    <option value="Elliptical">Elliptical (Sprints)</option>
+                    <option value="Hoop">Infinity Hoop (Speed Intervals)</option>
+                    <option value="None">No Equipment (Suicide Drills)</option>
+                </select>
+                <br><br>
+                <label><strong>Plan (Editable):</strong></label>
+                <textarea id="cardio3-text" rows="3" oninput="saveData('cardio3-text', this.value)">Elliptical: Go MAX EFFORT for 1 minute, rest 1 minute. Repeat 5 times.</textarea>
+                
+                <div class="timer-box">
+                    <input type="number" id="cardio3-time" class="timer-input" value="60"> sec
+                    <button class="timer-btn" onclick="startTimer('cardio3-timer', 'cardio3-time')">Start</button>
+                    <span id="cardio3-timer" class="timer-display">01:00</span>
+                </div>
+            </div>
+        </div>
+
+        <button class="reset-btn" onclick="resetWeek()">⚠️ Reset Week (Clear All)</button>
+    </div>
+
+    <script>
+        // --- DATA ---
+        const workouts = {
+            day1: [
+                { name: "Goblet Squat (Pulse)", sets: 3, reps: "15-20", note: "12lb. Pulse at bottom.", timer: 60 },
+                { name: "Single-Leg RDL", sets: 3, reps: "12/leg", note: "10-12lb. Flat back.", timer: 60 },
+                { name: "Lateral Lunges", sets: 3, reps: "12/leg", note: "Bodyweight. Step wide.", timer: 0 },
+                { name: "Jump Squats", sets: 4, reps: "10", note: "Explosive up. Soft landing.", timer: 45 },
+                { name: "Calf Raises", sets: 3, reps: "25", note: "Hold both 12lb DBs.", timer: 0 },
+                { name: "Wall Sits", sets: 3, reps: "45 sec", note: "Isometric hold.", timer: 45 }
+            ],
+            day2: [
+                { name: "Push-Ups", sets: 3, reps: "Failure", note: "Elbows at 45 degrees.", timer: 60 },
+                { name: "Single-Arm Overhead Press", sets: 3, reps: "15/arm", note: "12lb. Tight core.", timer: 60 },
+                { name: "Y-T-W Raises", sets: 3, reps: "10 each", note: "3-5lb. Bent over.", timer: 0 },
+                { name: "Bent Over Rows", sets: 4, reps: "20", note: "12lb. Squeeze back.", timer: 60 },
+                { name: "Russian Twists", sets: 3, reps: "30 total", note: "12lb. Feet up.", timer: 45 },
+                { name: "Woodchoppers", sets: 3, reps: "15/side", note: "10-12lb. Hip to shoulder.", timer: 0 }
+            ],
+            day3: [
+                { name: "Kettlebell Swings", sets: 4, reps: "25", note: "12lb. Snap hips.", timer: 0 },
+                { name: "DB Thrusters", sets: 4, reps: "15", note: "10-12lb. Squat to Press.", timer: 0 },
+                { name: "Mountain Climbers", sets: 4, reps: "45 sec", note: "Fast pace.", timer: 45 },
+                { name: "Renegade Rows", sets: 4, reps: "10/arm", note: "Pushup position row.", timer: 0 },
+                { name: "Burpees", sets: 4, reps: "10", note: "Chest to floor.", timer: 0 },
+                { name: "Plank Hold", sets: 4, reps: "60 sec", note: "Stable core.", timer: 60 }
+            ]
+        };
+
+        // --- RENDER LOGIC ---
+
+        function renderWorkouts() {
+            for (const [day, exercises] of Object.entries(workouts)) {
+                const container = document.getElementById(`${day}-container`);
+                container.innerHTML = exercises.map((ex, index) => {
+                    // Video Link
+                    const videoQuery = `how to do ${ex.name} exercise`;
+                    const videoUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(videoQuery)}`;
+                    
+                    // Set Bubbles
+                    let setBubbles = '';
+                    for(let i=0; i<ex.sets; i++) {
+                        const bubbleId = `${day}-ex${index}-set${i}`;
+                        setBubbles += `<div id="${bubbleId}" class="set-bubble" onclick="toggleSet('${bubbleId}')">${i+1}</div>`;
+                    }
+
+                    // Timer HTML
+                    const defaultTime = ex.timer > 0 ? ex.timer : 60;
+                    const label = ex.timer > 0 && (ex.name.includes("Hold") || ex.name.includes("Sit") || ex.name.includes("Climber")) ? "Duration" : "Rest";
+                    
+                    return `
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="ex-name">${ex.name}</div>
+                                <a href="${videoUrl}" target="_blank" class="video-link">🎥 Video</a>
+                            </div>
+                            <div class="details">
+                                <strong>${ex.sets} Sets</strong> x <strong>${ex.reps}</strong> <br>
+                                <em>${ex.note}</em>
+                            </div>
+                            <div class="set-tracker">
+                                <span style="font-size:0.8em; font-weight:bold;">Sets:</span>
+                                ${setBubbles}
+                            </div>
+                            <div class="timer-box">
+                                <span style="font-size:0.8em; color:#666; margin-right:5px;">${label}:</span>
+                                <input type="number" id="timer-input-${day}-${index}" class="timer-input" value="${defaultTime}"> s
+                                <button class="timer-btn" onclick="startTimer('timer-display-${day}-${index}', 'timer-input-${day}-${index}')">Start</button>
+                                <span id="timer-display-${day}-${index}" class="timer-display">${formatTime(defaultTime)}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+            loadSavedData();
+        }
+
+        // --- SAVING & PERSISTENCE (LocalStorage) ---
+
+        function toggleSet(id) {
+            const el = document.getElementById(id);
+            el.classList.toggle('done');
+            saveData(id, el.classList.contains('done'));
+        }
+
+        function saveData(key, value) {
+            localStorage.setItem('vb-workout-' + key, JSON.stringify(value));
+        }
+
+        function loadSavedData() {
+            // Load Sets
+            const allBubbles = document.querySelectorAll('.set-bubble');
+            allBubbles.forEach(b => {
+                const saved = JSON.parse(localStorage.getItem('vb-workout-' + b.id));
+                if (saved === true) b.classList.add('done');
+            });
+
+            // Load Cardio Notes
+            ['cardio1-text', 'cardio2-text', 'cardio3-text'].forEach(id => {
+                const saved = JSON.parse(localStorage.getItem('vb-workout-' + id));
+                if (saved) document.getElementById(id).value = saved;
+            });
+        }
+
+        function resetWeek() {
+            if(confirm("Are you sure you want to clear all progress?")) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        // --- TAB LOGIC ---
+        function showDay(dayId) {
+            document.querySelectorAll('.day-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(dayId).classList.add('active');
+            if(event) event.target.classList.add('active');
+        }
+
+        // --- TIMER LOGIC (DELTA TIME) ---
+        // This fixes the issue where timers lose accuracy when phone sleeps
+        let activeIntervals = {};
+
+        function formatTime(seconds) {
+            if (seconds < 0) return "00:00";
+            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const s = (seconds % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        function startTimer(displayId, inputId) {
+            // Clear existing timer
+            if (activeIntervals[displayId]) clearInterval(activeIntervals[displayId]);
+
+            const display = document.getElementById(displayId);
+            const input = document.getElementById(inputId);
+            const duration = parseInt(input.value);
+
+            // Calculate End Time (Current Time + Duration)
+            const endTime = Date.now() + (duration * 1000);
+
+            // Update immediately
+            display.innerText = formatTime(duration);
+            display.style.color = "var(--primary)";
+
+            activeIntervals[displayId] = setInterval(() => {
+                // Calculate remaining time based on Clock Time, not just decrementing
+                const now = Date.now();
+                const timeLeft = Math.ceil((endTime - now) / 1000);
+
+                display.innerText = formatTime(timeLeft);
+
+                if (timeLeft <= 0) {
+                    clearInterval(activeIntervals[displayId]);
+                    display.innerText = "DONE";
+                    display.style.color = "var(--danger)";
+                    // Optional: Vibrate if supported
+                    if (navigator.vibrate) navigator.vibrate(200); 
+                }
+            }, 500); // Check every 500ms for smoothness
+        }
+
+        // --- CARDIO LOGIC ---
+        function updateCardioDetails(id) {
+            const select = document.getElementById(`${id}-select`);
+            const text = document.getElementById(`${id}-text`);
+            const val = select.value;
+
+            let newText = "";
+            if (id === 'cardio1') {
+                if (val === 'Elliptical') newText = "Elliptical: 10 rounds of [30 sec HARD / 30 sec EASY]. Focus on leg drive.";
+                if (val === 'Hoop') newText = "Infinity Hoop: Spin continuously for 30 sec, rest 30 sec. 10 Rounds. Switch spin direction halfway.";
+                if (val === 'None') newText = "No Equipment: High Knees or Jog in Place. 30 sec ON / 30 sec OFF. 10 Rounds.";
+            } else if (id === 'cardio2') {
+                if (val === 'Elliptical') newText = "Elliptical: 15 minutes at moderate pace. Keep hands on moving handles for upper body work.";
+                if (val === 'Hoop') newText = "Infinity Hoop: 15 minutes steady rhythm. Try to maintain constant speed.";
+                if (val === 'None') newText = "No Equipment: Shadow Boxing. Keep feet moving, throw constant light punches. 15 mins.";
+            } else if (id === 'cardio3') {
+                if (val === 'Elliptical') newText = "Elliptical: Go MAX EFFORT for 1 minute, rest 1 minute. Repeat 5 times.";
+                if (val === 'Hoop') newText = "Infinity Hoop: Speed Intervals. Spin as fast as possible for 1 min, slow spin for 1 min.";
+                if (val === 'None') newText = "No Equipment: Suicide Drills. Sprint 10 ft and back, 20 ft and back. 1 min on / 1 min rest.";
+            }
+            
+            text.value = newText;
+            saveData(`${id}-text`, newText);
+        }
+
+        // Initialize
+        renderWorkouts();
+
+    </script>
+</body>
+</html>

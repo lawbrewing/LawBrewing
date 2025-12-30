@@ -1,0 +1,2381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Law Brewing Defender: The Sheriff of Taps</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Rye&family=Roboto+Slab:wght@400;700&display=swap');
+
+        body {
+            background-color: #1a1a1a;
+            color: white;
+            font-family: 'Roboto Slab', serif;
+            overflow: hidden;
+            touch-action: none; 
+            user-select: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle at center, #2a2a2a 0%, #000000 100%);
+            overflow: hidden;
+        }
+
+        /* --- Background Logo --- */
+        #bg-logo {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80vmin;
+            height: 80vmin;
+            opacity: 0.3;
+            pointer-events: none;
+            z-index: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #bg-logo svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 15; 
+            display: block;
+        }
+
+        /* --- UI Overlays --- */
+        .ui-overlay {
+            position: absolute;
+            z-index: 50;
+            pointer-events: auto; 
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: rgba(0,0,0,0.9);
+            backdrop-filter: blur(8px);
+            transition: opacity 0.5s;
+            overflow-y: auto;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        /* Last Call Vignette */
+        #last-call-vignette {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 14; 
+            box-shadow: inset 0 0 100px 30px rgba(255, 0, 0, 0.6);
+            opacity: 0;
+            transition: opacity 0.5s;
+            animation: pulse-red 1s infinite alternate;
+        }
+        @keyframes pulse-red {
+            from { box-shadow: inset 0 0 100px 30px rgba(255, 0, 0, 0.4); }
+            to { box-shadow: inset 0 0 120px 50px rgba(255, 0, 0, 0.7); }
+        }
+
+        /* HUD - Lives and Score */
+        .hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            font-size: 1.5rem;
+            text-shadow: 2px 2px 0 #000;
+            z-index: 10; 
+            pointer-events: none;
+        }
+
+        #pause-overlay {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 20; 
+            pointer-events: auto;
+        }
+
+        /* Lives container */
+        #lives-container {
+            display: flex;
+            gap: 5px;
+            margin-top: 5px;
+        }
+        .heart-icon {
+            width: 30px;
+            height: 30px;
+            fill: #ef4444;
+            transition: fill 0.3s, transform 0.2s;
+        }
+        .heart-lost {
+            fill: #555;
+            transform: scale(0.8);
+        }
+        
+        /* 4. Pulsing Low-Health Warning */
+        .heart-danger {
+            fill: #ff0000;
+            animation: heartbeat 0.8s infinite;
+            filter: drop-shadow(0 0 5px red);
+        }
+
+        @keyframes heartbeat {
+            0% { transform: scale(1); }
+            15% { transform: scale(1.3); }
+            30% { transform: scale(1); }
+            45% { transform: scale(1.3); }
+            60% { transform: scale(1); }
+            100% { transform: scale(1); }
+        }
+
+        /* Center the score absolutely */
+        .streak-container {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            color: #ffeb3b;
+            top: 20px;
+            transition: color 0.3s, transform 0.1s;
+        }
+
+        /* 3. Hot Streak Visuals */
+        .hot-streak {
+            color: #ff4500 !important; /* OrangeRed */
+            animation: pulse-hot 0.5s infinite alternate;
+            text-shadow: 0 0 10px #ff0000, 0 0 20px orange;
+        }
+        
+        @keyframes pulse-hot { 
+            from { transform: translateX(-50%) scale(1); } 
+            to { transform: translateX(-50%) scale(1.2); } 
+        }
+
+        #score {
+            font-variant-numeric: tabular-nums; /* Prevents jittering when numbers change */
+        }
+
+        .btn {
+            background: #fff;
+            color: #000;
+            border: 4px solid #fff;
+            padding: 10px 30px; 
+            font-size: 1.3rem; 
+            font-family: 'Rye', serif;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: transform 0.1s, background 0.2s;
+            pointer-events: auto;
+            margin-top: 15px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        .button-row {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        #start-screen .btn {
+            margin-top: 0;
+            padding: 8px 20px;
+            font-size: 1.1rem;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+            background: #eee;
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+        
+        .btn:disabled {
+            background: #888;
+            border-color: #888;
+            color: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .pause-btn {
+            background: rgba(0,0,0,0.5);
+            border: 2px solid rgba(255,255,255,0.8);
+            color: white;
+            font-family: 'Rye', serif;
+            font-size: 1rem;
+            padding: 5px 15px;
+            cursor: pointer;
+            pointer-events: auto;
+            border-radius: 4px;
+        }
+        .pause-btn:hover { background: rgba(255,255,255,0.3); }
+
+        h1 {
+            font-family: 'Rye', serif;
+            font-size: 2.5rem; 
+            margin-bottom: 0;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.8);
+            color: #fff;
+            line-height: 1;
+        }
+        
+        h2 {
+            font-family: 'Rye', serif;
+            font-size: 1.2rem; 
+            margin-bottom: 5px; 
+            color: #ccc;
+        }
+
+        /* Compact Headers for Start Screen */
+        #start-screen h1 {
+            font-size: 3rem;
+            margin-bottom: 5px;
+            color: gold;
+        }
+        #start-screen h2 {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: #fff;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+        
+        /* --- INSTRUCTION GRID --- */
+        .tutorial-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #555;
+            max-width: 800px;
+            width: 95%;
+        }
+
+        .tutorial-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border-right: 1px solid rgba(255,255,255,0.2);
+        }
+        .tutorial-section:last-child {
+            border-right: none;
+        }
+
+        .section-title {
+            color: gold;
+            font-family: 'Rye', serif;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            border-bottom: 1px solid gold;
+            padding-bottom: 5px;
+            width: 80%;
+        }
+
+        .icon-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .tutorial-canvas {
+            position: relative !important; 
+            z-index: 1 !important;
+            background: transparent;
+            margin-bottom: 5px;
+        }
+        
+        .icon-desc {
+            font-size: 0.9rem;
+            color: #ddd;
+            line-height: 1.2;
+        }
+        
+        /* Level Transition Text Style */
+        #level-transition {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Rye', serif;
+            font-size: 5rem;
+            color: gold;
+            text-shadow: 0 0 10px rgba(255, 255, 0, 0.8), 0 0 20px black;
+            z-index: 30;
+            opacity: 0;
+            transition: opacity 0.5s;
+            pointer-events: none;
+            text-align: center;
+            width: 100%;
+        }
+
+        #level-subtext {
+            display: block;
+            font-size: 2rem;
+            color: white;
+            font-family: 'Roboto Slab', serif;
+            margin-top: 10px;
+        }
+
+        .show-transition {
+            opacity: 1 !important;
+        }
+        
+        /* Event Notification */
+        #event-notify {
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Rye', serif;
+            font-size: 4rem;
+            color: #ffeb3b;
+            text-shadow: 0 0 20px #ffeb3b, 0 0 40px red;
+            z-index: 25;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s, transform 0.3s;
+            white-space: nowrap;
+        }
+        .event-pulse {
+            animation: pulse-scale 0.5s infinite alternate;
+        }
+        @keyframes pulse-scale {
+            from { transform: translate(-50%, -50%) scale(1); }
+            to { transform: translate(-50%, -50%) scale(1.1); }
+        }
+
+        /* BOSS TIMER HUD */
+        #boss-timer-display {
+            position: absolute;
+            top: 15%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Rye', serif;
+            font-size: 6rem;
+            color: #ef4444;
+            text-shadow: 0 0 20px red, 0 0 40px black;
+            z-index: 24;
+            display: none;
+            pointer-events: none;
+        }
+
+        .title-img {
+            max-width: 80%;
+            max-height: 45vh; 
+            border: 5px solid #fff;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        
+        /* Leaderboard / Input Styles */
+        .modal-content {
+            background: #333;
+            padding: 20px; 
+            border-radius: 10px;
+            border: 5px solid gold;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.5);
+            pointer-events: auto;
+        }
+        
+        #leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 1rem;
+        }
+        #leaderboard-table th, #leaderboard-table td {
+            padding: 5px;
+            border-bottom: 1px solid #555;
+        }
+        #leaderboard-table th {
+            font-family: 'Rye', serif;
+            color: gold;
+            background: #444;
+        }
+        #leaderboard-table td {
+            text-align: left;
+        }
+        #leaderboard-table tr:nth-child(1) td { color: gold; font-weight: bold; }
+        #leaderboard-table tr:nth-child(2) td { color: silver; }
+        #leaderboard-table tr:nth-child(3) td { color: #cd7f32; }
+        
+        #name-input {
+            padding: 10px;
+            font-size: 1.2rem;
+            width: 80%;
+            max-width: 300px;
+            border: 3px solid #ccc;
+            border-radius: 5px;
+            color: #000;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .tutorial-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            .tutorial-section {
+                border-right: none;
+                border-bottom: 1px solid rgba(255,255,255,0.2);
+                padding-bottom: 10px;
+                flex-direction: row;
+                justify-content: space-around;
+            }
+            .tutorial-section:last-child {
+                border-bottom: none;
+            }
+            .section-title {
+                display: none; 
+            }
+            .streak-container {
+                top: 60px; /* Move score down on mobile to avoid lives */
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div id="last-call-vignette"></div>
+
+    <div id="bg-logo">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" preserveAspectRatio="xMidYMid meet">
+            <defs>
+                <linearGradient id="metal" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#d9d9d9"/>
+                    <stop offset="100%" stop-color="#7a7a7a"/>
+                </linearGradient>
+                <linearGradient id="gold" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#ffeb8a"/>
+                    <stop offset="100%" stop-color="#c59a00"/>
+                </linearGradient>
+            </defs>
+            <circle cx="300" cy="300" r="260" fill="url(#metal)" stroke="#000" stroke-width="6"/>
+            <polygon points="300,70 355,240 535,240 390,345 445,515 300,410 155,515 210,345 65,240 245,240" fill="url(#metal)" stroke="#000" stroke-width="5"/>
+            <text x="300" y="285" font-family="Rye, serif" font-size="150" text-anchor="middle" fill="url(#gold)" stroke="#000" stroke-width="4">LAW</text>
+            <text x="300" y="380" font-family="Rye, serif" font-size="70" text-anchor="middle" fill="url(#gold)" stroke="#000" stroke-width="3">BREWING</text>
+        </svg>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="hud" class="hud hidden">
+        <div>
+            <div>LEVEL: <span id="level">1</span></div>
+            <div id="lives-container">
+                </div>
+        </div>
+        
+        <div id="streak-wrapper" class="streak-container">
+            <div id="score">0</div>
+            <div id="streak-display" style="font-size: 1rem; opacity: 0;">STREAK x<span id="streak-val">0</span></div>
+        </div>
+    </div>
+
+    <div id="pause-overlay" class="hidden">
+        <button id="pause-btn" class="pause-btn">PAUSE (P)</button>
+    </div>
+    
+    <div id="boss-timer-display">15</div>
+
+    <div id="level-transition">
+        <span id="level-title">LEVEL 1</span>
+        <span id="level-subtext"></span>
+    </div>
+
+    <div id="event-notify">HAPPY HOUR!</div>
+
+    <div id="landing-page" class="ui-overlay">
+        <img src="https://github.com/lawbrewing/LawBrewing/blob/main/Gemini_Generated_Image_f46i9af46i9af46i.png?raw=true" 
+             alt="Law Brewing Co." 
+             class="title-img">
+        
+        <button id="enter-btn" class="btn" disabled>LOADING ASSETS...</button>
+    </div>
+
+    <div id="start-screen" class="ui-overlay hidden">
+        <h1>LAW BREWING</h1>
+        <h2>Quality Control</h2>
+        
+        <div class="tutorial-grid">
+            <div class="tutorial-section">
+                <div class="section-title">The Basics</div>
+                <div class="icon-box">
+                    <canvas id="demo-swill" width="60" height="70" class="tutorial-canvas"></canvas>
+                    <span class="icon-desc"><strong>TAP TO SHOOT</strong><br>Bad Beer (Swill)</span>
+                </div>
+                <div class="icon-box">
+                    <canvas id="demo-law" width="60" height="70" class="tutorial-canvas"></canvas>
+                    <span class="icon-desc"><strong>DON'T SHOOT</strong><br>Law Brew (Good)</span>
+                </div>
+            </div>
+
+            <div class="tutorial-section">
+                <div class="section-title">Threats</div>
+                <div class="icon-box">
+                    <canvas id="demo-oldtimer" width="70" height="60" class="tutorial-canvas"></canvas>
+                    <span class="icon-desc"><strong>OLD TIMER</strong><br>Tries to get swill!</span>
+                </div>
+                <div class="icon-box">
+                    <canvas id="demo-green" width="60" height="70" class="tutorial-canvas"></canvas>
+                    <span class="icon-desc"><strong>GREEN BOTTLE</strong><br>Heavy Swill<br>(Shoot It!)</span>
+                </div>
+            </div>
+
+            <div class="tutorial-section">
+                <div class="section-title">Special</div>
+                <div class="icon-box">
+                    <canvas id="demo-vip" width="90" height="60" class="tutorial-canvas"></canvas>
+                    <span class="icon-desc"><strong>VIP TABLE</strong><br>Drag bottom to catch<br>Law Brews</span>
+                </div>
+                <div class="icon-box" style="flex-direction: row; gap: 10px; justify-content: center;">
+                    <div>
+                        <canvas id="demo-pretzel" width="50" height="50" class="tutorial-canvas"></canvas>
+                        <br><span style="font-size:0.7rem; color: #aaa;">+1 Life</span>
+                    </div>
+                    <div>
+                        <canvas id="demo-curd" width="50" height="50" class="tutorial-canvas"></canvas>
+                        <br><span style="font-size:0.7rem; color: #00ffff;">2x Pts</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="button-row">
+            <button id="start-btn" class="btn">Start Shift</button>
+            <button id="leaderboard-btn" class="btn" style="background: gold; color: black; border-color: gold;">High Scores</button>
+        </div>
+    </div>
+
+    <div id="pause-screen" class="ui-overlay hidden" style="background: rgba(0,0,0,0.5);">
+        <h1 style="font-size: 5rem;">PAUSED</h1>
+        <button id="resume-btn" class="btn">Resume</button>
+        <button id="quit-btn" class="btn" style="margin-top: 20px; font-size: 1rem; border-width: 2px;">Quit to Menu</button>
+    </div>
+
+    <div id="game-over-screen" class="ui-overlay hidden">
+        <h1>SHIFT OVER</h1>
+        <h2>Final Score: <span id="final-score">0</span></h2>
+        <p id="game-over-msg" style="margin-bottom: 20px; font-size: 1.5rem; color: #aaa;">Last Call.</p>
+        <button id="restart-btn" class="btn">Re-Open Tab</button>
+        <button id="menu-btn" class="btn" style="margin-top: 15px;">Back to Main Menu</button>
+    </div>
+    
+    <div id="leaderboard-modal" class="ui-overlay hidden">
+        <div class="modal-content">
+            <h1>LEADERBOARD</h1>
+            <h2>The Sheriffs of Taps</h2>
+            <div id="leaderboard-status" style="color: #ffeb8a; margin-bottom: 15px;">Loading...</div>
+            <table id="leaderboard-table">
+                <thead>
+                    <tr><th>Rank</th><th>Name</th><th>Score</th></tr>
+                </thead>
+                <tbody id="leaderboard-body">
+                </tbody>
+            </table>
+            <button id="close-leaderboard-btn" class="btn" style="margin-top: 30px;">Back to Menu</button>
+        </div>
+    </div>
+    
+    <div id="name-input-modal" class="ui-overlay hidden">
+        <div class="modal-content">
+            <h1>HIGH SCORE!</h1>
+            <h2>You Scored: <span id="input-final-score">0</span></h2>
+            <p style="margin-bottom: 20px;">Enter your name to join the leaderboard!</p>
+            <input type="text" id="name-input" placeholder="Enter Name (Max 10 Chars)" maxlength="10">
+            <button id="submit-name-btn" class="btn">Submit Score</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    /* --- Asset Preloader --- */
+    const imagesToLoad = [
+        "https://lawbrewing.github.io/LawBrewing/vip.png",
+        "https://lawbrewing.github.io/LawBrewing/vip2.png",
+        "https://lawbrewing.github.io/LawBrewing/oldtimer.png",
+        "https://lawbrewing.github.io/LawBrewing/oldtimerright.png",
+        "https://lawbrewing.github.io/LawBrewing/bosstimer.png"
+    ];
+
+    const assets = {};
+    let loadedCount = 0;
+
+    const enterBtn = document.getElementById('enter-btn');
+
+    // Robust Loading: Failsafe if images fail
+    function onAssetEvent() {
+        loadedCount++;
+        if (loadedCount === imagesToLoad.length) {
+            enableGame();
+        }
+    }
+
+    function enableGame() {
+        enterBtn.disabled = false;
+        enterBtn.innerText = "ENTER TAPROOM";
+    }
+
+    // Safety Timeout (Force enable after 3 seconds if assets hang)
+    setTimeout(() => {
+        if (enterBtn.disabled) {
+            console.log("Forcing start due to slow assets");
+            enableGame();
+        }
+    }, 3000);
+
+    // Load Images with Error Handlers
+    const vipInstructionImg = new Image();
+    vipInstructionImg.onload = onAssetEvent;
+    vipInstructionImg.onerror = onAssetEvent;
+    vipInstructionImg.src = imagesToLoad[0];
+
+    const vipGameImg = new Image();
+    vipGameImg.onload = onAssetEvent;
+    vipGameImg.onerror = onAssetEvent;
+    vipGameImg.src = imagesToLoad[1];
+
+    const oldTimerLeftImg = new Image();
+    oldTimerLeftImg.onload = onAssetEvent;
+    oldTimerLeftImg.onerror = onAssetEvent;
+    oldTimerLeftImg.src = imagesToLoad[2];
+
+    const oldTimerRightImg = new Image();
+    oldTimerRightImg.onload = onAssetEvent;
+    oldTimerRightImg.onerror = onAssetEvent;
+    oldTimerRightImg.src = imagesToLoad[3];
+
+    const bossImg = new Image();
+    bossImg.onload = onAssetEvent;
+    bossImg.onerror = onAssetEvent;
+    bossImg.src = imagesToLoad[4];
+
+    /* --- Sound System (Synthesized) & Background Music --- */
+    let audioCtx = null;
+    
+    // Music setup
+    const musicMain = new Audio('https://lawbrewing.github.io/LawBrewing/hard-rock-guitar-loop-2-289430.mp3');
+    musicMain.loop = true;
+    musicMain.volume = 0.6; 
+    
+    const musicBoss = new Audio('https://lawbrewing.github.io/LawBrewing/guitar-riff2-451160.mp3');
+    musicBoss.loop = true;
+    musicBoss.volume = 0.6;
+    
+    let currentTrack = musicMain;
+
+    function initAudio() {
+        try {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        } catch (e) {
+            console.log("Audio not supported or blocked");
+        }
+    }
+    
+    function switchMusic(trackName) {
+        musicMain.pause();
+        musicBoss.pause();
+        
+        if (trackName === 'boss') {
+            currentTrack = musicBoss;
+        } else {
+            currentTrack = musicMain;
+        }
+        
+        currentTrack.currentTime = 0;
+        if (isPlaying && !isPaused) {
+            currentTrack.play().catch(e => {});
+        }
+    }
+
+    function playSound(type) {
+        if (!audioCtx || audioCtx.state === 'suspended') return;
+
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+
+        if (type === 'shoot') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(600, now);
+            osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+            osc.start(now);
+            osc.stop(now + 0.1);
+        } 
+        else if (type === 'explosion') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(100, now);
+            osc.frequency.exponentialRampToValueAtTime(10, now + 0.2);
+            gain.gain.setValueAtTime(0.5, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+            osc.start(now);
+            osc.stop(now + 0.2);
+        }
+        else if (type === 'healthUp') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(400, now);
+            osc.frequency.linearRampToValueAtTime(600, now + 0.1);
+            osc.frequency.linearRampToValueAtTime(1000, now + 0.3);
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.4);
+            osc.start(now);
+            osc.stop(now + 0.4);
+        }
+        else if (type === 'score') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(800, now);
+            osc.frequency.exponentialRampToValueAtTime(1200, now + 0.1);
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+            osc.start(now);
+            osc.stop(now + 0.5);
+        } 
+        else if (type === 'vipCatch') {
+            osc.type = 'triangle'; 
+            osc.frequency.setValueAtTime(523.25, now); 
+            osc.frequency.linearRampToValueAtTime(1046.50, now + 0.1); 
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6); 
+            osc.start(now);
+            osc.stop(now + 0.6);
+        }
+        else if (type === 'bonus') {
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(1000, now);
+            osc.frequency.setValueAtTime(1500, now + 0.1);
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+            osc.start(now);
+            osc.stop(now + 0.3);
+        }
+        else if (type === 'megaBonus') {
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(1200, now);
+            osc.frequency.linearRampToValueAtTime(1800, now + 0.1);
+            osc.frequency.linearRampToValueAtTime(1200, now + 0.2);
+            osc.frequency.linearRampToValueAtTime(2000, now + 0.3);
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.4);
+            osc.start(now);
+            osc.stop(now + 0.4);
+        }
+        else if (type === 'streak') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(400, now);
+            osc.frequency.linearRampToValueAtTime(800, now + 0.15);
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+            osc.start(now);
+            osc.stop(now + 0.15);
+        }
+        else if (type === 'error') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, now);
+            osc.frequency.linearRampToValueAtTime(150, now + 0.2);
+            gain.gain.setValueAtTime(0.5, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+            osc.start(now);
+            osc.stop(now + 0.2);
+        }
+        else if (type === 'toxicTheft') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(100, now);
+            osc.frequency.linearRampToValueAtTime(50, now + 0.3);
+            gain.gain.setValueAtTime(0.5, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+            osc.start(now);
+            osc.stop(now + 0.4);
+        }
+        else if (type === 'toxicHit') {
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(50, now);
+            osc.frequency.exponentialRampToValueAtTime(10, now + 0.3);
+            gain.gain.setValueAtTime(0.8, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+            osc.start(now);
+            osc.stop(now + 0.4);
+        }
+        else if (type === 'gameover') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(300, now);
+            osc.frequency.linearRampToValueAtTime(50, now + 1);
+            gain.gain.setValueAtTime(0.5, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 1);
+            osc.start(now);
+            osc.stop(now + 1);
+        }
+    }
+
+    /* --- Simpleboards Configuration --- */
+    const SIMPLEBOARDS_API_KEY = "78098c7b-fa9d-4ce1-9300-a56d081d53c4";
+    const SIMPLEBOARDS_LEADERBOARD_ID = "9f649aa6-f553-4a57-57a6-08de2efe707f";
+    const SIMPLEBOARDS_BASE_URL = "https://api.simpleboards.dev/api"; 
+
+    /* --- Game Setup --- */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // UI Elements
+    const landingPage = document.getElementById('landing-page');
+    const startScreen = document.getElementById('start-screen');
+    const gameOverScreen = document.getElementById('game-over-screen');
+    const pauseScreen = document.getElementById('pause-screen');
+    const hud = document.getElementById('hud');
+    const pauseOverlay = document.getElementById('pause-overlay');
+    const livesContainer = document.getElementById('lives-container');
+    const lastCallVignette = document.getElementById('last-call-vignette');
+    const eventNotify = document.getElementById('event-notify');
+    const bossTimerDisplay = document.getElementById('boss-timer-display');
+    
+    const scoreEl = document.getElementById('score');
+    const levelEl = document.getElementById('level'); 
+    const finalScoreEl = document.getElementById('final-score');
+    const streakWrapper = document.getElementById('streak-wrapper');
+    const streakDisplay = document.getElementById('streak-display');
+    const streakVal = document.getElementById('streak-val');
+    
+    const startBtn = document.getElementById('start-btn');
+    const restartBtn = document.getElementById('restart-btn');
+    const menuBtn = document.getElementById('menu-btn');
+    const pauseBtn = document.getElementById('pause-btn');
+    const resumeBtn = document.getElementById('resume-btn');
+    const quitBtn = document.getElementById('quit-btn');
+    
+    const levelTransitionEl = document.getElementById('level-transition'); 
+    const levelTitleEl = document.getElementById('level-title');
+    const levelSubtextEl = document.getElementById('level-subtext');
+    
+    // Leaderboard Elements
+    const leaderboardBtn = document.getElementById('leaderboard-btn');
+    const leaderboardModal = document.getElementById('leaderboard-modal');
+    const leaderboardBody = document.getElementById('leaderboard-body');
+    const leaderboardStatus = document.getElementById('leaderboard-status');
+    const closeLeaderboardBtn = document.getElementById('close-leaderboard-btn');
+    
+    // Name Input Elements
+    const nameInputModal = document.getElementById('name-input-modal');
+    const inputFinalScoreEl = document.getElementById('input-final-score');
+    const nameInput = document.getElementById('name-input');
+    const submitNameBtn = document.getElementById('submit-name-btn');
+
+    /* --- Level Configuration --- */
+    const levelsConfig = [
+        { scoreToClear: 1000, spawnIntervalMs: 1500, speedMultiplier: 1.0, thiefSpawnMs: 999999, vipActive: false }, 
+        { scoreToClear: 3000, spawnIntervalMs: 1200, speedMultiplier: 1.3, thiefSpawnMs: 7000, vipActive: false }, 
+        { scoreToClear: 15000, spawnIntervalMs: 1000, speedMultiplier: 1.6, thiefSpawnMs: 6000, vipActive: true },
+        // Level 4 is BOSS MODE
+    ];
+
+    // Game State
+    let isPlaying = false;
+    let isPaused = false;
+    let score = 0;
+    let displayScore = 0; // 2. Rolling Score Counter
+    let streak = 0; 
+    let lives = 3;
+    let currentLevel = 1;
+    let lastTime = 0;
+    
+    // Guaranteed Drops State
+    let hasSpawnedPretzelLevel3 = false;
+    let hasSpawnedCurdLevel3 = false;
+
+    // Boss State
+    let isBossMode = false;
+    let bossInstance = null;
+    let bossCountdown = 0;
+    let bossWarmup = false;
+
+    // Double Bubble State
+    let isDoubleBubble = false;
+    let doubleBubbleTimer = 0;
+
+    // Screen Shake State
+    let shakeDuration = 0;
+    let shakeIntensity = 0;
+
+    // Player/VIP State
+    let playerGuestX = window.innerWidth / 2;
+    let vipInstance;  
+    let isMovingGuest = false;
+
+    // Spawning/Difficulty variables
+    let spawnTimer = 0;
+    let spawnInterval = levelsConfig[0].spawnIntervalMs; 
+    let speedMultiplier = levelsConfig[0].speedMultiplier;
+    
+    let thiefSpawnTimer = 0;
+    let thiefSpawnInterval = levelsConfig[0].thiefSpawnMs; 
+
+    let isTransitioning = false;
+    
+    // Arrays for entities
+    let beers = [];
+    let particles = [];
+    let clickEffects = [];
+    let thieves = []; 
+    let pretzels = [];
+    let curds = [];
+
+    /* --- Resize Handling --- */
+    function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        playerGuestX = canvas.width / 2;
+        if (vipInstance) {
+            vipInstance.y = canvas.height - 100;
+        }
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    /* --- Screen Shake Function --- */
+    function triggerShake(duration, intensity) {
+        shakeDuration = duration;
+        shakeIntensity = intensity;
+    }
+
+    /* --- SAFE SPAWN LOGIC (Enhanced for Overlap Prevention) --- */
+    function getSafeSpawnX() {
+        const padding = 50; // Increased padding from edge
+        const minDistance = 100; // Minimum horizontal distance between ANY falling item
+        let attempts = 0;
+        let valid = false;
+        let x = 0;
+
+        while (!valid && attempts < 20) {
+            x = Math.random() * (canvas.width - padding * 2) + padding;
+            valid = true;
+
+            // Check against BEERS
+            for (let b of beers) {
+                if (Math.abs(b.x - x) < minDistance) {
+                    valid = false;
+                    break;
+                }
+            }
+            // Check against PRETZELS
+            if (valid) {
+                for (let p of pretzels) {
+                    if (Math.abs(p.x - x) < minDistance) {
+                        valid = false;
+                        break;
+                    }
+                }
+            }
+            // Check against CURDS
+             if (valid) {
+                for (let c of curds) {
+                    if (Math.abs(c.x - x) < minDistance) {
+                        valid = false;
+                        break;
+                    }
+                }
+            }
+            attempts++;
+        }
+
+        return valid ? x : null;
+    }
+
+    /* --- Input Handling --- */
+    const handleShootInput = (x, y) => {
+        if (!isPlaying || isTransitioning || isPaused) return;
+
+        // If the tap/click is in the VIP control zone (bottom 1/3), don't shoot!
+        if (y > canvas.height * 0.7) { 
+            return;
+        }
+
+        playSound('shoot'); 
+        clickEffects.push({x, y, age: 0});
+
+        // 1. Thieves
+        for (let i = thieves.length - 1; i >= 0; i--) {
+            const t = thieves[i];
+            const dist = Math.hypot(t.x - x, t.y - y);
+            
+            if (dist < t.size / 2) { 
+                t.isHit = true;
+                if (!isDoubleBubble) { // Invincible during Double Bubble
+                      loseLife();
+                }
+                playSound('explosion'); 
+                triggerShake(10, 5); 
+                createFloatingText(t.x, t.y, "DEAD TIMER", "red");
+                createExplosion(t.x, t.y, '#fdbd9c', 'circle');
+                streak = 0; 
+                updateStreakDisplay();
+                checkGameOver();
+                return;
+            }
+        }
+
+        // 2. Pretzels & Curds (Destroy if shot)
+        for (let i = pretzels.length - 1; i >= 0; i--) {
+            const p = pretzels[i];
+            if (Math.hypot(p.x - x, p.y - y) < 30) {
+                createExplosion(p.x, p.y, '#8b4513', 'square');
+                pretzels.splice(i, 1);
+                return; 
+            }
+        }
+        for (let i = curds.length - 1; i >= 0; i--) {
+             const c = curds[i];
+            if (Math.hypot(c.x - x, c.y - y) < 30) {
+                createExplosion(c.x, c.y, '#fcd34d', 'circle');
+                curds.splice(i, 1);
+                return; 
+            }
+        }
+
+        // 3. Beers
+        let hitBeer = false;
+        for (let i = beers.length - 1; i >= 0; i--) {
+            const b = beers[i];
+            const dist = Math.hypot(b.x - x, b.y - y);
+            
+            if (dist < 40) {
+                hitBeer = true;
+                if (b.type === 'BAD' || b.type === 'GREEN_SWILL') {
+                    // CORRECT ACTION: Shoot the Swill (Green is now just regular swill to shoot)
+                    let shardCols = b.type === 'GREEN_SWILL' ? ['#22c55e', '#166534', '#dcfce7'] : ['#9ca3af', '#4b5563', '#ef4444'];
+                    createExplosion(b.x, b.y, shardCols, 'square'); 
+                    beers.splice(i, 1);
+                    triggerShake(5, 2); 
+                    
+                    streak++;
+                    let multiplier = 1 + (Math.floor(streak / 3) * 0.2);
+                    let points = Math.floor(100 * multiplier);
+                    let text = `+${points}`;
+                    let soundType = 'explosion';
+
+                    if (b.y < canvas.height / 3) {
+                        points += 25;
+                        text = "EARLY BIRD! " + text;
+                        soundType = 'bonus';
+                    }
+
+                    if (streak > 2 && soundType === 'explosion') {
+                        soundType = 'streak';
+                        text += ` (x${multiplier.toFixed(1)})`;
+                    }
+
+                    score += points;
+                    // Score rendering happens in gameLoop now
+                    updateStreakDisplay();
+                    playSound(soundType); 
+                    // 1. Floating Score Text -> spawn at Beer Location (b.x, b.y)
+                    createFloatingText(b.x, b.y, text, "#ffff00"); // Yellow text
+                    checkLevelUp();
+                } else {
+                    // INCORRECT ACTION: Shot the Law Brew
+                    if (b.isSpecial) {
+                        createFloatingText(b.x, b.y, "WASTED GOLD!", "red");
+                    } else {
+                        createFloatingText(b.x, b.y, "WASTED BREW!", "red");
+                    }
+
+                    playSound('error'); 
+                    triggerShake(15, 8); 
+                    createExplosion(b.x, b.y, '#d97706', 'circle');
+                    beers.splice(i, 1);
+                    
+                    // Penalty applies even in Double Bubble (player fault)
+                    loseLife(); 
+                    
+                    streak = 0; 
+                    updateStreakDisplay();
+                    checkGameOver();
+                }
+                return; 
+            }
+        }
+        
+        if (!hitBeer) {
+            streak = 0;
+            updateStreakDisplay();
+        }
+    };
+
+    function updateStreakDisplay() {
+        streakVal.innerText = streak;
+        
+        // 3. Hot Streak Visuals
+        if (streak >= 5) {
+            streakWrapper.classList.add('hot-streak');
+        } else {
+            streakWrapper.classList.remove('hot-streak');
+        }
+
+        if (streak > 1) {
+            streakDisplay.style.opacity = 1;
+        } else {
+            streakDisplay.style.opacity = 0;
+        }
+    }
+
+    /* --- Input Handlers for VIP Movement --- */
+
+    const handleGuestMoveStart = (x, y) => {
+        if (y > canvas.height * 0.7) {
+            isMovingGuest = true;
+        }
+    };
+
+    const handleGuestMove = (x) => {
+        if (isMovingGuest && isPlaying && !isTransitioning && !isPaused) {
+            const minX = 60;
+            const maxX = canvas.width - 60;
+            playerGuestX = Math.min(Math.max(x, minX), maxX);
+        }
+    };
+
+    const handleGuestMoveEnd = () => {
+        isMovingGuest = false;
+    };
+
+    // MOUSE EVENTS
+    canvas.addEventListener('mousedown', (e) => {
+        initAudio(); // Safe to call here
+        if (e.clientY > canvas.height * 0.7) {
+             handleGuestMoveStart(e.clientX, e.clientY);
+        } else {
+            handleShootInput(e.clientX, e.clientY);
+        }
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+        handleGuestMove(e.clientX);
+    });
+
+    canvas.addEventListener('mouseup', handleGuestMoveEnd);
+    canvas.addEventListener('mouseleave', handleGuestMoveEnd);
+
+    // TOUCH EVENTS
+    canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        initAudio(); // Safe to call here
+        const x = e.touches[0].clientX;
+        const y = e.touches[0].clientY;
+        
+        if (y > canvas.height * 0.7) {
+            handleGuestMoveStart(x, y); 
+        } else {
+            handleShootInput(x, y);
+        }
+    }, {passive: false});
+
+    canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        handleGuestMove(e.touches[0].clientX);
+    }, {passive: false});
+
+    canvas.addEventListener('touchend', handleGuestMoveEnd);
+
+    // KEYBOARD EVENTS
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'p' || e.key === 'P') {
+            togglePause();
+        }
+    });
+
+    /* --- Classes --- */
+
+    class Boss {
+        constructor() {
+            this.width = 150; 
+            this.height = 150;
+            this.x = canvas.width / 2;
+            this.y = 80; 
+            this.vx = 5; 
+            this.spawnTimer = 0;
+        }
+        update(dt) {
+            this.x += this.vx;
+            if (this.x < 50 || this.x > canvas.width - 50) this.vx *= -1;
+            
+            // Spawn Swill FAST (every 600ms)
+            this.spawnTimer += dt;
+            if (this.spawnTimer > 600) { 
+                 // Cap at 5 items on screen during Boss Wave
+                 if (beers.length < 5) {
+                     const b = new Beer(5, this.x);
+                     // Boss items fall 1.2x faster
+                     b.speed *= 1.2;
+                     // 5% chance of green swill in Boss Wave (Reduced)
+                     b.type = (Math.random() > 0.95) ? 'GREEN_SWILL' : 'BAD'; 
+                     beers.push(b);
+                 }
+                 this.spawnTimer = 0;
+            }
+        }
+        draw(ctx) {
+            ctx.save();
+            // Removed shadowBlur to prevent box artifact
+            ctx.drawImage(bossImg, this.x - this.width/2, this.y - this.height/2, this.width, this.height);
+            ctx.restore();
+        }
+    }
+
+    class CheeseCurd {
+        constructor(x) {
+            this.x = x;
+            this.y = -50;
+            const baseSpeed = canvas.height / 500;
+            this.speed = (baseSpeed * speedMultiplier) * 1.0;
+        }
+        update() {
+            this.y += this.speed;
+        }
+        draw(ctx) {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+
+            // --- RED WOVEN BASKET ---
+            ctx.fillStyle = '#c62828'; // Deep red base
+            ctx.beginPath();
+            ctx.moveTo(-20, -10);
+            ctx.lineTo(20, -10);
+            ctx.lineTo(15, 15);
+            ctx.lineTo(-15, 15);
+            ctx.closePath();
+            ctx.fill();
+
+            // Woven texture (cross-hatching)
+            ctx.strokeStyle = '#e53935'; // Lighter red for texture
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            // Horizontal lines
+            ctx.moveTo(-18, -5); ctx.lineTo(18, -5);
+            ctx.moveTo(-16, 5); ctx.lineTo(16, 5);
+            // Vertical/Diagonal lines hint
+            ctx.moveTo(-5, -10); ctx.lineTo(-10, 15);
+            ctx.moveTo(5, -10); ctx.lineTo(10, 15);
+            ctx.stroke();
+
+            // --- MISHAPEN CURDS ---
+            ctx.fillStyle = '#fcd34d'; // Cheese yellow
+            ctx.strokeStyle = '#d97706'; // Darker orange
+            ctx.lineWidth = 2;
+
+            // Curd lump 1 (Left)
+            ctx.beginPath();
+            ctx.moveTo(-12, -12);
+            ctx.quadraticCurveTo(-18, -18, -10, -22);
+            ctx.quadraticCurveTo(-2, -20, -5, -15);
+            ctx.closePath();
+            ctx.fill(); ctx.stroke();
+
+            // Curd lump 2 (Center-Right)
+            ctx.beginPath();
+            ctx.moveTo(2, -14);
+            ctx.quadraticCurveTo(10, -20, 16, -15);
+            ctx.quadraticCurveTo(14, -8, 5, -10);
+            ctx.closePath();
+            ctx.fill(); ctx.stroke();
+
+             // Curd lump 3 (Top Center - smaller)
+            ctx.beginPath();
+            ctx.moveTo(-5, -18);
+            ctx.quadraticCurveTo(0, -25, 5, -19);
+            ctx.quadraticCurveTo(0, -15, -5, -18);
+            ctx.closePath();
+            ctx.fill(); ctx.stroke();
+
+            ctx.restore();
+        }
+    }
+
+    class Pretzel {
+        constructor(x) {
+            this.x = x;
+            this.y = -50;
+            this.radius = 25;
+            const baseSpeed = canvas.height / 500; 
+            this.speed = (baseSpeed * speedMultiplier) * 1.2; 
+            this.rotation = 0;
+            this.rotSpeed = 0.05;
+        }
+        update() {
+            this.y += this.speed;
+            this.rotation += this.rotSpeed;
+        }
+        draw(ctx) {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.rotate(this.rotation);
+            
+            ctx.strokeStyle = '#cd853f'; 
+            ctx.lineWidth = 10;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            
+            ctx.beginPath();
+            ctx.moveTo(-15, -10);
+            ctx.bezierCurveTo(-25, -25, 0, -25, 0, -10);
+            ctx.bezierCurveTo(0, -25, 25, -25, 15, -10);
+            ctx.quadraticCurveTo(25, 15, 0, 20);
+            ctx.quadraticCurveTo(-25, 15, -15, -10);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(-10, -5);
+            ctx.lineTo(10, 5);
+            ctx.moveTo(10, -5);
+            ctx.lineTo(-10, 5);
+            ctx.lineWidth = 8;
+            ctx.stroke();
+
+            ctx.fillStyle = '#fff';
+            const saltPositions = [[-10,-15], [10,-15], [0,15], [-12,5], [12,5], [0,-5]];
+            saltPositions.forEach(pos => {
+                ctx.fillRect(pos[0], pos[1], 3, 3);
+            });
+
+            ctx.restore();
+        }
+    }
+
+    class Beer {
+        constructor(level, x, isSpecial = false) {
+            this.radius = 30;
+            this.isSpecial = isSpecial;
+            
+            if (this.isSpecial) {
+                this.type = 'GOOD';
+                this.initialX = x;
+                this.x = this.initialX;
+            } else {
+                this.x = x;
+                let isBad = Math.random() > 0.35; 
+                if (isBad) {
+                    // Level 3+ allows green swill. 15% chance normally.
+                    if (level >= 3 && Math.random() > 0.85) {
+                        this.type = 'GREEN_SWILL';
+                    } else {
+                        this.type = 'BAD';
+                    }
+                } else {
+                    this.type = 'GOOD'; 
+                }
+            }
+            
+            this.y = -50;
+            this.initialX = this.x; // Store spawn X for wave calc
+            
+            const baseSpeed = canvas.height / 500; 
+            let s = (baseSpeed * speedMultiplier) * (1 + Math.random() * 0.4);
+            
+            if (this.type === 'GREEN_SWILL') {
+                s = baseSpeed * 0.5; // Slower green swill
+            }
+
+            this.speed = s;
+            this.rotation = 0;
+            this.rotSpeed = (Math.random() - 0.5) * 0.1;
+            this.pulse = 0;
+        }
+
+        update(dt) {
+            this.y += this.speed;
+            
+            // Standard Spirals
+            if (this.isSpecial || this.type === 'GREEN_SWILL') {
+                this.x = this.initialX + Math.sin(this.y * 0.05) * 30;
+                 if (this.isSpecial && Math.random() > 0.8) {
+                    particles.push(new Particle(this.x, this.y, '#ffd700', 'circle'));
+                }
+            } 
+            // DOUBLE BUBBLE: Drunken Movement for EVERYTHING
+            else if (isDoubleBubble) {
+                 this.x = this.initialX + Math.sin(this.y * 0.05) * 20;
+            }
+            
+            this.rotation += this.rotSpeed;
+            if (this.type === 'BAD' || this.type === 'GREEN_SWILL') {
+                this.pulse += 0.1;
+            }
+        }
+
+        draw(ctx) {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.rotate(this.rotation);
+
+            if (this.type === 'BAD') {
+                const scale = 1 + Math.sin(this.pulse) * 0.1;
+                ctx.scale(scale, scale);
+                ctx.fillStyle = '#9ca3af'; 
+                ctx.fillRect(-15, -25, 30, 50); 
+                ctx.fillStyle = '#d1d5db';
+                ctx.fillRect(-15, -25, 30, 5);
+                ctx.fillRect(-15, 20, 30, 5);
+                ctx.fillStyle = '#ef4444';
+                ctx.fillRect(-15, -10, 30, 20); 
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 10px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText("SWILL", 0, 5);
+            } else if (this.type === 'GREEN_SWILL') {
+                const scale = 1 + Math.sin(this.pulse) * 0.1;
+                ctx.scale(scale, scale);
+                ctx.fillStyle = '#15803d'; 
+                ctx.fillRect(-5, -35, 10, 20);
+                ctx.fillRect(-15, -15, 30, 45);
+                ctx.fillStyle = '#f0fdf4';
+                ctx.fillRect(-15, -5, 30, 15);
+                ctx.fillStyle = '#166534';
+                ctx.font = 'bold 10px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText("SWILL", 0, 6);
+            } else {
+                // Good Beer
+                ctx.beginPath();
+                ctx.moveTo(-15, -25);
+                ctx.lineTo(-10, 25);
+                ctx.lineTo(10, 25);
+                ctx.lineTo(15, -25);
+                ctx.closePath();
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#fff';
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(-13, -15);
+                ctx.lineTo(-9, 23);
+                ctx.lineTo(9, 23);
+                ctx.lineTo(9, 23);
+                ctx.lineTo(13, -15);
+                ctx.closePath();
+                ctx.fillStyle = this.isSpecial ? '#ffd700' : '#d97706'; 
+                ctx.fill();
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.ellipse(0, -15, 13, 5, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = 'black';
+                ctx.beginPath();
+                ctx.arc(0, 0, 5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+    }
+
+    class PatronRaider { 
+        constructor() {
+            this.size = 50;
+            const minSpawnY = canvas.height * 0.25; 
+            const maxSpawnY = canvas.height * 0.60;
+            this.y = minSpawnY + Math.random() * (maxSpawnY - minSpawnY);
+
+            if (Math.random() < 0.5) {
+                this.x = -this.size;
+                this.vx = 0.5 + Math.random() * 0.5 * speedMultiplier;
+                this.side = 'left';
+            } else {
+                this.x = canvas.width + this.size;
+                this.vx = -(0.5 + Math.random() * 0.5 * speedMultiplier);
+                this.side = 'right';
+            }
+            this.vy = 0.1 + Math.random() * 0.1 * speedMultiplier; 
+            this.isHit = false;
+            this.life = 100;
+        }
+
+        update() {
+            this.x += this.vx;
+            this.y += this.vy;
+            if (this.isHit) this.life -= 3;
+        }
+
+        draw(ctx) {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.globalAlpha = this.life / 100;
+            const imgSize = 70; 
+            
+            // Double Bubble Shield
+            if (isDoubleBubble) {
+                ctx.strokeStyle = '#fcd34d';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(0, 0, 40, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            if (this.side === 'left') {
+                ctx.shadowColor = "white"; ctx.shadowBlur = 10;
+                ctx.drawImage(oldTimerLeftImg, -imgSize/2, -imgSize/2, imgSize, imgSize);
+                ctx.shadowBlur = 0;
+            } else {
+                ctx.shadowColor = "white"; ctx.shadowBlur = 10;
+                ctx.drawImage(oldTimerRightImg, -imgSize/2, -imgSize/2, imgSize, imgSize);
+                ctx.shadowBlur = 0;
+            }
+
+            ctx.globalAlpha = 1.0;
+            ctx.restore();
+        }
+    }
+
+    class TableGuest { 
+        constructor(initialY) {
+            this.x = playerGuestX; 
+            this.y = initialY; 
+            this.isVipActive = false; 
+        }
+        update() { this.x = playerGuestX; }
+
+        draw(ctx) {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            
+            // Double Bubble Shield
+            if (isDoubleBubble) {
+                ctx.strokeStyle = '#fcd34d';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(0, 0, 60, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            const vipSize = 120; 
+            ctx.shadowColor = "white"; ctx.shadowBlur = 10;
+            ctx.drawImage(vipGameImg, -vipSize/2, -vipSize/2, vipSize, vipSize);
+            ctx.shadowBlur = 0;
+            ctx.restore();
+        }
+    }
+
+    class Particle {
+        constructor(x, y, color, shape) {
+            this.x = x; this.y = y; this.color = color;
+            this.shape = shape || 'circle';
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.random() * 5 + 2;
+            this.vx = Math.cos(angle) * speed;
+            this.vy = Math.sin(angle) * speed;
+            this.life = 1.0;
+            this.decay = Math.random() * 0.03 + 0.02;
+            this.size = Math.random() * 4 + 2;
+            this.rotation = Math.random() * Math.PI;
+            this.rotSpeed = (Math.random() - 0.5) * 0.2;
+        }
+        update() {
+            this.x += this.vx; this.y += this.vy; this.vy += 0.2;
+            this.life -= this.decay;
+            this.rotation += this.rotSpeed;
+        }
+        draw(ctx) {
+            ctx.save();
+            ctx.globalAlpha = Math.max(0, this.life);
+            ctx.fillStyle = this.color;
+            ctx.translate(this.x, this.y);
+            ctx.rotate(this.rotation);
+            if (this.shape === 'square') {
+                ctx.fillRect(-this.size, -this.size, this.size*2, this.size*2);
+            } else {
+                ctx.beginPath();
+                ctx.arc(0, 0, this.size, 0, Math.PI*2);
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+    }
+
+    // 2. Floating Score Text Logic
+    class FloatingText {
+        constructor(x, y, text, color) {
+            this.x = x; 
+            this.y = y; 
+            this.text = text; 
+            this.color = color;
+            this.life = 1.0; 
+            this.vy = -3; // Float up speed
+        }
+        update() { 
+            this.y += this.vy; 
+            this.life -= 0.02; 
+        }
+        draw(ctx) {
+            ctx.save();
+            ctx.globalAlpha = Math.max(0, this.life);
+            ctx.fillStyle = this.color;
+            ctx.font = "bold 24px 'Roboto Slab'";
+            ctx.textAlign = 'center';
+            ctx.shadowColor = 'black';
+            ctx.shadowBlur = 4;
+            ctx.fillText(this.text, this.x, this.y);
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 1;
+            ctx.strokeText(this.text, this.x, this.y);
+            ctx.restore();
+        }
+    }
+
+    /* --- Helper Functions --- */
+
+    function createExplosion(x, y, colorOrArray, shape) {
+        for(let i=0; i<15; i++) {
+            let col = colorOrArray;
+            if (Array.isArray(colorOrArray)) {
+                col = colorOrArray[Math.floor(Math.random() * colorOrArray.length)];
+            }
+            particles.push(new Particle(x, y, col, shape));
+        }
+    }
+    
+    function createSparkle(x, y) {
+        for(let i=0; i<10; i++) particles.push(new Particle(x, y, '#ffd700', 'circle'));
+    }
+
+    function createFloatingText(x, y, text, color) {
+        particles.push(new FloatingText(x, y, text, color));
+    }
+
+    function updateLivesDisplay() {
+        livesContainer.innerHTML = '';
+        const heartSVG = `<svg class="heart-icon" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`;
+        
+        for (let i = 0; i < 3; i++) {
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = heartSVG;
+            const svg = wrapper.firstChild;
+            
+            // 4. Pulsing Low-Health Warning
+            if (lives === 1 && i === 0) {
+                 svg.classList.add('heart-danger');
+            }
+
+            if (i >= lives) {
+                svg.classList.add('heart-lost');
+                svg.classList.remove('heart-danger'); // Remove Danger if it becomes lost
+            }
+            livesContainer.appendChild(svg);
+        }
+
+        if (lives === 1) {
+            lastCallVignette.style.opacity = 1;
+        } else {
+            lastCallVignette.style.opacity = 0;
+        }
+    }
+
+    function loseLife() {
+        lives--;
+        updateLivesDisplay();
+    }
+
+    function gainLife() {
+        if (lives < 3) {
+            lives++;
+            updateLivesDisplay();
+            playSound('healthUp');
+        }
+    }
+
+    function checkGameOver() {
+        if (lives <= 0) endGame();
+    }
+
+    function startHappyHour() {
+         eventNotify.innerText = "HAPPY HOUR!";
+         eventNotify.classList.add('show-transition');
+         eventNotify.classList.add('happy-pulse');
+         playSound('megaBonus');
+         
+         // Spawn Special Beer
+         let safeX = getSafeSpawnX();
+         if (safeX !== null) {
+            beers.push(new Beer(currentLevel, safeX, true)); 
+         }
+
+         setTimeout(() => {
+            eventNotify.classList.remove('show-transition');
+            eventNotify.classList.remove('happy-pulse');
+         }, 1500);
+    }
+
+    function startDoubleBubble() {
+         isDoubleBubble = true;
+         doubleBubbleTimer = 5000; // 5 seconds
+         
+         eventNotify.innerText = "DOUBLE BUBBLE!";
+         eventNotify.classList.add('show-transition');
+         eventNotify.classList.add('happy-pulse');
+         playSound('megaBonus'); 
+
+         setTimeout(() => {
+            eventNotify.classList.remove('show-transition');
+            eventNotify.classList.remove('happy-pulse');
+         }, 1500);
+    }
+
+    function checkLevelUp() {
+        // Normal level progression check for levels 1-3
+        if (currentLevel < 4 && !isBossMode) {
+            const currentLevelIndex = currentLevel - 1;
+            const requiredScore = levelsConfig[currentLevelIndex].scoreToClear;
+            if (score >= requiredScore) {
+                currentLevel++;
+                transitionToLevel(currentLevel);
+            }
+        }
+    }
+
+    function transitionToLevel(newLevel) {
+        isTransitioning = true;
+        beers = []; thieves = []; pretzels = []; curds = [];
+        spawnTimer = 0; thiefSpawnTimer = 0; 
+        streak = 0;
+        updateStreakDisplay();
+        
+        let titleText, subText;
+
+        // BOSS LEVEL CHECK (Level 4)
+        if (newLevel === 4) {
+            titleText = "BOSS WAVE";
+            subText = "SURVIVE FOR 15 SECONDS!";
+            levelEl.textContent = "BOSS";
+            isBossMode = true;
+            bossCountdown = 15; // 15 seconds
+            bossInstance = new Boss();
+            bossTimerDisplay.style.display = 'block';
+            bossTimerDisplay.innerText = bossCountdown;
+            // Warmup State Start
+            bossWarmup = true;
+        }
+        else if (newLevel <= levelsConfig.length) {
+            // Standard Levels 1-3
+            const cfg = levelsConfig[newLevel - 1];
+            titleText = `LEVEL ${newLevel}`;
+            if (cfg.vipActive) {
+                subText = "VIP IS NOW ACTIVE! CATCH LAW BREWS!";
+                vipInstance.isVipActive = true;
+            } else if (newLevel === 2) {
+                subText = "HERE COMES THE OLD TIMER!";
+                vipInstance.isVipActive = false;
+            } else {
+                subText = "FASTER!";
+                vipInstance.isVipActive = false;
+            }
+            spawnInterval = cfg.spawnIntervalMs;
+            speedMultiplier = cfg.speedMultiplier;
+            thiefSpawnInterval = cfg.thiefSpawnMs;
+            levelEl.textContent = newLevel;
+            isBossMode = false;
+        } else {
+            // Level 5+ is Expert Mode
+            titleText = `EXPERT MODE`;
+            subText = "SURVIVE";
+            spawnInterval = 500;
+            speedMultiplier = 3.0;
+            thiefSpawnInterval = 3000;
+            vipInstance.isVipActive = true; 
+            levelEl.textContent = 'E';
+            isBossMode = false;
+        }
+        
+        levelTitleEl.textContent = titleText;
+        levelSubtextEl.textContent = subText;
+        levelTransitionEl.classList.add('show-transition');
+
+        // Text Transition Logic
+        setTimeout(() => {
+            levelTransitionEl.classList.remove('show-transition');
+            
+            // If it is Boss Level, we move to "Warmup" instead of playing immediately
+            if (newLevel === 4) {
+                levelTitleEl.textContent = "GET READY!";
+                levelSubtextEl.textContent = "MOVE VIP NOW!";
+                levelTransitionEl.classList.add('show-transition');
+                
+                // Switch music IMMEDIATELY on notification
+                switchMusic('boss');
+                
+                // Keep transitioning logic true so normal spawns don't start, but allow movement
+                isTransitioning = false; 
+                
+                setTimeout(() => {
+                    levelTransitionEl.classList.remove('show-transition');
+                    bossWarmup = false; // FIGHT STARTS
+                    createFloatingText(canvas.width/2, canvas.height/2, "SURVIVE!", "red");
+                }, 3000); // 3s warmup
+            } else if (newLevel === 5) {
+                switchMusic('main'); // Back to main loop
+                isTransitioning = false;
+            } else {
+                isTransitioning = false;
+            }
+        }, 2500);
+    }
+
+    function togglePause() {
+        if (!isPlaying || isTransitioning) return;
+        isPaused = !isPaused;
+        if (isPaused) {
+            pauseOverlay.classList.remove('hidden');
+            document.getElementById('pause-screen').classList.remove('hidden');
+            currentTrack.pause();
+        } else {
+            document.getElementById('pause-screen').classList.add('hidden');
+            lastTime = performance.now(); 
+            requestAnimationFrame(gameLoop);
+            currentTrack.play();
+        }
+    }
+
+    function endGame() {
+        isPlaying = false;
+        isPaused = false;
+        isDoubleBubble = false;
+        isBossMode = false;
+        bossTimerDisplay.style.display = 'none';
+        
+        hud.classList.add('hidden');
+        pauseOverlay.classList.add('hidden');
+        document.getElementById('pause-screen').classList.add('hidden');
+        
+        lastCallVignette.style.opacity = 0;
+        
+        musicMain.pause(); musicMain.currentTime = 0;
+        musicBoss.pause(); musicBoss.currentTime = 0;
+        currentTrack = musicMain; // Reset to default
+
+        playSound('gameover'); 
+        inputFinalScoreEl.innerText = score;
+        nameInputModal.classList.remove('hidden');
+        nameInput.focus();
+    }
+
+    function showGameOverScreen() {
+        nameInputModal.classList.add('hidden');
+        gameOverScreen.classList.remove('hidden');
+        finalScoreEl.innerText = score;
+    }
+
+    function startGame() {
+        score = 0; 
+        displayScore = 0; // Reset rolling score
+        lives = 3; currentLevel = 1;
+        streak = 0;
+        updateStreakDisplay();
+        updateLivesDisplay();
+        
+        spawnInterval = levelsConfig[0].spawnIntervalMs;
+        speedMultiplier = levelsConfig[0].speedMultiplier;
+        thiefSpawnInterval = levelsConfig[0].thiefSpawnMs;
+
+        scoreEl.innerText = score;
+        levelEl.innerText = currentLevel;
+        
+        beers = []; particles = []; clickEffects = []; thieves = []; pretzels = []; curds = [];
+        spawnTimer = 0; thiefSpawnTimer = 0;
+        isTransitioning = false;
+        isPaused = false;
+        
+        isDoubleBubble = false;
+        doubleBubbleTimer = 0;
+        
+        isBossMode = false;
+        bossWarmup = false;
+        bossTimerDisplay.style.display = 'none';
+        
+        // Reset Guaranteed Drops
+        hasSpawnedPretzelLevel3 = false;
+        hasSpawnedCurdLevel3 = false;
+
+        if (!vipInstance) {
+            vipInstance = new TableGuest(canvas.height - 100);
+        }
+        vipInstance.isVipActive = false; 
+        
+        isPlaying = true;
+        startScreen.classList.add('hidden');
+        gameOverScreen.classList.add('hidden');
+        document.getElementById('pause-screen').classList.add('hidden');
+        
+        hud.classList.remove('hidden');
+        pauseOverlay.classList.remove('hidden');
+        
+        // Play Music
+        currentTrack = musicMain;
+        musicMain.currentTime = 0;
+        musicMain.play().catch(e => console.log("Audio play failed", e));
+        
+        lastTime = performance.now();
+        requestAnimationFrame(gameLoop);
+    }
+
+    /* --- HYBRID LEADERBOARD SYSTEM --- */
+    async function fetchLeaderboard() {
+        leaderboardBody.innerHTML = '';
+        leaderboardStatus.textContent = 'Loading...';
+        let data = []; let usedSource = 'API';
+        try {
+            const response = await fetch(`${SIMPLEBOARDS_BASE_URL}/leaderboards/${SIMPLEBOARDS_LEADERBOARD_ID}/entries`, { headers: { 'x-api-key': SIMPLEBOARDS_API_KEY } });
+            if (!response.ok) throw new Error("API Fetch failed");
+            const jsonData = await response.json();
+            data = Array.isArray(jsonData) ? jsonData : (jsonData.entries || []);
+        } catch (error) {
+            usedSource = 'Local';
+            const localData = localStorage.getItem('law_leaderboard');
+            if (localData) { data = JSON.parse(localData); }
+        }
+        if (!data || data.length === 0) {
+            leaderboardStatus.textContent = `No scores yet (${usedSource}). Be the first!`;
+            return;
+        }
+        leaderboardStatus.textContent = `Top Scores (${usedSource})`;
+        const standardizedData = data.map(entry => ({ name: entry.playerDisplayName || entry.name || "Anonymous", score: Number(entry.score) || 0 }));
+        standardizedData.sort((a, b) => b.score - a.score);
+        standardizedData.slice(0, 10).forEach((entry, index) => {
+            const row = leaderboardBody.insertRow();
+            row.insertCell(0).textContent = index + 1;
+            row.insertCell(1).textContent = entry.name;
+            row.insertCell(2).textContent = entry.score.toLocaleString();
+        });
+    }
+    
+    async function submitScore(name, score) {
+        const sanitizedName = name.trim().toUpperCase() || "ANONYMOUS";
+        submitNameBtn.textContent = "Submitting..."; submitNameBtn.disabled = true;
+        const payload = { leaderboardId: SIMPLEBOARDS_LEADERBOARD_ID, playerDisplayName: sanitizedName, score: score.toString() };
+        try {
+            await fetch(`${SIMPLEBOARDS_BASE_URL}/entries`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': SIMPLEBOARDS_API_KEY }, body: JSON.stringify(payload)
+            });
+        } catch (error) {
+            let localScores = JSON.parse(localStorage.getItem('law_leaderboard')) || [];
+            localScores.push({ name: sanitizedName, score: score }); 
+            localScores.sort((a, b) => b.score - a.score);
+            localScores = localScores.slice(0, 10);
+            localStorage.setItem('law_leaderboard', JSON.stringify(localScores));
+        }
+        submitNameBtn.textContent = "Submit Score"; submitNameBtn.disabled = false;
+        showGameOverScreen();
+    }
+
+    enterBtn.addEventListener('click', () => { initAudio(); landingPage.classList.add('hidden'); startScreen.classList.remove('hidden'); requestAnimationFrame(renderTutorialIcons); });
+    leaderboardBtn.addEventListener('click', () => { startScreen.classList.add('hidden'); leaderboardModal.classList.remove('hidden'); fetchLeaderboard(); });
+    closeLeaderboardBtn.addEventListener('click', () => { leaderboardModal.classList.add('hidden'); startScreen.classList.remove('hidden'); });
+    submitNameBtn.addEventListener('click', () => { submitScore(nameInput.value, score); nameInput.value = ''; });
+    nameInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') submitNameBtn.click(); });
+    restartBtn.addEventListener('click', () => { showGameOverScreen(); gameOverScreen.classList.add('hidden'); startScreen.classList.remove('hidden'); });
+    menuBtn.addEventListener('click', () => { gameOverScreen.classList.add('hidden'); startScreen.classList.remove('hidden'); });
+    pauseBtn.addEventListener('click', togglePause); resumeBtn.addEventListener('click', togglePause); quitBtn.addEventListener('click', endGame);
+    startBtn.addEventListener('click', startGame);
+
+    function renderTutorialIcons() { 
+        // 1. Swill
+        const swillCanvas = document.getElementById('demo-swill');
+        if (swillCanvas) { const ctx = swillCanvas.getContext('2d'); const beer = new Beer(1, 0); beer.type = 'BAD'; beer.x = swillCanvas.width/2; beer.y = swillCanvas.height/2+10; beer.rotation=0; beer.draw(ctx); }
+        // 2. Law
+        const lawCanvas = document.getElementById('demo-law');
+        if (lawCanvas) { const ctx = lawCanvas.getContext('2d'); const beer = new Beer(1, 0); beer.type = 'GOOD'; beer.x = lawCanvas.width/2; beer.y = lawCanvas.height/2+10; beer.rotation=0; beer.draw(ctx); }
+        // 3. Green
+        const greenCanvas = document.getElementById('demo-green');
+        if (greenCanvas) { const ctx = greenCanvas.getContext('2d'); const beer = new Beer(4, 0); beer.type = 'GREEN_SWILL'; beer.x = greenCanvas.width/2; beer.y = greenCanvas.height/2+10; beer.rotation=0; beer.draw(ctx); }
+        // 4. Special (Using pretzel/curd canvases instead of generic "special")
+        const pretzelCanvas = document.getElementById('demo-pretzel');
+        if (pretzelCanvas) { const ctx = pretzelCanvas.getContext('2d'); const p = new Pretzel(20); p.x = 20; p.y = 25; p.radius = 15; p.draw(ctx); }
+        const curdCanvas = document.getElementById('demo-curd');
+        if (curdCanvas) { const ctx = curdCanvas.getContext('2d'); const c = new CheeseCurd(20); c.x = 20; c.y = 25; c.draw(ctx); }
+        
+        // 5. Old Timer
+        const otCanvas = document.getElementById('demo-oldtimer');
+        if (otCanvas) { const ctx = otCanvas.getContext('2d'); ctx.shadowColor="white"; ctx.shadowBlur=10; ctx.drawImage(oldTimerLeftImg, (otCanvas.width-60)/2, (otCanvas.height-60)/2, 60, 60); ctx.shadowBlur=0; }
+        // 6. VIP
+        const vipCanvas = document.getElementById('demo-vip');
+        if (vipCanvas) { const ctx = vipCanvas.getContext('2d'); ctx.shadowColor="white"; ctx.shadowBlur=10; ctx.drawImage(vipInstructionImg, (vipCanvas.width-85)/2, (vipCanvas.height-85)/2, 85, 85); ctx.shadowBlur=0; }
+    }
+
+    function gameLoop(timestamp) {
+        if (!isPlaying || isPaused) return;
+
+        const dt = timestamp - lastTime;
+        lastTime = timestamp;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.save();
+        if (shakeDuration > 0) {
+            const dx = (Math.random() - 0.5) * shakeIntensity;
+            const dy = (Math.random() - 0.5) * shakeIntensity;
+            ctx.translate(dx, dy);
+            shakeDuration--;
+        }
+
+        // --- 1. ROLLING SCORE LOGIC ---
+        if (displayScore < score) {
+            let diff = score - displayScore;
+            // Add a chunk based on distance (easing), minimum 1 to ensure it finishes
+            let step = Math.ceil(diff * 0.1); 
+            displayScore += step;
+            scoreEl.innerText = displayScore.toLocaleString();
+        } else if (displayScore > score) {
+            // If score went down (penalty), update immediately or roll down faster
+            displayScore = score;
+            scoreEl.innerText = displayScore.toLocaleString();
+        }
+
+        // --- DOUBLE BUBBLE LOGIC ---
+        if (isDoubleBubble) {
+            doubleBubbleTimer -= dt;
+            ctx.fillStyle = 'rgba(252, 211, 77, 0.1)'; // Golden tint
+            ctx.fillRect(0,0,canvas.width, canvas.height);
+            
+            if (doubleBubbleTimer <= 0) {
+                isDoubleBubble = false;
+                
+                // EXPLODE EVERYTHING
+                beers.forEach(b => {
+                    let color = (b.type === 'GREEN_SWILL') ? '#22c55e' : (b.type === 'BAD') ? '#9ca3af' : '#d97706';
+                    createExplosion(b.x, b.y, color, 'square');
+                });
+                thieves.forEach(t => createExplosion(t.x, t.y, '#fdbd9c', 'circle'));
+                pretzels.forEach(p => createExplosion(p.x, p.y, '#8b4513', 'square'));
+                curds.forEach(c => createExplosion(c.x, c.y, '#fcd34d', 'circle'));
+
+                // Audio & Visual feedback
+                playSound('explosion'); 
+                triggerShake(15, 10); 
+
+                // Clear arrays
+                beers = [];
+                pretzels = [];
+                curds = [];
+                thieves = [];
+            }
+        }
+
+        // --- BOSS MODE LOGIC ---
+        if (isBossMode) {
+            
+            // Draw Boss Always (Idle or Active)
+            if (bossInstance) {
+                // Only update position if NOT warmup
+                if (!bossWarmup) bossInstance.update(dt);
+                bossInstance.draw(ctx);
+            }
+
+            // Only run timer if NOT warmup
+            if (!bossWarmup) {
+                if (bossCountdown > 0) {
+                      bossCountdown -= dt / 1000;
+                      if (bossCountdown < 0) bossCountdown = 0;
+                      bossTimerDisplay.innerText = Math.ceil(bossCountdown);
+                }
+
+                if (bossCountdown <= 0) {
+                    // BOSS DEFEATED
+                    isBossMode = false;
+                    bossTimerDisplay.style.display = 'none';
+                    createFloatingText(canvas.width/2, canvas.height/2, "BOSS DEFEATED!", "gold");
+                    playSound('megaBonus');
+                    // Transition to Level 5 (Expert)
+                    currentLevel++; 
+                    transitionToLevel(currentLevel);
+                }
+            }
+        }
+
+        // Spawning (Only if NOT transitioning)
+        // If we are in Boss Warmup, we skip spawning entirely
+        if (!isTransitioning && !bossWarmup) {
+            // Boss spawns handle themselves in bossInstance.update()
+            
+            // Standard Spawning (Only if NOT Boss Mode)
+            if (!isBossMode) {
+                spawnTimer += dt;
+                let spawnCap = isDoubleBubble ? 999 : 3; 
+                let currentInterval = isDoubleBubble ? 300 : spawnInterval;
+
+                // --- DYNAMIC DIFFICULTY FOR LEVEL 3 ---
+                if (currentLevel === 3 && !isDoubleBubble) {
+                    const startScore = 300; 
+                    const endScore = 500; 
+                    // TEST MODE logic for Difficulty Scaling:
+                    const progress = Math.min(Math.max((score - 100) / (500 - 100), 0), 1); 
+
+                    // Interpolate difficulty parameters
+                    // Spawn Interval: 1000 -> 600
+                    currentInterval = 1000 - (progress * 400);
+                    // Speed: 1.6 -> 2.5
+                    speedMultiplier = 1.6 + (progress * 0.9);
+                    // Thief Interval: 6000 -> 3000
+                    thiefSpawnInterval = 6000 - (progress * 3000);
+                }
+
+                if (spawnTimer > currentInterval) {
+                    // Try to spawn if we are under the cap
+                    if (beers.length < spawnCap) {
+                        let safeX = getSafeSpawnX();
+                        if (safeX !== null) {
+                             beers.push(new Beer(currentLevel, safeX));
+                        }
+                    }
+                    
+                    // --- POWER-UP SPAWNING (Level 3 Only) ---
+                    // Rates Increased for testing/visibility: Pretzel 4%, Curd 3%
+                    if (!isDoubleBubble && currentLevel === 3) {
+                        // Pretzel Logic
+                        if (Math.random() < 0.04) {
+                            let safeX = getSafeSpawnX();
+                            if (safeX !== null) { 
+                                pretzels.push(new Pretzel(safeX));
+                                hasSpawnedPretzelLevel3 = true;
+                            }
+                        }
+                        // Curd Logic
+                        if (Math.random() < 0.03) {
+                            let safeX = getSafeSpawnX();
+                            if (safeX !== null) {
+                                curds.push(new CheeseCurd(safeX));
+                                hasSpawnedCurdLevel3 = true;
+                            }
+                        }
+
+                        // --- GUARANTEED DROP LOGIC (Scaled for Test) ---
+                        // Pretzel at 350
+                        if (score > 350 && !hasSpawnedPretzelLevel3) {
+                             let safeX = getSafeSpawnX();
+                             if (safeX !== null) {
+                                 pretzels.push(new Pretzel(safeX));
+                                 hasSpawnedPretzelLevel3 = true;
+                                 console.log("Force spawned Pretzel (Bad Luck Protection)");
+                             }
+                        }
+                        // Curd at 450
+                        if (score > 450 && !hasSpawnedCurdLevel3) {
+                             let safeX = getSafeSpawnX();
+                             if (safeX !== null) {
+                                 curds.push(new CheeseCurd(safeX));
+                                 hasSpawnedCurdLevel3 = true;
+                                 console.log("Force spawned Curd (Bad Luck Protection)");
+                             }
+                        }
+                    }
+
+                    spawnTimer = 0;
+                }
+                
+                // Thieves (Level 2+)
+                if (!isDoubleBubble && currentLevel >= 2) {
+                    thiefSpawnTimer += dt;
+                    if (thiefSpawnTimer > thiefSpawnInterval) {
+                        thieves.push(new PatronRaider());
+                        thiefSpawnTimer = 0;
+                    }
+                }
+            }
+        }
+
+        // VIP Guest (Level 3+)
+        if (vipInstance) {
+            vipInstance.update();
+            if (vipInstance.isVipActive) {
+                vipInstance.draw(ctx);
+                
+                // VIP Collision BEER
+                for (let j = beers.length - 1; j >= 0; j--) {
+                    const b = beers[j];
+                    if (b.x > vipInstance.x - 40 && b.x < vipInstance.x + 40 && 
+                        b.y > vipInstance.y - 40 && b.y < vipInstance.y + 20) {
+                        
+                        beers.splice(j, 1);
+                        
+                        if (b.type === 'GOOD') {
+                            let pts = 500;
+                            if (b.isSpecial) {
+                                pts = 1000;
+                                playSound('megaBonus');
+                                createFloatingText(vipInstance.x, vipInstance.y - 60, "GOLDEN BREW! +1 LIFE", "#ffd700");
+                                gainLife();
+                            } else {
+                                playSound('vipCatch'); 
+                                createFloatingText(vipInstance.x, vipInstance.y - 60, "VIP LAW BONUS!", "#d946ef");
+                            }
+                            score += pts;
+                            // Score updates in next loop iteration
+                            createSparkle(b.x, b.y);
+                        } 
+                        else if (b.type === 'GREEN_SWILL') {
+                            if (!isDoubleBubble) loseLife();
+                            score -= 1000; // -1000 for VIP hit
+                            createFloatingText(vipInstance.x, vipInstance.y - 60, "-1000", "red");
+                            if(!isDoubleBubble) playSound('toxicHit'); 
+                            triggerShake(20, 8); 
+                            createExplosion(b.x, b.y, ['#22c55e', '#166534', '#dcfce7'], 'square'); 
+                            streak = 0; 
+                            updateStreakDisplay();
+                            checkGameOver();
+                        }
+                        else {
+                            if (!isDoubleBubble) loseLife();
+                            createFloatingText(vipInstance.x, vipInstance.y - 60, isDoubleBubble ? "SHIELDED!" : "VIP SWILL HIT!", isDoubleBubble ? "#fcd34d" : "red");
+                            if(!isDoubleBubble) playSound('error'); 
+                            triggerShake(10, 5); 
+                            createExplosion(b.x, b.y, '#ef4444', 'square'); 
+                            streak = 0; 
+                            updateStreakDisplay();
+                            checkGameOver();
+                        }
+                    }
+                }
+
+                // VIP Collision PRETZEL -> Trigger Happy Hour
+                for (let j = pretzels.length - 1; j >= 0; j--) {
+                    const p = pretzels[j];
+                    if (p.x > vipInstance.x - 40 && p.x < vipInstance.x + 40 && p.y > vipInstance.y - 40 && p.y < vipInstance.y + 20) {
+                        pretzels.splice(j, 1);
+                        startHappyHour();
+                    }
+                }
+                
+                // VIP Collision CURDS -> Trigger Double Bubble
+                for (let j = curds.length - 1; j >= 0; j--) {
+                    const c = curds[j];
+                    if (c.x > vipInstance.x - 40 && c.x < vipInstance.x + 40 && c.y > vipInstance.y - 40 && c.y < vipInstance.y + 20) {
+                        curds.splice(j, 1);
+                        startDoubleBubble();
+                    }
+                }
+            }
+        }
+
+        // Entities Loop
+        for (let i = beers.length - 1; i >= 0; i--) {
+            const b = beers[i];
+            b.update(dt);
+            b.draw(ctx);
+            if (b.y > canvas.height) {
+                beers.splice(i, 1);
+                if (b.isSpecial) continue; 
+                if (b.type === 'GOOD') {
+                    let pts = 50; score += pts; 
+                    // Floating text for caught beer
+                    createFloatingText(b.x, canvas.height - 50, "LAW BREW SERVED", "lime");
+                    playSound('score'); 
+                } else {
+                    // Swill hit bottom
+                    // If Double Bubble: Penalty points but NO life lost
+                    if (isDoubleBubble) {
+                        score -= 100;
+                        createFloatingText(b.x, canvas.height - 50, "-100", "orange");
+                    } else {
+                        loseLife();
+                        createFloatingText(b.x, canvas.height - 50, "SWILL SERVED!", "orange");
+                        playSound('error'); 
+                        streak = 0; updateStreakDisplay();
+                    }
+                    checkGameOver();
+                    triggerShake(10, 5);
+                }
+            }
+        }
+
+        for (let i = pretzels.length - 1; i >= 0; i--) {
+            const p = pretzels[i]; p.update(); p.draw(ctx);
+            if (p.y > canvas.height) pretzels.splice(i, 1);
+        }
+        for (let i = curds.length - 1; i >= 0; i--) {
+            const c = curds[i]; c.update(); c.draw(ctx);
+            if (c.y > canvas.height) curds.splice(i, 1);
+        }
+
+        for (let i = thieves.length - 1; i >= 0; i--) {
+            const t = thieves[i]; t.update(dt); t.draw(ctx);
+            if (t.x < -t.size * 2 || t.x > canvas.width + t.size * 2 || t.life <= 0) { thieves.splice(i, 1); }
+            
+            for (let j = beers.length - 1; j >= 0; j--) {
+                const b = beers[j];
+                if (Math.hypot(t.x - b.x, t.y - b.y) < 50) {
+                    if (b.type === 'GOOD') continue;
+                    else {
+                        beers.splice(j, 1); 
+                        if (!isDoubleBubble) {
+                             loseLife();
+                             createFloatingText(t.x, t.y, "DRANK SWILL!", "orange");
+                             playSound('error'); 
+                        } else {
+                             createFloatingText(t.x, t.y, "SHIELDED!", "#fcd34d");
+                        }
+                        
+                        if (b.type === 'GREEN_SWILL') {
+                            score -= 500; // -500 for thief hit
+                            if(!isDoubleBubble) playSound('toxicTheft');
+                        }
+
+                        checkGameOver(); triggerShake(10, 5); t.isHit = true; 
+                    }
+                }
+            }
+        }
+        
+        for (let i = particles.length - 1; i >= 0; i--) { particles[i].update(); particles[i].draw(ctx); if (particles[i].life <= 0) particles.splice(i, 1); }
+        for (let i = clickEffects.length - 1; i >= 0; i--) { const c = clickEffects[i]; c.age++; ctx.fillStyle = `rgba(255, 255, 255, ${1 - c.age / 10})`; ctx.beginPath(); ctx.arc(c.x, c.y, 10 * (c.age / 10), 0, Math.PI * 2); ctx.fill(); if (c.age > 10) clickEffects.splice(i, 1); }
+        
+        ctx.restore(); 
+        checkLevelUp();
+        requestAnimationFrame(gameLoop);
+    }
+</script>
+</body>
+</html>
