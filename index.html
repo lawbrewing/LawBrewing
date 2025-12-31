@@ -5,97 +5,92 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Law Brewing - Live Taps</title>
     <style>
-        :root {
-            --gold: #f1c40f;
-            --dark-bg: #0a0a0a;
-            --card-bg: #161616;
-        }
-        body { background: var(--dark-bg); color: white; font-family: sans-serif; text-align: center; margin: 0; }
-        header { padding: 40px; }
+        :root { --gold: #f1c40f; --dark: #0a0a0a; --card: #161616; }
+        body { background: var(--dark); color: white; font-family: 'Courier New', Courier, monospace; margin: 0; text-align: center; }
+        header { padding: 40px; border-bottom: 2px solid var(--gold); margin-bottom: 20px; }
         .glowing-logo { color: var(--gold); font-size: 3rem; letter-spacing: 10px; text-shadow: 0 0 15px rgba(241, 196, 15, 0.5); }
-        
-        .tap-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            max-width: 1200px;
-            margin: auto;
-            padding: 20px;
-        }
-
-        .tap-card {
-            background: var(--card-bg);
-            border: 1px solid #333;
-            border-radius: 15px;
-            padding: 20px;
-        }
-
-        .tap-name { font-size: 1.5rem; font-weight: bold; color: var(--gold); margin-bottom: 20px; }
-
-        /* Progress Bar */
-        .bar-outer {
-            background: #000;
-            height: 40px;
-            border-radius: 20px;
-            border: 1px solid #444;
-            overflow: hidden;
-            position: relative;
-            margin-top: 10px;
-        }
-        .bar-inner {
-            background: linear-gradient(90deg, #b8860b, var(--gold));
-            height: 100%;
-            transition: width 1s ease-in-out;
-        }
-        .bar-text {
-            position: absolute; width: 100%; top: 0; left: 0;
-            line-height: 40px; font-weight: bold; font-size: 1rem;
-            color: white; text-shadow: 1px 1px 2px black;
-        }
+        .main-container { max-width: 900px; margin: auto; padding: 20px; }
+        .tap-card { background: var(--card); border: 2px solid #333; border-radius: 15px; padding: 30px; margin-bottom: 40px; }
+        .beer-art { width: 100%; max-height: 400px; border-radius: 10px; object-fit: cover; margin-bottom: 20px; border: 1px solid #444; }
+        .beer-title { color: var(--gold); font-size: 2.5rem; margin: 10px 0; text-transform: uppercase; }
+        .description { line-height: 1.6; text-align: left; background: #000; padding: 20px; border-radius: 10px; border-left: 4px solid var(--gold); white-space: pre-line; }
+        .bar-outer { background: #000; height: 50px; border-radius: 25px; border: 1px solid #444; overflow: hidden; position: relative; margin: 30px 0; }
+        .bar-inner { background: linear-gradient(90deg, #b8860b, var(--gold)); height: 100%; transition: width 1.5s ease-in-out; }
+        .bar-text { position: absolute; width: 100%; top: 0; left: 0; line-height: 50px; font-weight: bold; font-size: 1.2rem; text-shadow: 2px 2px 4px black; }
+        .stats { display: flex; justify-content: space-around; font-size: 1.2rem; font-weight: bold; color: var(--gold); }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1 class="glowing-logo">LAW BREWING</h1>
-    </header>
+    <header><h1 class="glowing-logo">LAW BREWING</h1></header>
 
-    <div id="tap-display" class="tap-container">
-        </div>
+    <div class="main-container">
+        <div id="active-taps">Loading the Bar...</div>
+    </div>
 
     <script>
-        async function updateTaps() {
+        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQWqyJ5-pMWhRUkkZLoHdmFPtOHJozHRJkL9c0ivSSY9J7Fp0lto4W05tH-XbFelBL-htJZXedhv7i3/pub?output=csv';
+
+        // Simple CSV Parser
+        function parseCSV(text) {
+            const lines = text.split('\n');
+            const headers = lines[0].split(',');
+            return lines.slice(1).map(line => {
+                const values = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/); // Handles commas inside quotes
+                return headers.reduce((obj, header, i) => {
+                    obj[header.trim()] = values[i] ? values[i].replace(/"/g, '').trim() : '';
+                    return obj;
+                }, {});
+            });
+        }
+
+        async function updateDisplay() {
             try {
-                // Fetch only the weights
-                const response = await fetch('tap_weights.json?t=' + Date.now());
-                const weights = await response.json();
+                // 1. Fetch data from Pi (Weights) and Google (Beer Info)
+                const [wRes, sRes] = await Promise.all([
+                    fetch('tap_weights.json?t=' + Date.now()),
+                    fetch(SHEET_URL + '&t=' + Date.now())
+                ]);
                 
-                const display = document.getElementById('tap-display');
+                const weights = await wRes.json();
+                const sheetText = await sRes.text();
+                const beerData = parseCSV(sheetText);
+
+                const display = document.getElementById('active-taps');
                 display.innerHTML = '';
 
-                // List the keys exactly as they appear in your Python TAP_CONFIG
-                const tapNames = ["Law Tap", "Wisco Tap", "Nitro Tap"];
+                beerData.forEach(beer => {
+                    // Match the CSV "Tap ID" to the Pi's JSON "Tap Name"
+                    const pct = weights[beer["Tap ID"]] || 0;
+                    const pints = Math.round((pct / 100) * 40);
 
-                tapNames.forEach(name => {
-                    const percent = weights[name] || 0;
-                    
                     display.innerHTML += `
                         <div class="tap-card">
-                            <div class="tap-name">${name.toUpperCase()}</div>
+                            <img class="beer-art" src="${beer["Image URL"]}" onerror="this.src='https://via.placeholder.com/600x400?text=Law+Brewing'">
+                            <div style="color: #888; letter-spacing: 3px;">${beer["Tap ID"].toUpperCase()}</div>
+                            <div class="beer-title">${beer["Beer Name"]}</div>
+                            <div style="margin-bottom:20px;">${beer["Style"]} | ${beer["ABV"]}</div>
+                            
                             <div class="bar-outer">
-                                <div class="bar-inner" style="width: ${percent}%"></div>
-                                <div class="bar-text">${percent}% FULL</div>
+                                <div class="bar-inner" style="width: ${pct}%"></div>
+                                <div class="bar-text">${pct}% REMAINING</div>
+                            </div>
+
+                            <div class="description">${beer["Description"]}</div>
+                            <div class="stats" style="margin-top:20px;">
+                                <div>PINTS LEFT: ${pints}</div>
                             </div>
                         </div>
                     `;
                 });
+
             } catch (e) {
-                console.error("Waiting for weights...", e);
+                console.error("Updating...", e);
             }
         }
 
-        setInterval(updateTaps, 5000); // Check every 5 seconds
-        updateTaps();
+        setInterval(updateDisplay, 10000); // Check for updates every 10 seconds
+        updateDisplay();
     </script>
 </body>
 </html>
