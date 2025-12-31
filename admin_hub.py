@@ -20,13 +20,14 @@ def run_deploy():
     try:
         os.chdir(BASE_DIR)
         subprocess.run(["git", "add", "taps.json"], check=True)
-        subprocess.run(["git", "commit", "-m", "Manual Update"], check=True)
+        subprocess.run(["git", "commit", "-m", "Tap and Weight Sync"], check=True)
         subprocess.run(["git", "push", "origin", "main"], check=True)
-    except Exception as e: print(f"Git Error: {e}")
+        print("🚀 Git Push Success!")
+    except Exception as e:
+        print(f"❌ Git Error: {e}")
 
 @app.route('/')
 def admin_page():
-    # This serves the admin interface directly from the Pi
     with open(os.path.join(BASE_DIR, 'admin.html'), 'r') as f:
         return render_template_string(f.read())
 
@@ -34,45 +35,56 @@ def admin_page():
 def get_data():
     return jsonify(load_data())
 
-@app.route('/save_to_library', methods=['POST'])
-def save_to_library():
-    data = request.json
-    all_data = load_data()
-    all_data['library'][data['beer_name']] = {
-        "abv": data['abv'], "desc": data['desc'],
-        "artwork": data['artwork'], "percent": int(data.get('percent', 100))
-    }
-    save_data(all_data)
-    run_deploy()
-    return jsonify({"status": "success"})
-
-@app.route('/assign_tap', methods=['POST'])
-def assign_tap():
-    data = request.json
-    all_data = load_data()
-    all_data['active_taps'][data['tap']] = data['beer_name']
-    save_data(all_data)
-    run_deploy()
-    return jsonify({"status": "success"})
-
 @app.route('/update_weight', methods=['POST'])
 def update_weight():
     data = request.json
-    tap_name = data.get('tap')   # e.g., "Law Tap"
-    new_percent = data.get('percent')
-    
     all_data = load_data()
+    tap_id = data.get('tap')  # e.g., "Law Tap"
+    new_pct = data.get('percent', 0)
     
-    # 1. Find which beer is currently on that tap
-    active_beer = all_data['active_taps'].get(tap_name)
+    # 1. Update the weight in the Active Taps section (for index.html display)
+    if 'taps' in all_data and tap_id in all_data['taps']:
+        all_data['taps'][tap_id]['percent'] = new_pct
     
-    # 2. Update that beer's weight in the library
-    if active_beer and active_beer in all_data['library']:
-        # Only update and deploy if the weight actually changed
-        if all_data['library'][active_beer]['percent'] != new_percent:
-            all_data['library'][active_beer]['percent'] = new_percent
-            save_data(all_data)
-            run_deploy()
-            print(f"⚖️ Updated {active_beer} on {tap_name} to {new_percent}%")
-            
-    return jsonify({"status": "success"})
+    # 2. Update the weight in the Library for the beer currently on that tap
+    beer_name = all_data['active_taps'].get(tap_id)
+    if beer_name and beer_name in all_data['library']:
+        all_data['library'][beer_name]['percent'] = new_pct
+        
+    save_data(all_data)
+    run_deploy()
+    return jsonify({"status": "success", "tap": tap_id, "percent": new_pct})
+
+@app.route('/assign_beer', methods=['POST'])
+def assign_beer():
+    data = request.json
+    all_data = load_data()
+    tap_id = data.get('tap')
+    beer_name = data.get('beer_name')
+
+    if beer_name in all_data['library']:
+        beer_info = all_data['library'][beer_name]
+        
+        # Ensure artwork path is relative for GitHub
+        filename = beer_info['artwork'].split('/')[-1]
+        artwork_path = f"images/labels/{filename}"
+        
+        # Update the active tap info
+        all_data['active_taps'][tap_id] = beer_name
+        all_data['taps'][tap_id] = {
+            "name": beer_name,
+            "brewery": beer_info.get('brewery', 'Law Brewing'),
+            "style": beer_info.get('style', 'Beer'),
+            "abv": beer_info.get('abv', '0%'),
+            "percent": beer_info.get('percent', 100),
+            "artwork": artwork_path
+        }
+        
+        save_data(all_data)
+        run_deploy()
+        return jsonify({"status": "success"})
+    
+    return jsonify({"status": "error", "message": "Beer not found"}), 404
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
