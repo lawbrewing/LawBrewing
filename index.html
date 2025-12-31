@@ -21,7 +21,7 @@
             padding-bottom: 50px;
         }
 
-        /* BACKLIT LOGO HEADER FROM TEST.HTML */
+        /* BACKLIT LOGO HEADER */
         .header-container {
             text-align: center;
             padding: 50px 0 30px;
@@ -34,7 +34,6 @@
             max-width: 280px;
             filter: drop-shadow(0 0 10px rgba(255, 180, 0, 0.5)) 
                     drop-shadow(0 0 25px rgba(255, 180, 0, 0.2));
-            transition: filter 0.4s ease-in-out;
         }
 
         .sub-brand {
@@ -46,7 +45,6 @@
             font-size: 1.5rem;
         }
 
-        /* TAP GRID */
         .tap-container { 
             display: grid; 
             grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); 
@@ -69,7 +67,7 @@
         .label-art { 
             width: 100%; 
             height: 350px; 
-            background-size: contain; /* Stop cropping */
+            background-size: contain; 
             background-repeat: no-repeat;
             background-position: center; 
             background-color: #000;
@@ -107,10 +105,9 @@
             color: #ccc; 
             line-height: 1.6; 
             margin-bottom: 20px; 
-            white-space: pre-wrap; /* Keeps Home Alone spacing */
+            white-space: pre-wrap; 
         }
 
-        /* PROGRESS BAR */
         .volume-container { 
             background: #000; 
             height: 35px; 
@@ -118,7 +115,7 @@
             position: relative; 
             overflow: hidden; 
             border: 1px solid #444;
-            margin-top: auto; /* Pushes to bottom of card content */
+            margin-top: auto; 
         }
 
         .volume-bar { 
@@ -149,8 +146,7 @@
         <div class="sub-brand">Liquid Attitude Taps</div>
     </div>
 
-    <div class="tap-container" id="tap-display">
-        </div>
+    <div class="tap-container" id="tap-display"></div>
 
     <script>
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQWqyJ5-pMWhRUkkZLoHdmFPtOHJozHRJkL9c0ivSSY9J7Fp0lto4W05tH-XbFelBL-htJZXedhv7i3/pub?output=csv';
@@ -185,23 +181,30 @@
                 const container = document.getElementById('tap-display');
                 container.innerHTML = '';
 
-                // Skipping Header (i=0)
                 for (let i = 1; i < csvData.length; i++) {
                     const row = csvData[i];
-                    if (!row[0]) continue;
+                    if (!row[0] || row[0] === "") continue;
 
-                    // POSITIONAL MAPPING: A=TapID, B=Name, C=Style, D=ABV, E=Img, F=Desc
-                    const tapID = row[0];
-                    const pct   = weights[tapID] || 0;
+                    // UPDATED MAPPING:
+                    // We define exactly which column is which based on your sheet layout
+                    const tapID   = row[0]; // "Law Tap"
+                    const beerID  = row[1]; // The ID we want to HIDE (5657071)
+                    const bName   = row[2]; // "Angels With Filthy Souls"
+                    const bStyle  = row[3]; // "Winter Warmer"
+                    const bABV    = row[4]; // "8.20%"
+                    const bImage  = row[5]; // URL
+                    const bDesc   = row[6]; // Description
+
+                    const pct = weights[tapID] || 0;
 
                     container.innerHTML += `
                         <div class="beer-card">
-                            <div class="label-art" style="background-image: url('${row[4]}');"></div>
+                            <div class="label-art" style="background-image: url('${bImage}');"></div>
                             <div class="details">
                                 <div class="tap-id-tag">${tapID}</div>
-                                <div class="stats">${row[2]} | ABV: ${row[3]}</div>
-                                <h2 class="beer-name">${row[1]}</h2>
-                                <p class="description">${row[5]}</p>
+                                <div class="stats">${bStyle} | ABV: ${bABV}</div>
+                                <h2 class="beer-name">${bName}</h2>
+                                <p class="description">${bDesc}</p>
                                 
                                 <div class="volume-container">
                                     <div class="volume-bar" style="width: ${pct}%"></div>
@@ -212,7 +215,7 @@
                     `;
                 }
             } catch (err) {
-                console.log("Syncing scales...");
+                console.log("Updating Taps...");
             }
         }
 
