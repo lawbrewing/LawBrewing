@@ -1,69 +1,57 @@
 import socket
-import requests
 import json
+import requests
 import re
 
-PORT = 1234
-HUB_URL = "http://127.0.0.1:5000/update_weight"
+# --- CONFIGURATION ---
+HUB_URL = "http://localhost:5000/update_weight"
 
-# --- CALIBRATION SETTINGS ---
-# Using the weights we established this morning
+# Add your Nitro info back here!
 TAP_CONFIG = {
-    '192.168.86.47': {
-        'name': 'Law Tap',
-        'empty': 480,    # Tare weight
-        'full': 4150     # Full weight
-    },
-    '192.168.86.116': {
-        'name': 'Wisco Tap',
-        'empty': 520,
-        'full': 4200
-    },
-    '192.168.86.45': {
-        'name': 'Nitro Tap',
-        'empty': 500,
-        'full': 4100
-    }
+    '192.168.86.47':  {'name': 'Law Tap',   'empty': 480, 'full': 4150},
+    '192.168.86.116': {'name': 'Wisco Tap', 'empty': 500, 'full': 4000},
+    '192.168.86.45':  {'name': 'Nitro Tap', 'empty': 450, 'full': 4200}
 }
 
-def calculate_percent(raw_val, empty, full):
-    # Standard formula to map raw weight to 0-100%
-    if raw_val <= empty: return 0
-    if raw_val >= full: return 100
-    return int(((raw_val - empty) / (full - empty)) * 100)
+def calculate_percent(raw_val, tap_ip):
+    conf = TAP_CONFIG.get(tap_ip, {'empty': 500, 'full': 4000})
+    # Filter out garbage scientific notation or the 8.7M error
+    if raw_val > 1000000 or raw_val < -500: 
+        return 0 
+    
+    pct = ((raw_val - conf['empty']) / (conf['full'] - conf['empty'])) * 100
+    return max(0, min(100, round(pct)))
 
-def start_hub():
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        s.bind(('0.0.0.0', PORT))
-        s.listen(10)
-        print(f"🍺 CALIBRATED BRAIN ONLINE - PORT {PORT}")
+def start_server():
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    sock.bind(('0.0.0.0', 1234))
+    sock.listen(5)
+    print("🚀 3-Tap Brain (Nitro Restored) + Handshake Live...")
 
-        while True:
-            conn, addr = s.accept()
-            with conn:
-                data = conn.recv(1024)
-                if data:
-                    try:
-                        raw_msg = data.decode('utf-8').strip()
-                        scale_ip = addr[0]
-                        
-                        if scale_ip in TAP_CONFIG:
-                            conf = TAP_CONFIG[scale_ip]
-                            # Extracts just the numbers from the scale data
-                            numbers = re.findall(r'\d+', raw_msg)
-                            
-                            if numbers:
-                                raw_weight = int(numbers[0])
-                                pct = calculate_percent(raw_weight, conf['empty'], conf['full'])
-                                
-                                payload = {"tap": conf['name'], "percent": pct}
-                                r = requests.post(HUB_URL, json=payload)
-                                print(f"✅ {conf['name']}: {raw_weight}g -> {pct}% | Hub: {r.status_code}")
-                        else:
-                            print(f"⚠️ Unknown IP: {scale_ip} sent {raw_msg}")
-                    except Exception as e:
-                        print(f"❌ Error: {e}")
+    while True:
+        conn, addr = sock.accept()
+        try:
+            # The scale waits for this 5-byte hex "Success" code
+            # Without this, the scale resets to Setup Mode after 30 seconds
+            conn.sendall(b'\x00\x00\x01\x00\xc8') 
+
+            data = conn.recv(1024).decode('utf-8', errors='ignore')
+            if not data: continue
+            
+            numbers = re.findall(r"[-+]?\d*\.\d+|\d+", data)
+            if numbers:
+                raw_weight = float(numbers[0])
+                tap_ip = addr[0]
+                tap_name = TAP_CONFIG.get(tap_ip, {}).get('name', 'Unknown')
+                percent = calculate_percent(raw_weight, tap_ip)
+                
+                print(f"📡 {tap_name} ({tap_ip}): {raw_weight}g -> {percent}%")
+                requests.post(HUB_URL, json={'tap': tap_name, 'percent': percent})
+        except Exception as e:
+            print(f"❌ Error: {e}")
+        finally:
+            conn.close()
 
 if __name__ == "__main__":
-    start_hub()
+    start_server()

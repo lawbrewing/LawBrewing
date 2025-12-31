@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Law Brewing - Archive</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { background: #121212; color: white; font-family: sans-serif; text-align: center; }
+        .library-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+        .beer-card {
+            position: relative;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #333;
+        }
+        .beer-card:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+            z-index: 10;
+        }
+        .beer-card img { width: 100%; display: block; }
+        .del-btn {
+            background: rgba(255,0,0,0.7);
+            color: white;
+            border: none;
+            padding: 5px;
+            cursor: pointer;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1>🍺 Beer Library</h1>
+    <p>Tap a label to view on Untappd</p>
+    <a href="/upload" style="color: gold;">+ Upload New Label</a>
+    <hr>
+    <div class="library-grid">
+        {% for id in beer_ids %}
+        <div class="beer-card">
+            <a href="https://untappd.com/beer/{{ id }}" target="_blank">
+                <img src="{{ url_for('static', filename='images/library/' + id + '.png') }}">
+            </a>
+            <form action="{{ url_for('delete_beer', beer_id=id) }}" method="post">
+                <button type="submit" class="del-btn">Delete</button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+</body>
+</html>
