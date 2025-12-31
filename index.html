@@ -8,36 +8,43 @@
         :root { --gold: #f1c40f; --dark: #0a0a0a; --card: #1a1a1a; }
         body { background: var(--dark); color: white; font-family: 'Courier New', Courier, monospace; margin: 0; padding-bottom: 50px; }
         
-        header { padding: 40px; border-bottom: 3px solid var(--gold); margin-bottom: 30px; background: #000; }
+        header { padding: 40px; border-bottom: 3px solid var(--gold); margin-bottom: 30px; background: #000; text-align: center; }
         .glowing-logo { color: var(--gold); font-size: 3.5rem; letter-spacing: 12px; text-shadow: 0 0 20px rgba(241, 196, 15, 0.4); margin: 0; }
 
-        .main-container { max-width: 1000px; margin: auto; padding: 20px; }
+        .main-container { max-width: 1100px; margin: auto; padding: 20px; }
         
+        /* Grid for multiple taps */
+        .tap-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 40px; }
+
         .tap-card { 
-            background: var(--card); border-radius: 20px; padding: 30px; 
-            margin-bottom: 50px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            background: var(--card); border-radius: 20px; padding: 25px; 
+            border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: flex; flex-direction: column;
         }
 
+        /* Fixed Art Cropping */
         .beer-art { 
-            width: 100%; max-height: 450px; border-radius: 10px; 
-            object-fit: cover; margin-bottom: 25px; border: 1px solid #444; 
+            width: 100%; height: auto; max-height: 400px; border-radius: 10px; 
+            object-fit: contain; /* Changed from cover to contain to stop cropping */
+            background: #000; margin-bottom: 20px; border: 1px solid #222; 
         }
 
-        .tap-id-label { color: var(--gold); font-weight: bold; font-size: 1.1rem; letter-spacing: 4px; margin-bottom: 10px; opacity: 0.8; }
-        .beer-name { font-size: 3rem; margin: 10px 0; color: #fff; text-transform: uppercase; }
-        .beer-meta { font-size: 1.4rem; color: #aaa; margin-bottom: 25px; border-bottom: 1px solid #333; padding-bottom: 15px; }
+        .tap-id-label { color: var(--gold); font-weight: bold; font-size: 1.1rem; letter-spacing: 4px; margin-bottom: 5px; opacity: 0.8; text-transform: uppercase; }
+        .beer-name { font-size: 2.2rem; margin: 5px 0; color: #fff; text-transform: uppercase; line-height: 1.1; }
+        .beer-meta { font-size: 1.2rem; color: #aaa; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #333; }
 
         /* Progress Bar */
-        .bar-container { height: 60px; background: #000; border-radius: 30px; position: relative; overflow: hidden; border: 2px solid #444; margin: 25px 0; }
+        .bar-container { height: 50px; background: #000; border-radius: 25px; position: relative; overflow: hidden; border: 2px solid #444; margin: 15px 0; }
         .bar-fill { height: 100%; background: linear-gradient(90deg, #8a6d3b, var(--gold)); transition: width 1.5s ease-in-out; }
-        .bar-text { position: absolute; width: 100%; text-align: center; top: 16px; font-weight: bold; font-size: 1.4rem; color: white; text-shadow: 2px 2px 4px black; }
+        .bar-text { position: absolute; width: 100%; text-align: center; top: 12px; font-weight: bold; font-size: 1.2rem; color: white; text-shadow: 2px 2px 4px black; }
 
         .description { 
-            text-align: left; line-height: 1.8; font-size: 1.1rem; background: rgba(0,0,0,0.3); 
-            padding: 25px; border-radius: 10px; border-left: 5px solid var(--gold); white-space: pre-wrap;
+            text-align: left; line-height: 1.6; font-size: 1rem; background: rgba(0,0,0,0.3); 
+            padding: 20px; border-radius: 10px; border-left: 4px solid var(--gold); white-space: pre-wrap;
+            flex-grow: 1; /* Pushes the badge to the bottom */
         }
 
-        .pints-badge { font-size: 1.5rem; color: var(--gold); margin-top: 20px; font-weight: bold; }
+        .pints-badge { font-size: 1.2rem; color: var(--gold); margin-top: 15px; font-weight: bold; text-align: center; }
     </style>
 </head>
 <body>
@@ -46,33 +53,34 @@
         <h1 class="glowing-logo">LAW BREWING</h1>
     </header>
 
-    <div class="main-container" id="tap-display">
-        <p>Loading the taproom data...</p>
+    <div class="main-container">
+        <div class="tap-grid" id="tap-display">
+            <p>Scanning the taps...</p>
+        </div>
     </div>
 
     <script>
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQWqyJ5-pMWhRUkkZLoHdmFPtOHJozHRJkL9c0ivSSY9J7Fp0lto4W05tH-XbFelBL-htJZXedhv7i3/pub?output=csv';
 
-        // Advanced CSV parser that handles quotes and commas correctly
         function parseCSV(str) {
             const arr = [];
-            let quote = false;
-            let col = "", row = [];
+            let quote = false, col = "", row = [];
             for (let c = 0; c < str.length; c++) {
                 let char = str[c], next = str[c+1];
                 if (char == '"' && quote && next == '"') { col += char; c++; continue; }
                 if (char == '"') { quote = !quote; continue; }
                 if (char == ',' && !quote) { row.push(col); col = ""; continue; }
-                if (char == '\r' && !quote) { continue; }
                 if (char == '\n' && !quote) { row.push(col); arr.push(row); col = ""; row = []; continue; }
                 col += char;
             }
             row.push(col); arr.push(row);
             
-            const headers = arr[0];
+            // CLEAN HEADERS: Removes invisible BOM characters and spaces
+            const headers = arr[0].map(h => h.trim().replace(/^\ufeff/g, ""));
+            
             return arr.slice(1).map(r => {
                 return headers.reduce((obj, h, i) => {
-                    obj[h.trim()] = r[i] ? r[i].trim() : '';
+                    obj[h] = r[i] ? r[i].trim() : '';
                     return obj;
                 }, {});
             });
@@ -93,30 +101,32 @@
                 container.innerHTML = '';
 
                 beers.forEach(beer => {
-                    if(!beer["Tap ID"]) return; // Skip empty rows
+                    // This checks for the exact name "Tap ID" as defined in your sheet
+                    const tapName = beer["Tap ID"];
+                    if(!tapName) return; 
 
-                    const pct = weights[beer["Tap ID"]] || 0;
+                    const pct = weights[tapName] || 0;
                     const pints = Math.round((pct / 100) * 40);
 
                     container.innerHTML += `
                         <div class="tap-card">
-                            <div class="tap-id-label">${beer["Tap ID"]}</div>
-                            <img class="beer-art" src="${beer["Image URL"]}" onerror="this.src='https://via.placeholder.com/800x400?text=Law+Brewing'">
+                            <div class="tap-id-label">${tapName}</div>
+                            <img class="beer-art" src="${beer["Image URL"]}" onerror="this.src='https://via.placeholder.com/600x400?text=Beer+Label'">
                             <div class="beer-name">${beer["Beer Name"]}</div>
                             <div class="beer-meta">${beer["Style"]} • ${beer["ABV"]}</div>
                             
                             <div class="bar-container">
                                 <div class="bar-fill" style="width: ${pct}%"></div>
-                                <div class="bar-text">${pct}% REMAINING</div>
+                                <div class="bar-text">${pct}% FULL</div>
                             </div>
 
                             <div class="description">${beer["Description"]}</div>
-                            <div class="pints-badge">APPROX. ${pints} PINTS REMAINING</div>
+                            <div class="pints-badge">${pints} PINTS LEFT</div>
                         </div>
                     `;
                 });
             } catch (err) {
-                console.error("Fetch error:", err);
+                console.error("Display update failed:", err);
             }
         }
 
