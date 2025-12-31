@@ -3,194 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Law Brewing - Live Dashboard</title>
+    <title>Law Brewing - Live Taps</title>
     <style>
         :root {
             --gold: #f1c40f;
-            --dark-bg: #121212;
-            --card-bg: #1e1e1e;
+            --glow: rgba(241, 196, 15, 0.6);
+            --dark-bg: #0a0a0a;
+            --card-bg: #161616;
         }
 
         body {
             background-color: var(--dark-bg);
             color: white;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
-            text-align: center;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0; padding: 0; text-align: center;
         }
 
-        /* Restored Header Section */
-        header {
-            padding: 50px 20px;
-            background: linear-gradient(to bottom, #1a1a1a, var(--dark-bg));
-            border-bottom: 1px solid #333;
+        header { padding: 50px 20px; background: radial-gradient(circle, #1a1a1a 0%, #0a0a0a 100%); }
+        .glowing-logo {
+            color: var(--gold);
+            font-size: 3.5rem;
+            letter-spacing: 10px;
+            text-transform: uppercase;
+            text-shadow: 0 0 15px var(--glow), 0 0 30px var(--glow);
+            margin: 0; font-weight: 900;
         }
-
-        h1 { margin: 0; color: var(--gold); letter-spacing: 4px; font-size: 2.5rem; text-transform: uppercase; }
-        .subtitle { color: #888; margin-top: 10px; font-style: italic; letter-spacing: 1px; }
 
         .tap-container {
-            max-width: 800px;
-            margin: 40px auto;
-            padding: 0 20px;
+            max-width: 1100px;
+            margin: 30px auto;
             display: grid;
-            gap: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            padding: 20px;
         }
 
-        .tap-card {
-            background: var(--card-bg);
-            border-radius: 20px;
-            padding: 30px;
-            border: 1px solid #333;
-            transition: transform 0.3s ease;
-            position: relative;
-        }
+        .tap-card { background: var(--card-bg); border-radius: 20px; padding: 25px; border: 1px solid #222; position: relative; }
+        .tap-label { position: absolute; top: 15px; right: 20px; color: var(--gold); font-size: 0.8rem; font-weight: bold; }
+        .beer-art { width: 180px; height: 180px; border-radius: 50%; border: 3px solid var(--gold); margin: 15px 0; object-fit: cover; }
+        .beer-name { font-size: 1.8rem; font-weight: bold; margin: 5px 0; }
+        
+        /* Stats Section */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .stat-item { background: #222; padding: 10px; border-radius: 10px; }
+        .stat-val { display: block; font-size: 1.3rem; font-weight: bold; color: var(--gold); }
+        .stat-lbl { font-size: 0.7rem; color: #666; text-transform: uppercase; }
 
-        .tap-card:hover { transform: translateY(-5px); border-color: var(--gold); }
-
-        .tap-number {
-            position: absolute;
-            top: 15px;
-            left: 20px;
-            color: var(--gold);
-            font-weight: bold;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-        }
-
-        .beer-label {
-            width: 220px;
-            height: 220px;
-            object-fit: cover;
-            border-radius: 15px;
-            border: 2px solid var(--gold);
-            margin: 15px 0;
-            cursor: pointer;
-        }
-
-        .beer-name { font-size: 2rem; font-weight: bold; margin: 5px 0; }
-        .beer-style { color: var(--gold); font-size: 1.1rem; margin-bottom: 20px; opacity: 0.8; }
-
-        /* Kegerator Level Bars */
-        .progress-bg {
-            background: #333;
-            border-radius: 25px;
-            height: 40px;
-            width: 100%;
-            position: relative;
-            overflow: hidden;
-            border: 1px solid #444;
-        }
-
-        .progress-fill {
-            background: linear-gradient(90deg, #b8860b, var(--gold));
-            height: 100%;
-            transition: width 1.5s ease-out;
-        }
-
-        .progress-text {
-            position: absolute;
-            width: 100%;
-            top: 0;
-            left: 0;
-            line-height: 40px;
-            font-weight: bold;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
-        }
-
-        .footer-nav {
-            margin: 60px 0;
-            padding-bottom: 40px;
-        }
-
-        .footer-nav a {
-            color: var(--gold);
-            text-decoration: none;
-            margin: 0 20px;
-            font-weight: bold;
-            font-size: 1.1rem;
-            border: 1px solid var(--gold);
-            padding: 10px 20px;
-            border-radius: 5px;
-            transition: 0.3s;
-        }
-
-        .footer-nav a:hover { background: var(--gold); color: black; }
+        /* Progress Bar */
+        .bar-outer { background: #111; height: 35px; border-radius: 20px; border: 1px solid #333; overflow: hidden; position: relative; }
+        .bar-inner { background: linear-gradient(90deg, #b8860b, var(--gold)); height: 100%; transition: width 1s ease-in-out; }
+        .bar-text { position: absolute; width: 100%; top: 0; left: 0; line-height: 35px; font-weight: bold; text-shadow: 1px 1px 2px black; }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>LAW BREWING</h1>
-        <div class="subtitle">Live Taproom Dashboard</div>
+        <h1 class="glowing-logo">LAW BREWING</h1>
     </header>
 
-    <div id="tap-display" class="tap-container">
-        </div>
-
-    <div class="footer-nav">
-        <a href="library.html">The Beer Vault</a>
-        <a href="https://untappd.com/brewery/536123" target="_blank">Untappd Profile</a>
-    </div>
+    <div id="tap-grid" class="tap-container"></div>
 
     <script>
-        // MASTER CONFIGURATION
-        // This tells the website which Beer ID is on which tap and the weight
-        const tapConfig = [
-            { tapNum: 1, tapName: "Law Tap",   id: "5657071", percent: 85 },
-            { tapNum: 2, tapName: "Wisco Tap", id: "none",    percent: 0  },
-            { tapNum: 3, tapName: "Nitro Tap", id: "none",    percent: 0  }
-        ];
-
-        async function initDashboard() {
+        async function updateDashboard() {
             try {
-                const response = await fetch('library.json');
-                const library = await response.json();
-                const display = document.getElementById('tap-display');
-                display.innerHTML = ''; 
+                // Fetch the weights file pushed by raw_brain.py
+                const weightRes = await fetch('tap_weights.json?t=' + Date.now());
+                const weights = await weightRes.json();
+                
+                const libRes = await fetch('library.json');
+                const library = await libRes.json();
+                
+                const grid = document.getElementById('tap-grid');
+                grid.innerHTML = '';
 
-                tapConfig.forEach(tap => {
+                // Linking the Raw Brain names to the Library IDs
+                const taps = [
+                    { label: "LAW TAP",   id: "5657071", current: weights["Law Tap"] },
+                    { label: "WISCO TAP", id: "none",    current: weights["Wisco Tap"] },
+                    { label: "NITRO TAP", id: "none",    current: weights["Nitro Tap"] }
+                ];
+
+                taps.forEach(tap => {
                     const beer = library[tap.id];
-                    
                     if (beer) {
-                        // Dynamically links to the specific beer on Untappd
-                        const untappdUrl = `https://untappd.com/beer/${tap.id}`;
-                        const imgUrl = `static/images/library/${tap.id}.jpeg`;
+                        const pints = (40 * (tap.current / 100)).toFixed(1);
+                        const growlers = (pints / 4).toFixed(1);
 
-                        display.innerHTML += `
+                        grid.innerHTML += `
                             <div class="tap-card">
-                                <div class="tap-number">${tap.tapName}</div>
+                                <div class="tap-label">${tap.label}</div>
+                                <img src="static/images/library/${tap.id}.jpeg" class="beer-art">
                                 <div class="beer-name">${beer.name}</div>
-                                <div class="beer-style">${beer.abv} | ${beer.style}</div>
-                                <a href="${untappdUrl}" target="_blank">
-                                    <img src="${imgUrl}" class="beer-label" title="View on Untappd"
-                                         onerror="this.src='static/images/library/placeholder.png'">
-                                </a>
-                                <div class="progress-bg">
-                                    <div class="progress-fill" style="width: ${tap.percent}%"></div>
-                                    <div class="progress-text">${tap.percent}% REMAINING</div>
+                                <div class="stats-grid">
+                                    <div class="stat-item"><span class="stat-val">${pints}</span><span class="stat-lbl">Pints</span></div>
+                                    <div class="stat-item"><span class="stat-val">${growlers}</span><span class="stat-lbl">Growlers</span></div>
                                 </div>
-                            </div>
-                        `;
-                    } else {
-                        // Placeholder for Empty Taps
-                        display.innerHTML += `
-                            <div class="tap-card" style="opacity: 0.5;">
-                                <div class="tap-number">${tap.tapName}</div>
-                                <div class="beer-name">Tapped Out</div>
-                                <div class="beer-style">Check back soon</div>
-                                <div class="progress-bg"><div class="progress-fill" style="width: 0%"></div></div>
-                            </div>
-                        `;
+                                <div class="bar-outer">
+                                    <div class="bar-inner" style="width: ${tap.current}%"></div>
+                                    <div class="bar-text">${tap.current}% FULL</div>
+                                </div>
+                            </div>`;
                     }
                 });
-            } catch (e) {
-                console.error("Dashboard Load Error:", e);
-            }
+            } catch (e) { console.log("Syncing weights..."); }
         }
 
-        initDashboard();
+        setInterval(updateDashboard, 30000);
+        updateDashboard();
     </script>
 </body>
 </html>
