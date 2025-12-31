@@ -8,82 +8,82 @@
         :root { --gold: #f1c40f; --dark: #0a0a0a; --card: #1a1a1a; }
         body { background: var(--dark); color: white; font-family: 'Courier New', Courier, monospace; margin: 0; padding-bottom: 50px; }
         
-        header { padding: 40px; border-bottom: 3px solid var(--gold); margin-bottom: 30px; background: #000; text-align: center; }
-        .glowing-logo { color: var(--gold); font-size: 3.5rem; letter-spacing: 12px; text-shadow: 0 0 20px rgba(241, 196, 15, 0.4); margin: 0; }
+        /* EXACT GLOWING LOGO FROM TEST.HTML */
+        header { 
+            padding: 60px 20px; 
+            border-bottom: 3px solid var(--gold); 
+            margin-bottom: 40px; 
+            background: #000; 
+            text-align: center;
+        }
+        .glowing-logo { 
+            color: var(--gold); 
+            font-size: clamp(2.5rem, 10vw, 5rem); 
+            letter-spacing: 15px; 
+            font-weight: 900;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px rgba(241, 196, 15, 0.9), 
+                         0 0 20px rgba(241, 196, 15, 0.7), 
+                         0 0 40px rgba(241, 196, 15, 0.5); 
+            margin: 0; 
+        }
 
-        .main-container { max-width: 1100px; margin: auto; padding: 20px; }
-        
-        /* Grid for multiple taps */
+        .main-container { max-width: 1200px; margin: auto; padding: 20px; }
         .tap-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 40px; }
 
         .tap-card { 
-            background: var(--card); border-radius: 20px; padding: 25px; 
-            border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            background: var(--card); border-radius: 20px; padding: 30px; 
+            border: 2px solid #333; box-shadow: 0 15px 40px rgba(0,0,0,0.8);
             display: flex; flex-direction: column;
         }
 
-        /* Fixed Art Cropping */
         .beer-art { 
-            width: 100%; height: auto; max-height: 400px; border-radius: 10px; 
-            object-fit: contain; /* Changed from cover to contain to stop cropping */
-            background: #000; margin-bottom: 20px; border: 1px solid #222; 
+            width: 100%; height: auto; max-height: 400px; border-radius: 12px; 
+            object-fit: contain; background: #000; margin-bottom: 25px; 
+            border: 1px solid #444; 
         }
 
-        .tap-id-label { color: var(--gold); font-weight: bold; font-size: 1.1rem; letter-spacing: 4px; margin-bottom: 5px; opacity: 0.8; text-transform: uppercase; }
-        .beer-name { font-size: 2.2rem; margin: 5px 0; color: #fff; text-transform: uppercase; line-height: 1.1; }
-        .beer-meta { font-size: 1.2rem; color: #aaa; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #333; }
+        .tap-id-label { color: var(--gold); font-weight: bold; font-size: 1.2rem; letter-spacing: 5px; margin-bottom: 10px; opacity: 0.9; text-transform: uppercase; }
+        .beer-name { font-size: 3rem; margin: 10px 0; color: #fff; text-transform: uppercase; line-height: 1; }
+        .beer-meta { font-size: 1.6rem; color: #bbb; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid #444; }
 
-        /* Progress Bar */
-        .bar-container { height: 50px; background: #000; border-radius: 25px; position: relative; overflow: hidden; border: 2px solid #444; margin: 15px 0; }
-        .bar-fill { height: 100%; background: linear-gradient(90deg, #8a6d3b, var(--gold)); transition: width 1.5s ease-in-out; }
-        .bar-text { position: absolute; width: 100%; text-align: center; top: 12px; font-weight: bold; font-size: 1.2rem; color: white; text-shadow: 2px 2px 4px black; }
+        .bar-container { height: 60px; background: #000; border-radius: 30px; position: relative; overflow: hidden; border: 2px solid #555; margin: 20px 0; }
+        .bar-fill { height: 100%; background: linear-gradient(90deg, #8a6d3b, var(--gold)); transition: width 1.5s ease; }
+        .bar-text { position: absolute; width: 100%; text-align: center; top: 16px; font-weight: 900; font-size: 1.5rem; color: white; text-shadow: 2px 2px 5px black; }
 
         .description { 
-            text-align: left; line-height: 1.6; font-size: 1rem; background: rgba(0,0,0,0.3); 
-            padding: 20px; border-radius: 10px; border-left: 4px solid var(--gold); white-space: pre-wrap;
-            flex-grow: 1; /* Pushes the badge to the bottom */
+            text-align: left; line-height: 1.8; font-size: 1.1rem; background: rgba(0,0,0,0.5); 
+            padding: 25px; border-radius: 12px; border-left: 6px solid var(--gold); white-space: pre-wrap;
+            flex-grow: 1;
         }
 
-        .pints-badge { font-size: 1.2rem; color: var(--gold); margin-top: 15px; font-weight: bold; text-align: center; }
+        .pints-badge { font-size: 1.5rem; color: var(--gold); margin-top: 25px; font-weight: bold; text-align: center; }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1 class="glowing-logo">LAW BREWING</h1>
-    </header>
+    <header><h1 class="glowing-logo">LAW BREWING</h1></header>
 
     <div class="main-container">
-        <div class="tap-grid" id="tap-display">
-            <p>Scanning the taps...</p>
-        </div>
+        <div class="tap-grid" id="tap-display"></div>
     </div>
 
-<script>
+    <script>
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQWqyJ5-pMWhRUkkZLoHdmFPtOHJozHRJkL9c0ivSSY9J7Fp0lto4W05tH-XbFelBL-htJZXedhv7i3/pub?output=csv';
 
         function parseCSV(str) {
-            const arr = [];
+            const rows = [];
             let quote = false, col = "", row = [];
             for (let c = 0; c < str.length; c++) {
                 let char = str[c], next = str[c+1];
                 if (char == '"' && quote && next == '"') { col += char; c++; continue; }
                 if (char == '"') { quote = !quote; continue; }
-                if (char == ',' && !quote) { row.push(col); col = ""; continue; }
-                if (char == '\n' && !quote) { row.push(col); arr.push(row); col = ""; row = []; continue; }
+                if (char == ',' && !quote) { row.push(col.trim()); col = ""; continue; }
+                if (char == '\n' && !quote) { row.push(col.trim()); rows.push(row); col = ""; row = []; continue; }
                 col += char;
             }
-            row.push(col); arr.push(row);
-            
-            // CLEAN HEADERS: Removes invisible BOMs, spaces, and makes them lowercase
-            const headers = arr[0].map(h => h.trim().toLowerCase().replace(/^\ufeff/g, "").replace(/\s/g, ""));
-            
-            return arr.slice(1).map(r => {
-                return headers.reduce((obj, h, i) => {
-                    obj[h] = r[i] ? r[i].trim() : '';
-                    return obj;
-                }, {});
-            });
+            row.push(col.trim()); rows.push(row);
+            return rows;
         }
 
         async function updateTaps() {
@@ -95,39 +95,45 @@
 
                 const weights = await wRes.json();
                 const sheetText = await sRes.text();
-                const beers = parseCSV(sheetText);
-
+                const csvData = parseCSV(sheetText);
+                
                 const container = document.getElementById('tap-display');
                 container.innerHTML = '';
 
-                beers.forEach(beer => {
-                    // Logic: Find the column regardless of how it's typed (tapid, beername, style, abv, imageurl, description)
-                    const tapName = beer["tapid"];
-                    if(!tapName || tapName === "") return; 
+                // Process rows starting from index 1 (skipping header)
+                for (let i = 1; i < csvData.length; i++) {
+                    const row = csvData[i];
+                    if (!row[0]) continue; // Skip if Tap ID is missing
 
-                    const pct = weights[tapName] || 0;
+                    // DIRECT MAPPING BY COLUMN POSITION
+                    const tapID   = row[0]; // Column A
+                    const bName   = row[1]; // Column B
+                    const bStyle  = row[2]; // Column C
+                    const bABV    = row[3]; // Column D (Your ABV Column)
+                    const bImage  = row[4]; // Column E
+                    const bDesc   = row[5]; // Column F
+
+                    const pct = weights[tapID] || 0;
                     const pints = Math.round((pct / 100) * 40);
 
                     container.innerHTML += `
                         <div class="tap-card">
-                            <div class="tap-id-label">${tapName}</div>
-                            <img class="beer-art" src="${beer["imageurl"]}" onerror="this.src='https://via.placeholder.com/600x400?text=Beer+Label'">
-                            <div class="beer-name">${beer["beername"]}</div>
-                            <div class="beer-meta">${beer["style"]} • ${beer["abv"]}</div>
+                            <div class="tap-id-label">${tapID}</div>
+                            <img class="beer-art" src="${bImage}" onerror="this.src='https://via.placeholder.com/600x400?text=Law+Brewing'">
+                            <div class="beer-name">${bName}</div>
+                            <div class="beer-meta">${bStyle} • ${bABV}</div>
                             
                             <div class="bar-container">
                                 <div class="bar-fill" style="width: ${pct}%"></div>
-                                <div class="bar-text">${pct}% FULL</div>
+                                <div class="bar-text">${pct}% REMAINING</div>
                             </div>
 
-                            <div class="description">${beer["description"]}</div>
-                            <div class="pints-badge">${pints} PINTS LEFT</div>
+                            <div class="description">${bDesc}</div>
+                            <div class="pints-badge">${pints} PINTS REMAINING</div>
                         </div>
                     `;
-                });
-            } catch (err) {
-                console.error("Display update failed:", err);
-            }
+                }
+            } catch (err) { console.error(err); }
         }
 
         setInterval(updateTaps, 10000);
