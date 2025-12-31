@@ -30,16 +30,24 @@ def calculate_percent(raw_val, tap_ip):
 def sync_to_github():
     """Writes weights to JSON and pushes to GitHub Pages"""
     try:
+        # 1. Write the file
         with open(WEIGHTS_FILE, 'w') as f:
             json.dump(current_weights, f)
+
+        # 2. Sync commands
+        # We add 'git pull --rebase' to make sure the Pi catches up to website changes
+        # We remove the '&' so we can actually see if it fails
+        cmd = (
+            f"git pull --rebase && "
+            f"git add {WEIGHTS_FILE} && "
+            f"git commit -m 'Scale Sync' && "
+            f"git push"
+        )
         
-        # Git commands to push the update
-        # '&' at the end runs it in the background so the script doesn't lag
-        os.system(f"git add {WEIGHTS_FILE} && git commit -m 'Scale Sync' && git push origin main &")
-        print("🌍 GitHub Sync Initiated")
+        os.system(cmd)
+        print("🌍 GitHub Sync Complete")
     except Exception as e:
         print(f"⚠️ GitHub Sync Failed: {e}")
-
 def start_server():
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
