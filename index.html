@@ -5,92 +5,123 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Law Brewing - Live Taps</title>
     <style>
-        :root { --gold: #f1c40f; --dark: #0a0a0a; --card: #161616; }
-        body { background: var(--dark); color: white; font-family: 'Courier New', Courier, monospace; margin: 0; text-align: center; }
-        header { padding: 40px; border-bottom: 2px solid var(--gold); margin-bottom: 20px; }
-        .glowing-logo { color: var(--gold); font-size: 3rem; letter-spacing: 10px; text-shadow: 0 0 15px rgba(241, 196, 15, 0.5); }
-        .main-container { max-width: 900px; margin: auto; padding: 20px; }
-        .tap-card { background: var(--card); border: 2px solid #333; border-radius: 15px; padding: 30px; margin-bottom: 40px; }
-        .beer-art { width: 100%; max-height: 400px; border-radius: 10px; object-fit: cover; margin-bottom: 20px; border: 1px solid #444; }
-        .beer-title { color: var(--gold); font-size: 2.5rem; margin: 10px 0; text-transform: uppercase; }
-        .description { line-height: 1.6; text-align: left; background: #000; padding: 20px; border-radius: 10px; border-left: 4px solid var(--gold); white-space: pre-line; }
-        .bar-outer { background: #000; height: 50px; border-radius: 25px; border: 1px solid #444; overflow: hidden; position: relative; margin: 30px 0; }
-        .bar-inner { background: linear-gradient(90deg, #b8860b, var(--gold)); height: 100%; transition: width 1.5s ease-in-out; }
-        .bar-text { position: absolute; width: 100%; top: 0; left: 0; line-height: 50px; font-weight: bold; font-size: 1.2rem; text-shadow: 2px 2px 4px black; }
-        .stats { display: flex; justify-content: space-around; font-size: 1.2rem; font-weight: bold; color: var(--gold); }
+        :root { --gold: #f1c40f; --dark: #0a0a0a; --card: #1a1a1a; }
+        body { background: var(--dark); color: white; font-family: 'Courier New', Courier, monospace; margin: 0; padding-bottom: 50px; }
+        
+        header { padding: 40px; border-bottom: 3px solid var(--gold); margin-bottom: 30px; background: #000; }
+        .glowing-logo { color: var(--gold); font-size: 3.5rem; letter-spacing: 12px; text-shadow: 0 0 20px rgba(241, 196, 15, 0.4); margin: 0; }
+
+        .main-container { max-width: 1000px; margin: auto; padding: 20px; }
+        
+        .tap-card { 
+            background: var(--card); border-radius: 20px; padding: 30px; 
+            margin-bottom: 50px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .beer-art { 
+            width: 100%; max-height: 450px; border-radius: 10px; 
+            object-fit: cover; margin-bottom: 25px; border: 1px solid #444; 
+        }
+
+        .tap-id-label { color: var(--gold); font-weight: bold; font-size: 1.1rem; letter-spacing: 4px; margin-bottom: 10px; opacity: 0.8; }
+        .beer-name { font-size: 3rem; margin: 10px 0; color: #fff; text-transform: uppercase; }
+        .beer-meta { font-size: 1.4rem; color: #aaa; margin-bottom: 25px; border-bottom: 1px solid #333; padding-bottom: 15px; }
+
+        /* Progress Bar */
+        .bar-container { height: 60px; background: #000; border-radius: 30px; position: relative; overflow: hidden; border: 2px solid #444; margin: 25px 0; }
+        .bar-fill { height: 100%; background: linear-gradient(90deg, #8a6d3b, var(--gold)); transition: width 1.5s ease-in-out; }
+        .bar-text { position: absolute; width: 100%; text-align: center; top: 16px; font-weight: bold; font-size: 1.4rem; color: white; text-shadow: 2px 2px 4px black; }
+
+        .description { 
+            text-align: left; line-height: 1.8; font-size: 1.1rem; background: rgba(0,0,0,0.3); 
+            padding: 25px; border-radius: 10px; border-left: 5px solid var(--gold); white-space: pre-wrap;
+        }
+
+        .pints-badge { font-size: 1.5rem; color: var(--gold); margin-top: 20px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <header><h1 class="glowing-logo">LAW BREWING</h1></header>
+    <header>
+        <h1 class="glowing-logo">LAW BREWING</h1>
+    </header>
 
-    <div class="main-container">
-        <div id="active-taps">Loading the Bar...</div>
+    <div class="main-container" id="tap-display">
+        <p>Loading the taproom data...</p>
     </div>
 
     <script>
-        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQWqyJ5-pMWhRUkkZLoHdmFPtOHJozHRJkL9c0ivSSY9J7Fp0lto4W05tH-XbFelBL-htJZXedhv7i3/pub?output=csv';
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQWqyJ5-pMWhRUkkZLoHdmFPtOHJozHRJkL9c0ivSSY9J7Fp0lto4W05tH-XbFelBL-htJZXedhv7i3/pub?output=csv';
 
-        // Simple CSV Parser
-        function parseCSV(text) {
-            const lines = text.split('\n');
-            const headers = lines[0].split(',');
-            return lines.slice(1).map(line => {
-                const values = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/); // Handles commas inside quotes
-                return headers.reduce((obj, header, i) => {
-                    obj[header.trim()] = values[i] ? values[i].replace(/"/g, '').trim() : '';
+        // Advanced CSV parser that handles quotes and commas correctly
+        function parseCSV(str) {
+            const arr = [];
+            let quote = false;
+            let col = "", row = [];
+            for (let c = 0; c < str.length; c++) {
+                let char = str[c], next = str[c+1];
+                if (char == '"' && quote && next == '"') { col += char; c++; continue; }
+                if (char == '"') { quote = !quote; continue; }
+                if (char == ',' && !quote) { row.push(col); col = ""; continue; }
+                if (char == '\r' && !quote) { continue; }
+                if (char == '\n' && !quote) { row.push(col); arr.push(row); col = ""; row = []; continue; }
+                col += char;
+            }
+            row.push(col); arr.push(row);
+            
+            const headers = arr[0];
+            return arr.slice(1).map(r => {
+                return headers.reduce((obj, h, i) => {
+                    obj[h.trim()] = r[i] ? r[i].trim() : '';
                     return obj;
                 }, {});
             });
         }
 
-        async function updateDisplay() {
+        async function updateTaps() {
             try {
-                // 1. Fetch data from Pi (Weights) and Google (Beer Info)
                 const [wRes, sRes] = await Promise.all([
                     fetch('tap_weights.json?t=' + Date.now()),
-                    fetch(SHEET_URL + '&t=' + Date.now())
+                    fetch(CSV_URL + '&t=' + Date.now())
                 ]);
-                
+
                 const weights = await wRes.json();
                 const sheetText = await sRes.text();
-                const beerData = parseCSV(sheetText);
+                const beers = parseCSV(sheetText);
 
-                const display = document.getElementById('active-taps');
-                display.innerHTML = '';
+                const container = document.getElementById('tap-display');
+                container.innerHTML = '';
 
-                beerData.forEach(beer => {
-                    // Match the CSV "Tap ID" to the Pi's JSON "Tap Name"
+                beers.forEach(beer => {
+                    if(!beer["Tap ID"]) return; // Skip empty rows
+
                     const pct = weights[beer["Tap ID"]] || 0;
                     const pints = Math.round((pct / 100) * 40);
 
-                    display.innerHTML += `
+                    container.innerHTML += `
                         <div class="tap-card">
-                            <img class="beer-art" src="${beer["Image URL"]}" onerror="this.src='https://via.placeholder.com/600x400?text=Law+Brewing'">
-                            <div style="color: #888; letter-spacing: 3px;">${beer["Tap ID"].toUpperCase()}</div>
-                            <div class="beer-title">${beer["Beer Name"]}</div>
-                            <div style="margin-bottom:20px;">${beer["Style"]} | ${beer["ABV"]}</div>
+                            <div class="tap-id-label">${beer["Tap ID"]}</div>
+                            <img class="beer-art" src="${beer["Image URL"]}" onerror="this.src='https://via.placeholder.com/800x400?text=Law+Brewing'">
+                            <div class="beer-name">${beer["Beer Name"]}</div>
+                            <div class="beer-meta">${beer["Style"]} • ${beer["ABV"]}</div>
                             
-                            <div class="bar-outer">
-                                <div class="bar-inner" style="width: ${pct}%"></div>
+                            <div class="bar-container">
+                                <div class="bar-fill" style="width: ${pct}%"></div>
                                 <div class="bar-text">${pct}% REMAINING</div>
                             </div>
 
                             <div class="description">${beer["Description"]}</div>
-                            <div class="stats" style="margin-top:20px;">
-                                <div>PINTS LEFT: ${pints}</div>
-                            </div>
+                            <div class="pints-badge">APPROX. ${pints} PINTS REMAINING</div>
                         </div>
                     `;
                 });
-
-            } catch (e) {
-                console.error("Updating...", e);
+            } catch (err) {
+                console.error("Fetch error:", err);
             }
         }
 
-        setInterval(updateDisplay, 10000); // Check for updates every 10 seconds
-        updateDisplay();
+        setInterval(updateTaps, 10000);
+        updateTaps();
     </script>
 </body>
 </html>
