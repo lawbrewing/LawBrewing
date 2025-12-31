@@ -59,7 +59,7 @@
         </div>
     </div>
 
-    <script>
+<script>
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQWqyJ5-pMWhRUkkZLoHdmFPtOHJozHRJkL9c0ivSSY9J7Fp0lto4W05tH-XbFelBL-htJZXedhv7i3/pub?output=csv';
 
         function parseCSV(str) {
@@ -75,8 +75,8 @@
             }
             row.push(col); arr.push(row);
             
-            // CLEAN HEADERS: Removes invisible BOM characters and spaces
-            const headers = arr[0].map(h => h.trim().replace(/^\ufeff/g, ""));
+            // CLEAN HEADERS: Removes invisible BOMs, spaces, and makes them lowercase
+            const headers = arr[0].map(h => h.trim().toLowerCase().replace(/^\ufeff/g, "").replace(/\s/g, ""));
             
             return arr.slice(1).map(r => {
                 return headers.reduce((obj, h, i) => {
@@ -101,9 +101,9 @@
                 container.innerHTML = '';
 
                 beers.forEach(beer => {
-                    // This checks for the exact name "Tap ID" as defined in your sheet
-                    const tapName = beer["Tap ID"];
-                    if(!tapName) return; 
+                    // Logic: Find the column regardless of how it's typed (tapid, beername, style, abv, imageurl, description)
+                    const tapName = beer["tapid"];
+                    if(!tapName || tapName === "") return; 
 
                     const pct = weights[tapName] || 0;
                     const pints = Math.round((pct / 100) * 40);
@@ -111,16 +111,16 @@
                     container.innerHTML += `
                         <div class="tap-card">
                             <div class="tap-id-label">${tapName}</div>
-                            <img class="beer-art" src="${beer["Image URL"]}" onerror="this.src='https://via.placeholder.com/600x400?text=Beer+Label'">
-                            <div class="beer-name">${beer["Beer Name"]}</div>
-                            <div class="beer-meta">${beer["Style"]} • ${beer["ABV"]}</div>
+                            <img class="beer-art" src="${beer["imageurl"]}" onerror="this.src='https://via.placeholder.com/600x400?text=Beer+Label'">
+                            <div class="beer-name">${beer["beername"]}</div>
+                            <div class="beer-meta">${beer["style"]} • ${beer["abv"]}</div>
                             
                             <div class="bar-container">
                                 <div class="bar-fill" style="width: ${pct}%"></div>
                                 <div class="bar-text">${pct}% FULL</div>
                             </div>
 
-                            <div class="description">${beer["Description"]}</div>
+                            <div class="description">${beer["description"]}</div>
                             <div class="pints-badge">${pints} PINTS LEFT</div>
                         </div>
                     `;
