@@ -1,25 +1,8 @@
 {
-    "ipa_01": {
-        "name": "The Law IPA",
-        "desc": "Bold West Coast IPA. Citrus and pine notes.",
-        "art": "assets/law_ipa.png",
-        "abv": "6.8%",
-        "rating": 4.8,
-        "votes": 12
-    },
-    "stout_01": {
-        "name": "Nitro Milk Stout",
-        "desc": "Creamy, roasted coffee and chocolate.",
-        "art": "assets/nitro_stout.png",
-        "abv": "5.4%",
-        "rating": 4.9,
-        "votes": 20
-    },
-    "angels_with_filthy_souls": {
+    "5657071": {
         "name": "Angels With Filthy Souls",
         "abv": "6.4%",
-        "art": "https://untappd.com/b/law-brewing-angels-with-filthy-souls/5657071",
-        "desc": "\u200b\"Acey tells me you\u2019re sniffin' around for a winter warmer...\"\r\n\r\n\u200bIs that a fact? Well, Acey ain\u2019t in charge no more.\r\n\r\n\u200bWhat you\u2019re gonna get is a glass full of the heavy stuff. We\u2019re talkin\u2019 a deep garnet pour with a hit of orange peel sharp enough to wake the neighbors. It\u2019s a full-bodied pillar of ale, see? But don\u2019t let the looks fool ya. She comes to you with a filthy soul, packing a heater of Tomahawk hops that roughs up the holiday spice right at center stage.\r\n\u200bSo I\u2019m gonna give you to the count of 10 to get your ugly, yella, no-good belly chocked-full of Angels with Filthy Souls.\r\n\r\n\u200b1... 2... 10!",
+        "desc": "\"Acey tells me you’re sniffin' around for a winter warmer...\" Is that a fact? Well, Acey ain't in charge no more.",
         "rating": 5.0,
         "votes": 0
     }

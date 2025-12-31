@@ -60,23 +60,22 @@
 </header>
 
 <div class="container">
-    {% for name, data in taps.items() %}
+    {% for num, data in taps.items() %}
     <div class="tap-card">
-        <div class="tap-name">{{ name }}</div>
+        <div class="tap-name">Tap {{ num }}: {{ data.name }}</div>
         
+        {% if data.id != 'none' %}
+        <img src="{{ url_for('static', filename='images/library/' + data.id + '.png') }}" style="width: 150px; border-radius: 10px; margin: 10px 0;">
+        <p><em>{{ data.abv }} - {{ data.desc }}</em></p>
+        {% endif %}
+
         <div class="progress-bg">
-            <div class="percent-text">{{ data.percent }}%</div>
+            <div class="percent-text">{{ data.percent }}% Full</div>
             <div class="progress-fill" style="width: {{ data.percent }}%;"></div>
         </div>
     </div>
     {% endfor %}
-
-    <nav>
-        <a href="/library">📖 View Beer Archive</a> | 
-        <a href="/upload">➕ Add New Label</a>
-    </nav>
 </div>
-
 <script>
     // Refresh the page every 30 seconds to update weights automatically
     setTimeout(function(){
