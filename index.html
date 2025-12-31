@@ -47,9 +47,9 @@
 
         .tap-container { 
             display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); 
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); 
             gap: 30px; 
-            max-width: 1200px; 
+            max-width: 1300px; 
             margin: 0 auto; 
             padding: 20px;
         }
@@ -64,6 +64,7 @@
             flex-direction: column;
         }
 
+        /* Fixed Art Section */
         .label-art { 
             width: 100%; 
             height: 350px; 
@@ -76,18 +77,10 @@
 
         .details { padding: 25px; flex-grow: 1; display: flex; flex-direction: column; }
 
-        .stats { 
-            font-family: 'Oswald', sans-serif; 
-            color: var(--accent); 
-            font-size: 1.1rem; 
-            margin-bottom: 5px;
-            letter-spacing: 1px;
-        }
-
         .tap-id-tag {
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             color: #888;
-            letter-spacing: 2px;
+            letter-spacing: 3px;
             text-transform: uppercase;
             margin-bottom: 5px;
         }
@@ -95,26 +88,38 @@
         .beer-name { 
             font-family: 'Oswald', sans-serif; 
             font-size: 2.2rem; 
-            margin: 0 0 10px 0; 
+            margin: 0 0 5px 0; 
             text-transform: uppercase;
             line-height: 1.1;
+            color: white;
+        }
+
+        .stats { 
+            font-family: 'Oswald', sans-serif; 
+            color: var(--accent); 
+            font-size: 1.3rem; 
+            margin-bottom: 15px;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
         }
 
         .description { 
             font-size: 1rem; 
             color: #ccc; 
             line-height: 1.6; 
-            margin-bottom: 20px; 
-            white-space: pre-wrap; 
+            margin-bottom: 25px; 
+            white-space: pre-wrap; /* Preserves your story formatting */
         }
 
+        /* PROGRESS BAR */
         .volume-container { 
             background: #000; 
-            height: 35px; 
-            border-radius: 17px; 
+            height: 38px; 
+            border-radius: 19px; 
             position: relative; 
             overflow: hidden; 
-            border: 1px solid #444;
+            border: 2px solid #444;
             margin-top: auto; 
         }
 
@@ -129,9 +134,9 @@
             position: absolute; 
             width: 100%; 
             text-align: center; 
-            top: 7px; 
+            top: 8px; 
             font-weight: bold; 
-            font-size: 1rem; 
+            font-size: 1.1rem; 
             color: white;
             text-shadow: 1px 1px 3px black;
         }
@@ -181,19 +186,24 @@
                 const container = document.getElementById('tap-display');
                 container.innerHTML = '';
 
+                // Processing your specific column order
                 for (let i = 1; i < csvData.length; i++) {
                     const row = csvData[i];
                     if (!row[0] || row[0] === "") continue;
 
-                    // UPDATED MAPPING:
-                    // We define exactly which column is which based on your sheet layout
-                    const tapID   = row[0]; // "Law Tap"
-                    const beerID  = row[1]; // The ID we want to HIDE (5657071)
-                    const bName   = row[2]; // "Angels With Filthy Souls"
-                    const bStyle  = row[3]; // "Winter Warmer"
-                    const bABV    = row[4]; // "8.20%"
-                    const bImage  = row[5]; // URL
-                    const bDesc   = row[6]; // Description
+                    // MAPPING BASED ON YOUR DATA:
+                    // 0: Tap ID (Law Tap)
+                    // 1: Beer ID (5657071) - HIDDEN
+                    // 2: Beer Name (Angels...)
+                    // 3: ABV (8.20%)
+                    // 4: Image URL (https://...)
+                    // 5: Description (Acey tells me...)
+
+                    const tapID  = row[0];
+                    const bName  = row[2];
+                    const bABV   = row[3];
+                    const bImage = row[4];
+                    const bDesc  = row[5];
 
                     const pct = weights[tapID] || 0;
 
@@ -202,8 +212,8 @@
                             <div class="label-art" style="background-image: url('${bImage}');"></div>
                             <div class="details">
                                 <div class="tap-id-tag">${tapID}</div>
-                                <div class="stats">${bStyle} | ABV: ${bABV}</div>
                                 <h2 class="beer-name">${bName}</h2>
+                                <div class="stats">ABV: ${bABV}</div>
                                 <p class="description">${bDesc}</p>
                                 
                                 <div class="volume-container">
@@ -215,7 +225,7 @@
                     `;
                 }
             } catch (err) {
-                console.log("Updating Taps...");
+                console.log("Checking scales...");
             }
         }
 
