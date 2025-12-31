@@ -46,7 +46,12 @@
             border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
             display: flex; flex-direction: column;
         }
-        .label-art { width: 100%; height: 350px; background-size: contain; background-repeat: no-repeat; background-position: center; background-color: #000; border-bottom: 3px solid var(--accent); }
+        .label-art { 
+            width: 100%; height: 350px; 
+            background-size: contain; background-repeat: no-repeat; 
+            background-position: center; background-color: #000; 
+            border-bottom: 3px solid var(--accent); 
+        }
         .details { padding: 25px; flex-grow: 1; display: flex; flex-direction: column; }
         .tap-id-tag { font-size: 0.85rem; color: #888; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 5px; }
         .beer-name { font-family: 'Oswald', sans-serif; font-size: 2.2rem; margin: 0 0 5px 0; text-transform: uppercase; line-height: 1.1; }
@@ -67,20 +72,30 @@
         }
         .toggle-btn:hover { background: var(--accent); color: black; box-shadow: 0 0 20px rgba(255,180,0,0.4); }
 
-        /* ARCHIVE SECTION (HIDDEN BY DEFAULT) */
+        /* ARCHIVE SECTION */
         #archive-wrapper { 
-            max-height: 0; overflow: hidden; transition: max-height 0.8s ease-out; background: rgba(0,0,0,0.3);
+            max-height: 0; overflow: hidden; transition: max-height 0.8s ease-out; background: rgba(0,0,0,0.2);
         }
-        #archive-wrapper.open { max-height: 5000px; padding-top: 40px; }
+        #archive-wrapper.open { max-height: 10000px; padding-top: 40px; padding-bottom: 60px; }
 
         .archive-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px; max-width: 1200px; margin: 0 auto; padding: 20px;
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 25px; max-width: 1200px; margin: 0 auto; padding: 20px;
         }
-        .archive-card { background: #1a1a1a; border-radius: 12px; border: 1px solid #222; text-align: center; padding-bottom: 15px; }
-        .archive-art { width: 100%; height: 200px; background-size: cover; border-radius: 12px 12px 0 0; }
-        .archive-name { font-family: 'Oswald', sans-serif; font-size: 1.4rem; margin: 10px 0 5px; text-transform: uppercase; color: #fff; }
-        .archive-stats { color: var(--accent); font-family: 'Oswald', sans-serif; font-size: 0.9rem; }
+        .archive-card { 
+            background: #1a1a1a; border-radius: 15px; border: 1px solid #333; 
+            text-align: center; overflow: hidden; display: flex; flex-direction: column;
+        }
+        .archive-art { 
+            width: 100%; height: 220px; 
+            background-size: contain; background-repeat: no-repeat; 
+            background-position: center; background-color: #080808;
+            border-bottom: 1px solid #333;
+        }
+        .archive-details { padding: 15px; }
+        .archive-name { font-family: 'Oswald', sans-serif; font-size: 1.2rem; margin: 0; text-transform: uppercase; color: #fff; line-height: 1.2; }
+        .archive-stats { color: var(--accent); font-family: 'Oswald', sans-serif; font-size: 0.9rem; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -95,7 +110,7 @@
     <button class="toggle-btn" id="toggle-archive" onclick="toggleArchive()">View The Cellar</button>
 
     <div id="archive-wrapper">
-        <h2 style="text-align: center; font-family: 'Oswald'; color: var(--accent); letter-spacing: 4px;">PAST BREWS</h2>
+        <h2 style="text-align: center; font-family: 'Oswald'; color: var(--accent); letter-spacing: 4px; margin-bottom: 30px;">PAST BREWS</h2>
         <div class="archive-grid" id="archive-display"></div>
     </div>
 
