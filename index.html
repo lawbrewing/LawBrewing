@@ -18,140 +18,86 @@
             color: var(--text); 
             font-family: 'Roboto', sans-serif; 
             margin: 0; 
-            padding-bottom: 50px;
+            padding-bottom: 80px;
         }
 
-        /* BACKLIT LOGO HEADER */
+        /* HEADER */
         .header-container {
             text-align: center;
             padding: 50px 0 30px;
             background: radial-gradient(circle, #2a2a2a 0%, #121212 80%);
             border-bottom: 2px solid var(--accent);
-            margin-bottom: 40px;
         }
+        .backlit-logo { max-width: 280px; filter: drop-shadow(0 0 10px rgba(255,180,0,0.5)); }
+        .sub-brand { font-family: 'Oswald', sans-serif; color: var(--accent); text-transform: uppercase; letter-spacing: 6px; margin-top: 15px; font-size: 1.5rem; }
 
-        .backlit-logo {
-            max-width: 280px;
-            filter: drop-shadow(0 0 10px rgba(255, 180, 0, 0.5)) 
-                    drop-shadow(0 0 25px rgba(255, 180, 0, 0.2));
-        }
-
-        .sub-brand {
-            font-family: 'Oswald', sans-serif;
-            color: var(--accent);
-            text-transform: uppercase;
-            letter-spacing: 6px;
-            margin-top: 15px;
-            font-size: 1.5rem;
-        }
-
+        /* LIVE GRID */
         .tap-container { 
             display: grid; 
             grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); 
             gap: 30px; 
             max-width: 1300px; 
-            margin: 0 auto; 
+            margin: 40px auto; 
             padding: 20px;
         }
 
         .beer-card { 
-            background: var(--card); 
-            border-radius: 20px; 
-            overflow: hidden; 
-            border: 1px solid #333;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            display: flex;
-            flex-direction: column;
+            background: var(--card); border-radius: 20px; overflow: hidden; 
+            border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+            display: flex; flex-direction: column;
         }
-
-        /* Fixed Art Section */
-        .label-art { 
-            width: 100%; 
-            height: 350px; 
-            background-size: contain; 
-            background-repeat: no-repeat;
-            background-position: center; 
-            background-color: #000;
-            border-bottom: 3px solid var(--accent); 
-        }
-
+        .label-art { width: 100%; height: 350px; background-size: contain; background-repeat: no-repeat; background-position: center; background-color: #000; border-bottom: 3px solid var(--accent); }
         .details { padding: 25px; flex-grow: 1; display: flex; flex-direction: column; }
-
-        .tap-id-tag {
-            font-size: 0.85rem;
-            color: #888;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            margin-bottom: 5px;
-        }
-
-        .beer-name { 
-            font-family: 'Oswald', sans-serif; 
-            font-size: 2.2rem; 
-            margin: 0 0 5px 0; 
-            text-transform: uppercase;
-            line-height: 1.1;
-            color: white;
-        }
-
-        .stats { 
-            font-family: 'Oswald', sans-serif; 
-            color: var(--accent); 
-            font-size: 1.3rem; 
-            margin-bottom: 15px;
-            letter-spacing: 1px;
-            border-bottom: 1px solid #333;
-            padding-bottom: 10px;
-        }
-
-        .description { 
-            font-size: 1rem; 
-            color: #ccc; 
-            line-height: 1.6; 
-            margin-bottom: 25px; 
-            white-space: pre-wrap; /* Preserves your story formatting */
-        }
+        .tap-id-tag { font-size: 0.85rem; color: #888; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 5px; }
+        .beer-name { font-family: 'Oswald', sans-serif; font-size: 2.2rem; margin: 0 0 5px 0; text-transform: uppercase; line-height: 1.1; }
+        .stats { font-family: 'Oswald', sans-serif; color: var(--accent); font-size: 1.2rem; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .description { font-size: 1rem; color: #ccc; line-height: 1.6; margin-bottom: 25px; white-space: pre-wrap; }
 
         /* PROGRESS BAR */
-        .volume-container { 
-            background: #000; 
-            height: 38px; 
-            border-radius: 19px; 
-            position: relative; 
-            overflow: hidden; 
-            border: 2px solid #444;
-            margin-top: auto; 
-        }
+        .volume-container { background: #000; height: 38px; border-radius: 19px; position: relative; overflow: hidden; border: 2px solid #444; margin-top: auto; }
+        .volume-bar { background: linear-gradient(90deg, #b8860b, var(--accent)); height: 100%; transition: width 1.5s ease; }
+        .volume-text { position: absolute; width: 100%; text-align: center; top: 8px; font-weight: bold; color: white; text-shadow: 1px 1px 3px black; }
 
-        .volume-bar { 
-            background: linear-gradient(90deg, #b8860b, var(--accent)); 
-            height: 100%; 
-            width: 0%; 
-            transition: width 1.5s cubic-bezier(0.1, 0.7, 1.0, 0.1); 
+        /* ARCHIVE TOGGLE BUTTON */
+        .toggle-btn {
+            display: block; width: 250px; margin: 40px auto; padding: 15px;
+            background: transparent; border: 2px solid var(--accent); color: var(--accent);
+            font-family: 'Oswald', sans-serif; font-size: 1.2rem; text-transform: uppercase;
+            letter-spacing: 2px; cursor: pointer; border-radius: 50px; transition: all 0.3s;
         }
+        .toggle-btn:hover { background: var(--accent); color: black; box-shadow: 0 0 20px rgba(255,180,0,0.4); }
 
-        .volume-text { 
-            position: absolute; 
-            width: 100%; 
-            text-align: center; 
-            top: 8px; 
-            font-weight: bold; 
-            font-size: 1.1rem; 
-            color: white;
-            text-shadow: 1px 1px 3px black;
+        /* ARCHIVE SECTION (HIDDEN BY DEFAULT) */
+        #archive-wrapper { 
+            max-height: 0; overflow: hidden; transition: max-height 0.8s ease-out; background: rgba(0,0,0,0.3);
         }
+        #archive-wrapper.open { max-height: 5000px; padding-top: 40px; }
+
+        .archive-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px; max-width: 1200px; margin: 0 auto; padding: 20px;
+        }
+        .archive-card { background: #1a1a1a; border-radius: 12px; border: 1px solid #222; text-align: center; padding-bottom: 15px; }
+        .archive-art { width: 100%; height: 200px; background-size: cover; border-radius: 12px 12px 0 0; }
+        .archive-name { font-family: 'Oswald', sans-serif; font-size: 1.4rem; margin: 10px 0 5px; text-transform: uppercase; color: #fff; }
+        .archive-stats { color: var(--accent); font-family: 'Oswald', sans-serif; font-size: 0.9rem; }
     </style>
 </head>
 <body>
 
     <div class="header-container">
-        <img src="https://github.com/lawbrewing/LawBrewing/blob/main/LBC%20-%20Black%20Transparent%20(1).png?raw=true" 
-             alt="Law Brewing Logo" 
-             class="backlit-logo">
+        <img src="https://github.com/lawbrewing/LawBrewing/blob/main/LBC%20-%20Black%20Transparent%20(1).png?raw=true" alt="Law Brewing Logo" class="backlit-logo">
         <div class="sub-brand">Liquid Attitude Taps</div>
     </div>
 
     <div class="tap-container" id="tap-display"></div>
+
+    <button class="toggle-btn" id="toggle-archive" onclick="toggleArchive()">View The Cellar</button>
+
+    <div id="archive-wrapper">
+        <h2 style="text-align: center; font-family: 'Oswald'; color: var(--accent); letter-spacing: 4px;">PAST BREWS</h2>
+        <div class="archive-grid" id="archive-display"></div>
+    </div>
 
     <script>
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQWqyJ5-pMWhRUkkZLoHdmFPtOHJozHRJkL9c0ivSSY9J7Fp0lto4W05tH-XbFelBL-htJZXedhv7i3/pub?output=csv';
@@ -171,6 +117,13 @@
             return rows;
         }
 
+        function toggleArchive() {
+            const wrapper = document.getElementById('archive-wrapper');
+            const btn = document.getElementById('toggle-archive');
+            wrapper.classList.toggle('open');
+            btn.innerText = wrapper.classList.contains('open') ? "Close The Cellar" : "View The Cellar";
+        }
+
         async function updateDisplay() {
             try {
                 const cacheBuster = new Date().getTime();
@@ -180,24 +133,17 @@
                 ]);
 
                 const weights = await wRes.json();
-                const sheetText = await sRes.text();
-                const csvData = parseCSV(sheetText);
+                const csvData = parseCSV(await sRes.text());
                 
-                const container = document.getElementById('tap-display');
-                container.innerHTML = '';
+                const tapContainer = document.getElementById('tap-display');
+                const archiveContainer = document.getElementById('archive-display');
+                
+                tapContainer.innerHTML = '';
+                archiveContainer.innerHTML = '';
 
-                // Processing your specific column order
                 for (let i = 1; i < csvData.length; i++) {
                     const row = csvData[i];
-                    if (!row[0] || row[0] === "") continue;
-
-                    // MAPPING BASED ON YOUR DATA:
-                    // 0: Tap ID (Law Tap)
-                    // 1: Beer ID (5657071) - HIDDEN
-                    // 2: Beer Name (Angels...)
-                    // 3: ABV (8.20%)
-                    // 4: Image URL (https://...)
-                    // 5: Description (Acey tells me...)
+                    if (!row[2]) continue;
 
                     const tapID  = row[0];
                     const bName  = row[2];
@@ -205,32 +151,38 @@
                     const bImage = row[4];
                     const bDesc  = row[5];
 
-                    const pct = weights[tapID] || 0;
-
-                    container.innerHTML += `
-                        <div class="beer-card">
-                            <div class="label-art" style="background-image: url('${bImage}');"></div>
-                            <div class="details">
-                                <div class="tap-id-tag">${tapID}</div>
-                                <h2 class="beer-name">${bName}</h2>
-                                <div class="stats">ABV: ${bABV}</div>
-                                <p class="description">${bDesc}</p>
-                                
-                                <div class="volume-container">
-                                    <div class="volume-bar" style="width: ${pct}%"></div>
-                                    <div class="volume-text">${pct}% REMAINING</div>
+                    if (tapID && tapID !== "") {
+                        const pct = weights[tapID] || 0;
+                        tapContainer.innerHTML += `
+                            <div class="beer-card">
+                                <div class="label-art" style="background-image: url('${bImage}');"></div>
+                                <div class="details">
+                                    <div class="tap-id-tag">${tapID}</div>
+                                    <h2 class="beer-name">${bName}</h2>
+                                    <div class="stats">ABV: ${bABV}</div>
+                                    <p class="description">${bDesc}</p>
+                                    <div class="volume-container">
+                                        <div class="volume-bar" style="width: ${pct}%"></div>
+                                        <div class="volume-text">${pct}% REMAINING</div>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
-                    `;
+                            </div>`;
+                    } else {
+                        archiveContainer.innerHTML += `
+                            <div class="archive-card">
+                                <div class="archive-art" style="background-image: url('${bImage}');"></div>
+                                <div class="archive-details">
+                                    <h3 class="archive-name">${bName}</h3>
+                                    <div class="archive-stats">ABV: ${bABV}</div>
+                                </div>
+                            </div>`;
+                    }
                 }
-            } catch (err) {
-                console.log("Checking scales...");
-            }
+            } catch (err) { console.log("Updating..."); }
         }
 
-        setInterval(updateDisplay, 15000);
         updateDisplay();
+        setInterval(updateDisplay, 30000);
     </script>
 </body>
 </html>
