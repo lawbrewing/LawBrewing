@@ -3,96 +3,141 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Law Brewing | Live Taps</title>
-    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Roboto:wght@300;400&display=swap" rel="stylesheet">
+    <title>Law Brewing - Live Taps</title>
     <style>
-        :root { --accent: #ffb400; --bg: #121212; --card: #1e1e1e; --text: #ffffff; }
-        body { background: var(--bg); color: var(--text); font-family: 'Roboto', sans-serif; margin: 0; padding-bottom: 50px; }
-        nav { background: #000; padding: 15px; text-align: center; border-bottom: 1px solid #333; }
-        nav a { color: var(--accent); text-decoration: none; margin: 0 20px; font-family: 'Oswald'; font-weight: bold; }
-        .header-container { text-align: center; padding: 40px 0; background: radial-gradient(circle, #2a2a2a 0%, #121212 80%); }
-        .backlit-logo { max-width: 250px; filter: drop-shadow(0 0 10px rgba(255,180,0,0.4)); }
-        .tap-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 25px; max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .beer-card { background: var(--card); border-radius: 20px; overflow: hidden; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .label-art { width: 100%; height: 280px; background-size: cover; background-position: center; border-bottom: 3px solid var(--accent); background-color: #222; }
-        .details { padding: 20px; text-align: center; }
-        .beer-name { font-family: 'Oswald'; font-size: 2rem; margin: 0; color: var(--accent); text-transform: uppercase; }
-        .desc { font-size: 0.85rem; color: #aaa; margin: 15px 0; line-height: 1.4; font-style: italic; min-height: 3em; }
-        .volume-container { background: #000; height: 30px; border-radius: 15px; position: relative; overflow: hidden; border: 1px solid #444; margin: 15px 0; }
-        .volume-bar { background: linear-gradient(90deg, #b8860b, var(--accent)); height: 100%; width: 0%; transition: width 1.5s ease-in-out; }
-        .volume-text { position: absolute; width: 100%; text-align: center; top: 5px; font-weight: bold; color: white; text-shadow: 1px 1px 2px black; }
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-top: 1px solid #333; padding-top: 15px; }
-        .stat-val { font-family: 'Oswald'; font-size: 1.5rem; color: var(--accent); display: block; }
-        .stat-label { font-size: 0.7rem; color: #666; text-transform: uppercase; }
+        :root {
+            --gold: #f1c40f;
+            --dark-bg: #121212;
+            --card-bg: #1e1e1e;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: white;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 { color: var(--gold); letter-spacing: 2px; margin-bottom: 30px; }
+
+        .tap-container {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .tap-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 25px;
+            border: 1px solid #333;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
+
+        .beer-label {
+            width: 200px;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 15px;
+            border: 2px solid var(--gold);
+            margin-bottom: 15px;
+        }
+
+        .beer-name { font-size: 1.8rem; font-weight: bold; margin: 10px 0; }
+        .beer-style { color: #888; margin-bottom: 20px; }
+
+        /* Progress Bar (Kegerator Level) */
+        .progress-container {
+            background: #333;
+            border-radius: 20px;
+            height: 35px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid #444;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #d4ae0b, var(--gold));
+            height: 100%;
+            transition: width 1s ease-in-out;
+        }
+
+        .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: bold;
+            text-shadow: 1px 1px 2px black;
+        }
+
+        .footer-links { margin-top: 50px; }
+        .footer-links a { color: var(--gold); text-decoration: none; margin: 0 15px; }
     </style>
 </head>
 <body>
 
-<nav>
-    <a href="index.html">LIVE TAPS</a>
-    <a href="archive.html">BEER VAULT</a>
-</nav>
+    <h1>LAW BREWING LIVE</h1>
 
-<div class="header-container">
-    <img src="https://github.com/lawbrewing/LawBrewing/blob/main/LBC%20-%20Black%20Transparent%20(1).png?raw=true" class="backlit-logo">
-</div>
+    <div id="tap-display" class="tap-container">
+        <p>Loading the vault...</p>
+    </div>
 
-<div class="tap-container" id="tap-display">
-    <p style="text-align:center; width:100%; color:#666;">Loading Taps...</p>
-</div>
+    <div class="footer-links">
+        <a href="library.html">Beer Vault</a>
+        <a href="https://untappd.com/v/law-brewing/123456">Untappd</a>
+    </div>
 
-<script>
-async function fetchTaps() {
-    try {
-        const response = await fetch('taps.json?t=' + Date.now());
-        const data = await response.json();
-        
-        const container = document.getElementById('tap-display');
-        container.innerHTML = '';
+    <script>
+        // Configuration: Which Beer ID is on which Tap?
+        // In the future, your Pi can update this JSON file automatically.
+        const tapConfig = [
+            { id: "5657071", percent: 85, tapName: "Law Tap" },
+            { id: "none", percent: 0, tapName: "Wisco Tap" },
+            { id: "none", percent: 0, tapName: "Nitro Tap" }
+        ];
 
-        // This ensures we check all three taps every time
-        const hardwareTaps = ["Law Tap", "Wisco Tap", "Nitro Tap"];
+        async function loadTaps() {
+            try {
+                const response = await fetch('library.json');
+                const library = await response.json();
+                const display = document.getElementById('tap-display');
+                display.innerHTML = ''; // Clear loading text
 
-        hardwareTaps.forEach(tapId => {
-            // 1. Find what beer name is assigned to this tap (e.g., "Hacker-Pschorr")
-            const beerName = data.active_taps[tapId];
-            
-            // 2. Get that beer's details from the library
-            const beer = data.library[beerName];
-            
-            // Only show the card if the tap is NOT "Off Tap"
-            if (beer && beerName !== "Off Tap") {
-                const pintsLeft = Math.round((beer.percent / 100) * 40);
-                const growlersLeft = Math.round((beer.percent / 100) * 10);
+                tapConfig.forEach(tap => {
+                    const beer = library[tap.id];
+                    
+                    if (beer) {
+                        // Logic to handle .jpeg vs .png (Public version)
+                        // We assume images are named [ID].jpeg as found on your Pi
+                        const imgUrl = `static/images/library/${tap.id}.jpeg`;
 
-                container.innerHTML += `
-                    <div class="beer-card">
-                        <div class="label-art" style="background-image: url('images/labels/${beer.artwork}');"></div>
-                        <div class="details">
-                            <h2 class="beer-name">${beerName}</h2>
-                            <div style="font-family: 'Oswald'; color: #888;">${beer.abv} | ${tapId}</div>
-                            <p class="desc">${beer.desc}</p>
-                            
-                            <div class="volume-container">
-                                <div class="volume-bar" style="width: ${beer.percent}%"></div>
-                                <div class="volume-text">${beer.percent}% REMAINING</div>
+                        display.innerHTML += `
+                            <div class="tap-card">
+                                <div style="color: var(--gold); font-weight: bold;">${tap.tapName}</div>
+                                <div class="beer-name">${beer.name}</div>
+                                <div class="beer-style">${beer.abv} | ${beer.style}</div>
+                                <img src="${imgUrl}" class="beer-label" onerror="this.src='static/images/library/placeholder.png'">
+                                <div class="progress-container">
+                                    <div class="progress-fill" style="width: ${tap.percent}%"></div>
+                                    <div class="progress-text">${tap.percent}% Remaining</div>
+                                </div>
                             </div>
-
-                            <div class="stats-grid">
-                                <div class="stat-box"><span class="stat-val">~${pintsLeft}</span><span class="stat-label">PINTS</span></div>
-                                <div class="stat-box"><span class="stat-val">~${growlersLeft}</span><span class="stat-label">GROWLERS</span></div>
-                            </div>
-                        </div>
-                    </div>
-                `;
+                        `;
+                    }
+                });
+            } catch (error) {
+                console.error("Error loading library:", error);
+                document.getElementById('tap-display').innerHTML = "<p>Error connecting to the Beer Vault.</p>";
             }
-        });
-    } catch (err) {
-        console.error("Dashboard error:", err);
-    }
-}
-    setInterval(fetchTaps, 10000);
-    fetchTaps();
-</script>
+        }
+
+        loadTaps();
+    </script>
 </body>
 </html>
