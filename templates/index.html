@@ -1,87 +1,31 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Law Brewing - Live Taps</title>
+    <title>Law Brewing Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        body { background: #121212; color: white; font-family: 'Segoe UI', sans-serif; text-align: center; margin: 0; }
-        header { background: #1a1a1a; padding: 20px; border-bottom: 2px solid gold; }
-        
-        .container { padding: 20px; max-width: 600px; margin: auto; }
-        
-        .tap-card { 
-            background: #222; 
-            margin-bottom: 25px; 
-            padding: 15px; 
-            border-radius: 15px; 
-            border: 1px solid #333;
-        }
-
-        .tap-name { font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; color: gold; }
-
-        /* The Keg Bar Container */
-        .progress-bg { 
-            background: #444; 
-            border-radius: 20px; 
-            height: 35px; 
-            width: 100%; 
-            overflow: hidden; 
-            position: relative;
-        }
-
-        /* The Actual Liquid */
-        .progress-fill { 
-            background: linear-gradient(90deg, #f39c12, #f1c40f); 
-            height: 100%; 
-            transition: width 1s ease-in-out; 
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .percent-text { 
-            position: absolute; 
-            width: 100%; 
-            font-weight: bold; 
-            color: white; 
-            text-shadow: 1px 1px 2px black;
-            line-height: 35px;
-        }
-
-        nav { margin-top: 30px; }
-        nav a { color: gold; text-decoration: none; font-weight: bold; padding: 10px; }
+        body { background: #121212; color: white; font-family: sans-serif; text-align: center; }
+        .tap-card { background: #222; margin: 20px auto; padding: 20px; border-radius: 15px; max-width: 500px; border: 1px solid #333; }
+        .progress-bg { background: #444; border-radius: 20px; height: 30px; width: 100%; position: relative; margin-top: 15px;}
+        .progress-fill { background: linear-gradient(90deg, #f39c12, #f1c40f); height: 100%; border-radius: 20px; transition: width 0.5s; }
+        .label-img { width: 180px; border-radius: 10px; margin: 15px 0; border: 2px solid gold; }
     </style>
 </head>
 <body>
-
-<header>
-    <h1>LAW BREWING</h1>
-    <p>Live Kegerator Status</p>
-</header>
-
-<div class="container">
+    <h1>LAW BREWING LIVE TAPS</h1>
     {% for num, data in taps.items() %}
     <div class="tap-card">
-        <div class="tap-name">Tap {{ num }}: {{ data.name }}</div>
-        
+        <h2>Tap {{ num }}: {{ data.name }}</h2>
         {% if data.id != 'none' %}
-        <img src="{{ url_for('static', filename='images/library/' + data.id + '.png') }}" style="width: 150px; border-radius: 10px; margin: 10px 0;">
-        <p><em>{{ data.abv }} - {{ data.desc }}</em></p>
+            <img src="{{ url_for('static', filename='images/library/' + data.image_file) }}" class="label-img">
+            <p>{{ data.desc }}</p>
         {% endif %}
-
         <div class="progress-bg">
-            <div class="percent-text">{{ data.percent }}% Full</div>
             <div class="progress-fill" style="width: {{ data.percent }}%;"></div>
+            <div style="position:absolute; width:100%; top:5px; font-weight:bold;">{{ data.percent }}%</div>
         </div>
     </div>
     {% endfor %}
-</div>
-<script>
-    // Refresh the page every 30 seconds to update weights automatically
-    setTimeout(function(){
-       window.location.reload(1);
-    }, 30000);
-</script>
-
+    <p><a href="/manage" style="color: gold;">Manage Taps</a> | <a href="/library" style="color: gold;">Beer Vault</a></p>
 </body>
 </html>

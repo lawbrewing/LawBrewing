@@ -1,55 +1,145 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Law Brewing - Archive</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Law Brewing - Beer Vault</title>
     <style>
-        body { background: #121212; color: white; font-family: sans-serif; text-align: center; }
-        .library-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 20px;
+        :root {
+            --gold: #f1c40f;
+            --dark-bg: #121212;
+            --card-bg: #1e1e1e;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            text-align: center;
+        }
+
+        header {
+            padding: 40px 20px;
+            background: linear-gradient(to bottom, #1a1a1a, var(--dark-bg));
+            border-bottom: 1px solid #333;
+        }
+
+        h1 { margin: 0; color: var(--gold); letter-spacing: 2px; }
+        .subtitle { color: #888; margin-top: 10px; }
+
+        .vault-container {
+            max-width: 1200px;
+            margin: 0 auto;
             padding: 20px;
         }
-        .beer-card {
-            position: relative;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            border-radius: 10px;
-            overflow: hidden;
-            border: 1px solid #333;
+
+        .library-grid {
+            display: grid;
+            /* Creates a responsive grid: min 160px wide columns */
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
         }
+
+        .beer-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid #333;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* The Gold Pop Effect */
         .beer-card:hover {
-            transform: scale(1.1);
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+            transform: translateY(-10px) scale(1.03);
+            border-color: var(--gold);
+            box-shadow: 0 10px 30px rgba(241, 196, 15, 0.2);
             z-index: 10;
         }
-        .beer-card img { width: 100%; display: block; }
-        .del-btn {
-            background: rgba(255,0,0,0.7);
-            color: white;
-            border: none;
-            padding: 5px;
-            cursor: pointer;
+
+        .image-container {
             width: 100%;
+            aspect-ratio: 1 / 1;
+            overflow: hidden;
+            background: #000;
         }
+
+        .beer-art {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .beer-info {
+            padding: 15px;
+            flex-grow: 1;
+        }
+
+        .beer-name {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: var(--gold);
+        }
+
+        .beer-stats {
+            font-size: 0.85rem;
+            color: #aaa;
+            margin-bottom: 10px;
+        }
+
+        .nav-links {
+            margin-top: 50px;
+            padding: 20px;
+        }
+
+        .nav-links a {
+            color: var(--gold);
+            text-decoration: none;
+            margin: 0 15px;
+            font-weight: bold;
+        }
+
+        .nav-links a:hover { text-decoration: underline; }
+
     </style>
 </head>
 <body>
-    <h1>🍺 Beer Library</h1>
-    <p>Tap a label to view on Untappd</p>
-    <a href="/upload" style="color: gold;">+ Upload New Label</a>
-    <hr>
-    <div class="library-grid">
-        {% for id in beer_ids %}
-        <div class="beer-card">
-            <a href="https://untappd.com/beer/{{ id }}" target="_blank">
-                <img src="{{ url_for('static', filename='images/library/' + id + '.png') }}">
+
+    <header>
+        <h1>BEER VAULT</h1>
+        <p class="subtitle">An archive of Law Brewing creations</p>
+    </header>
+
+    <div class="vault-container">
+        <div class="library-grid">
+            {% for id, info in library.items() %}
+            <a href="https://untappd.com/beer/{{ id }}" target="_blank" class="beer-card">
+                <div class="image-container">
+                    <img src="{{ url_for('static', filename='images/library/' + info.image_file) }}" 
+                         alt="{{ info.name }}" 
+                         class="beer-art">
+                </div>
+                <div class="beer-info">
+                    <div class="beer-name">{{ info.name }}</div>
+                    <div class="beer-stats">
+                        {{ info.abv }} | {{ info.style }}
+                    </div>
+                </div>
             </a>
-            <form action="{{ url_for('delete_beer', beer_id=id) }}" method="post">
-                <button type="submit" class="del-btn">Delete</button>
-            </form>
+            {% endfor %}
         </div>
-        {% endfor %}
     </div>
+
+    <div class="nav-links">
+        <a href="/">← Live Dashboard</a>
+        <a href="/manage">⚙️ Manage Taps</a>
+    </div>
+
 </body>
 </html>
