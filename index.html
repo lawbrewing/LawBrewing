@@ -7,199 +7,95 @@
     <style>
         :root {
             --gold: #f1c40f;
-            --glow: rgba(241, 196, 15, 0.7);
             --dark-bg: #0a0a0a;
             --card-bg: #161616;
         }
-
-        body {
-            background-color: var(--dark-bg);
-            color: white;
-            font-family: 'Segoe UI', Arial, sans-serif;
-            margin: 0; padding: 0; text-align: center;
-        }
-
-        /* RESTORED GLOWING LOGO */
-        header {
-            padding: 60px 20px;
-            background: radial-gradient(circle at center, #1a1a1a 0%, var(--dark-bg) 100%);
-        }
-
-        .glowing-logo {
-            color: var(--gold);
-            font-size: 3.5rem;
-            letter-spacing: 12px;
-            text-transform: uppercase;
-            text-shadow: 0 0 15px var(--glow), 0 0 30px var(--glow);
-            margin: 0;
-            font-weight: 900;
-            animation: pulse 3s infinite alternate;
-        }
-
-        @keyframes pulse {
-            from { text-shadow: 0 0 10px var(--glow); opacity: 0.9; }
-            to { text-shadow: 0 0 25px var(--glow), 0 0 40px var(--glow); opacity: 1; }
-        }
-
-        .subtitle { color: #444; letter-spacing: 5px; margin-top: 10px; font-size: 0.8rem; }
-
-        /* TAP GRID */
+        body { background: var(--dark-bg); color: white; font-family: sans-serif; text-align: center; margin: 0; }
+        header { padding: 40px; }
+        .glowing-logo { color: var(--gold); font-size: 3rem; letter-spacing: 10px; text-shadow: 0 0 15px rgba(241, 196, 15, 0.5); }
+        
         .tap-container {
-            max-width: 1100px;
-            margin: 40px auto;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: auto;
             padding: 20px;
         }
 
         .tap-card {
             background: var(--card-bg);
-            border-radius: 25px;
-            padding: 30px;
-            border: 1px solid #222;
-            position: relative;
-            transition: 0.3s;
-        }
-
-        .tap-badge {
-            position: absolute;
-            top: 20px;
-            right: 25px;
-            color: var(--gold);
-            font-weight: bold;
-            font-size: 0.8rem;
-        }
-
-        .beer-art {
-            width: 200px;
-            height: 200px;
-            border-radius: 50%;
-            border: 3px solid var(--gold);
-            margin: 20px 0;
-            object-fit: cover;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
-        }
-
-        .beer-name { font-size: 1.8rem; font-weight: bold; margin-bottom: 5px; }
-        .beer-meta { color: var(--gold); margin-bottom: 25px; opacity: 0.8; }
-
-        /* PINTS & GROWLERS */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 25px;
-        }
-
-        .stat-box { background: #222; padding: 12px; border-radius: 15px; }
-        .stat-val { display: block; font-size: 1.4rem; font-weight: bold; color: var(--gold); }
-        .stat-label { font-size: 0.7rem; color: #666; text-transform: uppercase; }
-
-        /* PROGRESS BAR */
-        .bar-bg {
-            background: #000;
-            border-radius: 30px;
-            height: 40px;
             border: 1px solid #333;
+            border-radius: 15px;
+            padding: 20px;
+        }
+
+        .tap-name { font-size: 1.5rem; font-weight: bold; color: var(--gold); margin-bottom: 20px; }
+
+        /* Progress Bar */
+        .bar-outer {
+            background: #000;
+            height: 40px;
+            border-radius: 20px;
+            border: 1px solid #444;
             overflow: hidden;
             position: relative;
+            margin-top: 10px;
         }
-
-        .bar-fill {
-            background: linear-gradient(90deg, #967e12, var(--gold));
+        .bar-inner {
+            background: linear-gradient(90deg, #b8860b, var(--gold));
             height: 100%;
-            transition: width 1.5s ease-in-out;
+            transition: width 1s ease-in-out;
         }
-
         .bar-text {
-            position: absolute;
-            width: 100%;
-            top: 0; left: 0; line-height: 40px;
-            font-weight: bold; font-size: 0.9rem;
+            position: absolute; width: 100%; top: 0; left: 0;
+            line-height: 40px; font-weight: bold; font-size: 1rem;
+            color: white; text-shadow: 1px 1px 2px black;
         }
-
-        footer { margin: 60px 0; }
-        .vault-btn {
-            color: var(--gold);
-            text-decoration: none;
-            padding: 12px 30px;
-            border: 1px solid var(--gold);
-            border-radius: 50px;
-            letter-spacing: 2px;
-            transition: 0.3s;
-        }
-        .vault-btn:hover { background: var(--gold); color: black; }
     </style>
 </head>
 <body>
 
     <header>
         <h1 class="glowing-logo">LAW BREWING</h1>
-        <div class="subtitle">LIVE TAPROOM DASHBOARD</div>
     </header>
 
     <div id="tap-display" class="tap-container">
         </div>
 
-    <footer>
-        <a href="library.html" class="vault-btn">THE BEER VAULT</a>
-    </footer>
-
     <script>
-        async function renderTaps() {
+        async function updateTaps() {
             try {
-                // Fetch the live weights file and the library
-                const [libRes, weightRes] = await Promise.all([
-                    fetch('library.json'),
-                    fetch('tap_weights.json?t=' + Date.now())
-                ]);
+                // Fetch only the weights
+                const response = await fetch('tap_weights.json?t=' + Date.now());
+                const weights = await response.json();
                 
-                const library = await libRes.json();
-                const weights = await weightRes.json();
                 const display = document.getElementById('tap-display');
                 display.innerHTML = '';
 
-                // Map the Raw Brain keys to the UI
-                const tapConfig = [
-                    { label: "LAW TAP",   id: "5657071", current: weights["Law Tap"] || 0 },
-                    { label: "WISCO TAP", id: "8726214", current: weights["Wisco Tap"] || 0 },
-                    { label: "NITRO TAP", id: "none",    current: weights["Nitro Tap"] || 0 }
-                ];
+                // List the keys exactly as they appear in your Python TAP_CONFIG
+                const tapNames = ["Law Tap", "Wisco Tap", "Nitro Tap"];
 
-                tapConfig.forEach(tap => {
-                    const beer = library[tap.id];
-                    if (beer) {
-                        const pints = (40 * (tap.current / 100)).toFixed(1);
-                        const growlers = (pints / 4).toFixed(1);
-
-                        display.innerHTML += `
-                            <div class="tap-card">
-                                <div class="tap-badge">${tap.label}</div>
-                                <a href="https://untappd.com/beer/${tap.id}" target="_blank">
-                                    <img src="static/images/library/${tap.id}.jpeg" class="beer-art" onerror="this.src='static/images/library/placeholder.png'">
-                                </a>
-                                <div class="beer-name">${beer.name}</div>
-                                <div class="beer-meta">${beer.abv} | ${beer.style}</div>
-                                
-                                <div class="stats-grid">
-                                    <div class="stat-box"><span class="stat-val">${pints}</span><span class="stat-label">Pints</span></div>
-                                    <div class="stat-box"><span class="stat-val">${growlers}</span><span class="stat-label">Growlers</span></div>
-                                </div>
-
-                                <div class="bar-bg">
-                                    <div class="bar-fill" style="width: ${tap.current}%"></div>
-                                    <div class="bar-text">${tap.current}% FULL</div>
-                                </div>
+                tapNames.forEach(name => {
+                    const percent = weights[name] || 0;
+                    
+                    display.innerHTML += `
+                        <div class="tap-card">
+                            <div class="tap-name">${name.toUpperCase()}</div>
+                            <div class="bar-outer">
+                                <div class="bar-inner" style="width: ${percent}%"></div>
+                                <div class="bar-text">${percent}% FULL</div>
                             </div>
-                        `;
-                    }
+                        </div>
+                    `;
                 });
-            } catch (e) { console.log("Syncing..."); }
+            } catch (e) {
+                console.error("Waiting for weights...", e);
+            }
         }
 
-        setInterval(renderTaps, 30000);
-        renderTaps();
+        setInterval(updateTaps, 5000); // Check every 5 seconds
+        updateTaps();
     </script>
 </body>
 </html>

@@ -2,52 +2,87 @@ import socket
 import json
 import requests
 import re
+import os
 
 # --- CONFIGURATION ---
 HUB_URL = "http://localhost:5000/update_weight"
+# The file that gets pushed to GitHub
+WEIGHTS_FILE = "tap_weights.json"
 
-# Add your Nitro info back here!
 TAP_CONFIG = {
     '192.168.86.47':  {'name': 'Law Tap',   'empty': 480, 'full': 4150},
     '192.168.86.116': {'name': 'Wisco Tap', 'empty': 500, 'full': 4000},
     '192.168.86.45':  {'name': 'Nitro Tap', 'empty': 450, 'full': 4200}
 }
 
+# Current state to prevent constant re-syncing if weights haven't changed
+current_weights = {"Law Tap": 0, "Wisco Tap": 0, "Nitro Tap": 0}
+
 def calculate_percent(raw_val, tap_ip):
     conf = TAP_CONFIG.get(tap_ip, {'empty': 500, 'full': 4000})
-    # Filter out garbage scientific notation or the 8.7M error
-    if raw_val > 1000000 or raw_val < -500: 
+    # If the scale sends absolute garbage (scientific notation), default to 0
+    if raw_val > 10000 or raw_val < -500: 
         return 0 
     
     pct = ((raw_val - conf['empty']) / (conf['full'] - conf['empty'])) * 100
     return max(0, min(100, round(pct)))
+
+def sync_to_github():
+    """Writes weights to JSON and pushes to GitHub Pages"""
+    try:
+        with open(WEIGHTS_FILE, 'w') as f:
+            json.dump(current_weights, f)
+        
+        # Git commands to push the update
+        # '&' at the end runs it in the background so the script doesn't lag
+        os.system(f"git add {WEIGHTS_FILE} && git commit -m 'Scale Sync' && git push origin main &")
+        print("🌍 GitHub Sync Initiated")
+    except Exception as e:
+        print(f"⚠️ GitHub Sync Failed: {e}")
 
 def start_server():
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.bind(('0.0.0.0', 1234))
     sock.listen(5)
-    print("🚀 3-Tap Brain (Nitro Restored) + Handshake Live...")
+    print("🚀 3-Tap Brain (Fixed Parser + Sync) Live...")
 
     while True:
         conn, addr = sock.accept()
         try:
-            # The scale waits for this 5-byte hex "Success" code
-            # Without this, the scale resets to Setup Mode after 30 seconds
+            # 1. Send the 5-byte "Success" handshake to keep scale online
             conn.sendall(b'\x00\x00\x01\x00\xc8') 
 
-            data = conn.recv(1024).decode('utf-8', errors='ignore')
-            if not data: continue
+            # 2. Receive the raw message
+            raw_data = conn.recv(1024).decode('utf-8', errors='ignore')
+            if not raw_data: continue
+
+            # 3. FIX: Only grab the first 1-4 digits found (the weight)
+            # This ignores the long serial/ID numbers that caused the 8.7M error
+            match = re.search(r"(\d{1,4})", raw_data)
             
-            numbers = re.findall(r"[-+]?\d*\.\d+|\d+", data)
-            if numbers:
-                raw_weight = float(numbers[0])
+            if match:
+                raw_weight = float(match.group(1))
                 tap_ip = addr[0]
-                tap_name = TAP_CONFIG.get(tap_ip, {}).get('name', 'Unknown')
-                percent = calculate_percent(raw_weight, tap_ip)
                 
-                print(f"📡 {tap_name} ({tap_ip}): {raw_weight}g -> {percent}%")
-                requests.post(HUB_URL, json={'tap': tap_name, 'percent': percent})
+                if tap_ip in TAP_CONFIG:
+                    tap_name = TAP_CONFIG[tap_ip]['name']
+                    percent = calculate_percent(raw_weight, tap_ip)
+
+                    # Only update if the percentage has changed
+                    if current_weights[tap_name] != percent:
+                        current_weights[tap_name] = percent
+                        print(f"📡 {tap_name} ({tap_ip}): {raw_weight}g -> {percent}%")
+                        
+                        # Update Local Hub
+                        try:
+                            requests.post(HUB_URL, json={'tap': tap_name, 'percent': percent}, timeout=1)
+                        except:
+                            print("⚠️ Local Hub unreachable (Port 5000)")
+
+                        # Update Public GitHub
+                        sync_to_github()
+
         except Exception as e:
             print(f"❌ Error: {e}")
         finally:
