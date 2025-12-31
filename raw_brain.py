@@ -28,20 +28,19 @@ def calculate_percent(raw_val, tap_ip):
     return max(0, min(100, round(pct)))
 
 def sync_to_github():
-    """Writes weights to JSON and pushes to GitHub Pages"""
+    """Syncs with GitHub by pulling changes before pushing weights"""
     try:
-        # 1. Write the file
         with open(WEIGHTS_FILE, 'w') as f:
             json.dump(current_weights, f)
 
-        # 2. Sync commands
-        # We add 'git pull --rebase' to make sure the Pi catches up to website changes
-        # We remove the '&' so we can actually see if it fails
+        # This command pulls the new website code first, 
+        # then adds the weights and pushes back.
+        # It prevents the 'out of sync' error that locks the Pi.
         cmd = (
-            f"git pull --rebase && "
+            "git pull origin main --rebase && "
             f"git add {WEIGHTS_FILE} && "
-            f"git commit -m 'Scale Sync' && "
-            f"git push"
+            "git commit -m 'Scale Sync' && "
+            "git push origin main"
         )
         
         os.system(cmd)
