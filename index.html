@@ -12,9 +12,6 @@
         .backlit-logo { max-width: 280px; filter: drop-shadow(0 0 10px rgba(255,180,0,0.5)); }
         .sub-brand { font-family: 'Oswald', sans-serif; color: var(--accent); text-transform: uppercase; letter-spacing: 6px; margin-top: 15px; font-size: 1.5rem; }
         
-        /* THE TIMESTAMP STYLE */
-        .last-updated { font-size: 1rem; color: var(--accent); margin-top: 15px; font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: 2px; }
-
         .tap-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 30px; max-width: 1300px; margin: 40px auto; padding: 20px; }
         .beer-card { background: var(--card); border-radius: 20px; overflow: hidden; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; flex-direction: column; }
         .label-art { width: 100%; height: 350px; background-size: contain; background-repeat: no-repeat; background-position: center; background-color: #000; border-bottom: 3px solid var(--accent); }
@@ -23,9 +20,13 @@
         .beer-name { font-family: 'Oswald', sans-serif; font-size: 2.2rem; margin: 0 0 5px 0; text-transform: uppercase; line-height: 1.1; }
         .stats { font-family: 'Oswald', sans-serif; color: var(--accent); font-size: 1.2rem; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px; }
         .description { font-size: 1rem; color: #ccc; line-height: 1.6; margin-bottom: 25px; white-space: pre-wrap; }
+        
+        /* VOLUME BAR & PER-TAP TIMESTAMP */
         .volume-container { background: #000; height: 38px; border-radius: 19px; position: relative; overflow: hidden; border: 2px solid #444; margin-top: auto; }
         .volume-bar { background: linear-gradient(90deg, #b8860b, var(--accent)); height: 100%; transition: width 1.5s ease; }
         .volume-text { position: absolute; width: 100%; text-align: center; top: 8px; font-weight: bold; color: white; text-shadow: 1px 1px 3px black; }
+        .tap-timestamp { font-size: 0.75rem; color: #666; text-align: center; margin-top: 8px; text-transform: uppercase; letter-spacing: 1px; }
+
         .toggle-btn { display: block; width: 250px; margin: 40px auto; padding: 15px; background: transparent; border: 2px solid var(--accent); color: var(--accent); font-family: 'Oswald', sans-serif; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; border-radius: 50px; transition: all 0.3s; }
         #archive-wrapper { max-height: 0; overflow: hidden; transition: max-height 0.8s ease-out; background: rgba(0,0,0,0.2); }
         #archive-wrapper.open { max-height: 10000px; padding-top: 40px; padding-bottom: 60px; }
@@ -41,7 +42,6 @@
     <div class="header-container">
         <img src="https://github.com/lawbrewing/LawBrewing/blob/main/LBC%20-%20Black%20Transparent%20(1).png?raw=true" alt="Law Brewing Logo" class="backlit-logo">
         <div class="sub-brand">Liquid Attitude Taps</div>
-        <div id="ts-box" class="last-updated">CONNECTING TO SCALES...</div>
     </div>
     <div class="tap-container" id="tap-display"></div>
     <button class="toggle-btn" id="toggle-archive" onclick="toggleArchive()">View The Cellar</button>
@@ -81,11 +81,6 @@
                 const weights = await wRes.json();
                 const csvData = parseCSV(await sRes.text());
                 
-                // Update Timestamp
-                if (weights.last_updated) {
-                    document.getElementById('ts-box').innerText = "LAST UPDATED: " + weights.last_updated;
-                }
-                
                 const tapContainer = document.getElementById('tap-display');
                 const archiveContainer = document.getElementById('archive-display');
                 tapContainer.innerHTML = '';
@@ -99,9 +94,13 @@
                     const bABV = row[3];
                     const bImage = row[4];
                     const bDesc = row[5];
+                    
                     if (tapID && tapID !== "") {
                         const pct = weights[tapID] || 0;
                         const pints = Math.round((pct / 100) * 41);
+                        // Get individual tap timestamp
+                        const tapTime = weights[tapID + "_updated"] || "Checking...";
+
                         tapContainer.innerHTML += `
                             <div class="beer-card">
                                 <div class="label-art" style="background-image: url('${bImage}');"></div>
@@ -112,8 +111,9 @@
                                     <p class="description">${bDesc}</p>
                                     <div class="volume-container">
                                         <div class="volume-bar" style="width: ${pct}%"></div>
-                                        <div class="volume-text">${pints} PINTS REMAINING</div>
+                                        <div class="volume-text">${pints} PINTS LEFT</div>
                                     </div>
+                                    <div class="tap-timestamp">Tap Synced: ${tapTime}</div>
                                 </div>
                             </div>`;
                     } else {
