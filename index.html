@@ -15,6 +15,9 @@
         .tap-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 30px; max-width: 1300px; margin: 40px auto; padding: 20px; align-items: stretch; }
         .beer-card { background: var(--card); border-radius: 20px; border: 1px solid #333; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); height: 100%; position: relative; }
         
+        /* TOP RATED RIBBON */
+        .top-rated-ribbon { position: absolute; top: 20px; right: -35px; background: var(--accent); color: #000; padding: 5px 40px; transform: rotate(45deg); font-family: 'Oswald'; font-weight: bold; font-size: 0.8rem; letter-spacing: 1px; z-index: 10; box-shadow: 0 0 15px rgba(255,180,0,0.4); text-transform: uppercase; }
+
         .label-art { width: 100%; height: 350px; background-size: contain; background-repeat: no-repeat; background-position: center; background-color: #000; border-bottom: 3px solid var(--accent); }
         .details { padding: 25px; flex-grow: 1; display: flex; flex-direction: column; }
         .beer-name-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 5px; }
@@ -39,7 +42,7 @@
         .toggle-btn:hover { background: var(--accent); color: #000; }
         .expand-section { max-height: 0; overflow: hidden; transition: max-height 0.8s ease-out; background: rgba(0,0,0,0.3); }
         .expand-section.open { max-height: 20000px; padding: 40px 0; }
-
+        
         .games-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; max-width: 1300px; margin: 0 auto; padding: 0 20px; }
         .game-card { background: #202020; border-radius: 15px; border: 1px solid #444; overflow: hidden; display: flex; flex-direction: column; }
         .game-img { width: 100%; height: 200px; object-fit: contain; background: #000; padding: 10px; }
@@ -101,12 +104,22 @@
                 ]);
                 
                 let ratingMap = {};
+                let maxRating = 0;
+                let topBeer = "";
+
                 try {
                     const rRes = await fetch(SCOREBOARD_URL + '&t=' + cb);
                     const ratingText = await rRes.text();
                     if (ratingText && !ratingText.includes("DOCTYPE")) {
                         parseCSV(ratingText).forEach(r => {
-                            if(r[0] && r[1]) ratingMap[r[0].trim()] = parseFloat(r[1]).toFixed(1);
+                            if(r[0] && r[1]) {
+                                const score = parseFloat(r[1]);
+                                ratingMap[r[0].trim()] = score.toFixed(1);
+                                if (score > maxRating) {
+                                    maxRating = score;
+                                    topBeer = r[0].trim();
+                                }
+                            }
                         });
                     }
                 } catch(e) {}
@@ -117,7 +130,6 @@
                 const archiveContainer = document.getElementById('archive-display');
                 tapContainer.innerHTML = ''; archiveContainer.innerHTML = '';
 
-                // Universal Sync Time
                 let universalSync = weights["last_updated"] || weights["updated"] || weights["time"] || "--:--";
 
                 beerData.forEach((row, i) => {
@@ -126,6 +138,8 @@
                     const bName = (row[2] || "").trim();
                     if (!bName) return;
 
+                    const isTop = (bName === topBeer && maxRating > 0);
+                    const topRibbon = isTop ? `<div class="top-rated-ribbon">Top Rated</div>` : '';
                     const avg = ratingMap[bName] ? `<span class="avg-badge">⭐ ${ratingMap[bName]}</span>` : '';
                     const getRatingLink = (val) => `${FORM_BASE}?usp=pp_url&${ENTRY_BEER}=${encodeURIComponent(bName)}&${ENTRY_SCORE}=${val}`;
 
@@ -145,6 +159,7 @@
                         const pct = weights[tapID] || 0;
                         tapContainer.innerHTML += `
                             <div class="beer-card">
+                                ${topRibbon}
                                 <div class="label-art" style="background-image: url('${row[4]}');"></div>
                                 <div class="details">
                                     <div style="font-size:0.8rem; color:#888; letter-spacing:2px; margin-bottom:5px;">${tapID}</div>
@@ -162,6 +177,7 @@
                     } else {
                         archiveContainer.innerHTML += `
                             <div class="beer-card">
+                                ${topRibbon}
                                 <div class="label-art" style="height:250px; background-image: url('${row[4]}');"></div>
                                 <div class="details">
                                     <div class="beer-name-row">
