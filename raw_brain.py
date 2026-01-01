@@ -8,6 +8,7 @@ import time
 WEIGHTS_FILE = "/home/lawmj04/law-brewing/tap_weights.json"
 PORT = 1234
 
+# MAP IPs TO TAP NAMES
 TAP_CONFIG = {
     '192.168.86.47':  {'name': 'Law Tap',   'empty': 480, 'full': 4150},
     '192.168.86.116': {'name': 'Wisco Tap', 'empty': 500, 'full': 4000},
@@ -23,7 +24,9 @@ current_weights = {
 
 def calculate_percent(raw_val, tap_ip):
     conf = TAP_CONFIG.get(tap_ip, {'empty': 500, 'full': 4000})
+    # Filter insane values (e.g. if scale sends 999999 or negative noise)
     if raw_val > 20000 or raw_val < -500: return 0 
+    
     pct = ((raw_val - conf['empty']) / (conf['full'] - conf['empty'])) * 100
     return max(0, min(100, round(pct)))
 
@@ -33,14 +36,15 @@ def sync_to_github():
         with open(WEIGHTS_FILE, 'w') as f:
             json.dump(current_weights, f, indent=4)
         
-        # Git Sync
+        # Git Sync (Auto-Fix Identity)
         os.system("git config user.email 'bot@lawbrewing.com'")
         os.system("git config user.name 'BeerBot'")
+        
         cmd = (
             f"git add {WEIGHTS_FILE} && "
             "git commit -m 'Scale Update' && "
             "git pull origin master --rebase && "
-            "git push origin master &"
+            "git push origin master &" # Run in background
         )
         os.system(cmd)
         print("🌍 GitHub Sync Initiated")
@@ -59,22 +63,21 @@ def start_server():
         print(f"❌ Port Error: {e}")
         return
 
-    while True:
+    while True: # Main Server Loop
         try:
             conn, addr = sock.accept()
             tap_ip = addr[0]
-            conn.settimeout(10.0) 
+            conn.settimeout(10.0) # 10s Timeout
 
-            while True:
+            while True: # Keep-Alive Loop
                 raw_data = conn.recv(1024).decode('utf-8', errors='ignore')
                 if not raw_data: break 
                 
-                # DEBUG: Use repr() to reveal hidden characters like \r \n \x00
-                print(f"🔍 {tap_ip} RAW: {repr(raw_data)}")
-
-                # THE FIX: Regex now allows garbage between 'vw' and the number
-                # It matches "vw", then any junk (.*?), then a number
-                weight_match = re.search(r"vw.*?(-?\d+\.?\d*)", raw_data)
+                # THE FIX: Delete invisible Null bytes that break numbers
+                clean_data = raw_data.replace('\x00', '').strip()
+                
+                # Find "vw" followed by ANY characters until a number appears
+                weight_match = re.search(r"vw.*?(-?\d+\.?\d*)", clean_data)
 
                 if weight_match and tap_ip in TAP_CONFIG:
                     try:
@@ -84,27 +87,24 @@ def start_server():
                         
                         current_weights[f"{tap_name}_updated"] = time.strftime("%H:%M:%S")
 
-                        # We found a valid weight!
+                        # Only sync if percentage changed
                         if current_weights.get(tap_name) != percent:
                             current_weights[tap_name] = percent
                             print(f"🍺 {tap_name} Update: {raw_weight}g -> {percent}%")
                             sync_to_github()
                         else:
-                             print(f"✅ {tap_name} Steady: {raw_weight}g")
+                             print(f"✅ {tap_name} Steady: {raw_weight}g ({percent}%)")
 
-                        # Send ACK
-                        conn.sendall(b'\x00\x00\x01\x00\xc8')
+                        conn.sendall(b'\x00\x00\x01\x00\xc8') # ACK
                     except ValueError:
-                        pass # Regex found something that wasn't a float
+                        pass
 
-                elif len(raw_data) > 5:
-                    # Token/Handshake logic
-                    if "vw" in raw_data:
-                        print(f"⚠️ Saw 'vw' but couldn't parse number: {repr(raw_data)}")
-                    
+                elif len(clean_data) > 5:
+                    # Token/Handshake - just say OK and keep listening
                     conn.sendall(b'\x00\x00\x01\x00\xc8')
 
         except Exception as e:
+            # print(f"Connection Reset: {e}")
             pass
         finally:
             try: conn.close()
