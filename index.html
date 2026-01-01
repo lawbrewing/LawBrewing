@@ -18,10 +18,9 @@
         .details { padding: 25px; flex-grow: 1; display: flex; flex-direction: column; }
         .tap-id-tag { font-size: 0.85rem; color: #888; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 5px; }
         .beer-name { font-family: 'Oswald', sans-serif; font-size: 2.2rem; margin: 0 0 5px 0; text-transform: uppercase; line-height: 1.1; }
-        .stats { font-family: 'Oswald', sans-serif; color: var(--accent); font-size: 1.2rem; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .stats { font-family: 'Oswald', sans-serif; color: var(--accent); font-size: 1.1rem; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px; display: flex; justify-content: space-between; }
         .description { font-size: 1rem; color: #ccc; line-height: 1.6; margin-bottom: 25px; white-space: pre-wrap; }
         
-        /* VOLUME BAR & PER-TAP TIMESTAMP */
         .volume-container { background: #000; height: 38px; border-radius: 19px; position: relative; overflow: hidden; border: 2px solid #444; margin-top: auto; }
         .volume-bar { background: linear-gradient(90deg, #b8860b, var(--accent)); height: 100%; transition: width 1.5s ease; }
         .volume-text { position: absolute; width: 100%; text-align: center; top: 8px; font-weight: bold; color: white; text-shadow: 1px 1px 3px black; }
@@ -35,7 +34,7 @@
         .archive-art { width: 100%; height: 220px; background-size: contain; background-repeat: no-repeat; background-position: center; background-color: #080808; border-bottom: 1px solid #333; }
         .archive-details { padding: 15px; }
         .archive-name { font-family: 'Oswald', sans-serif; font-size: 1.2rem; margin: 0; text-transform: uppercase; color: #fff; line-height: 1.2; }
-        .archive-stats { color: var(--accent); font-family: 'Oswald', sans-serif; font-size: 0.9rem; margin-top: 5px; }
+        .archive-stats { color: var(--accent); font-family: 'Oswald', sans-serif; font-size: 0.85rem; margin-top: 5px; display: flex; justify-content: center; gap: 10px; }
     </style>
 </head>
 <body>
@@ -94,11 +93,11 @@
                     const bABV = row[3];
                     const bImage = row[4];
                     const bDesc = row[5];
-                    
+                    const bStyle = row[6] || "";
+
                     if (tapID && tapID !== "") {
                         const pct = weights[tapID] || 0;
                         const pints = Math.round((pct / 100) * 41);
-                        // Get individual tap timestamp
                         const tapTime = weights[tapID + "_updated"] || "Checking...";
 
                         tapContainer.innerHTML += `
@@ -107,7 +106,10 @@
                                 <div class="details">
                                     <div class="tap-id-tag">${tapID}</div>
                                     <h2 class="beer-name">${bName}</h2>
-                                    <div class="stats">ABV: ${bABV}</div>
+                                    <div class="stats">
+                                        <span>${bStyle}</span>
+                                        <span>ABV: ${bABV}</span>
+                                    </div>
                                     <p class="description">${bDesc}</p>
                                     <div class="volume-container">
                                         <div class="volume-bar" style="width: ${pct}%"></div>
@@ -122,7 +124,9 @@
                                 <div class="archive-art" style="background-image: url('${bImage}');"></div>
                                 <div class="archive-details">
                                     <h3 class="archive-name">${bName}</h3>
-                                    <div class="archive-stats">ABV: ${bABV}</div>
+                                    <div class="archive-stats">
+                                        <span>${bStyle}</span> | <span>ABV: ${bABV}</span>
+                                    </div>
                                 </div>
                             </div>`;
                     }
