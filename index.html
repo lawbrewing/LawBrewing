@@ -99,20 +99,25 @@
         async function updateDisplay() {
             try {
                 const cb = new Date().getTime();
-                const [wRes, mRes, rRes] = await Promise.all([
+                const [wRes, mRes] = await Promise.all([
                     fetch('tap_weights.json?t=' + cb),
-                    fetch(MAIN_CSV + '&t=' + cb),
-                    fetch(SCOREBOARD_URL + '&t=' + cb).catch(() => null)
+                    fetch(MAIN_CSV + '&t=' + cb)
                 ]);
                 
+                let ratingMap = {};
+                try {
+                    const rRes = await fetch(SCOREBOARD_URL + '&t=' + cb);
+                    const ratingText = await rRes.text();
+                    if (!ratingText.includes("Not Published") && !ratingText.includes("DOCTYPE")) {
+                        const ratingData = parseCSV(ratingText);
+                        ratingData.forEach(r => {
+                            if(r[0] && r[1]) ratingMap[r[0].trim()] = parseFloat(r[1]).toFixed(1);
+                        });
+                    }
+                } catch(e) { console.log("Ratings not ready yet"); }
+
                 const weights = await wRes.json();
                 const beerData = parseCSV(await mRes.text());
-                const ratingData = rRes ? parseCSV(await rRes.text()) : [];
-
-                const ratingMap = {};
-                ratingData.forEach(r => {
-                    if(r[0] && r[1] && !isNaN(r[1])) ratingMap[r[0].trim()] = parseFloat(r[1]).toFixed(1);
-                });
                 
                 const tapContainer = document.getElementById('tap-display');
                 const archiveContainer = document.getElementById('archive-display');
