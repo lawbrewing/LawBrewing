@@ -12,56 +12,21 @@
             --card: #1e1e1e; 
             --text: #ffffff;
         }
-
-        body { 
-            background: var(--bg); 
-            color: var(--text); 
-            font-family: 'Roboto', sans-serif; 
-            margin: 0; 
-            padding-bottom: 80px;
-        }
+        body { background: var(--bg); color: var(--text); font-family: 'Roboto', sans-serif; margin: 0; padding-bottom: 80px; }
 
         /* HEADER */
-        .header-container {
-            text-align: center;
-            padding: 50px 0 30px;
-            background: radial-gradient(circle, #2a2a2a 0%, #121212 80%);
-            border-bottom: 2px solid var(--accent);
-        }
+        .header-container { text-align: center; padding: 50px 0 30px; background: radial-gradient(circle, #2a2a2a 0%, #121212 80%); border-bottom: 2px solid var(--accent); }
         .backlit-logo { max-width: 280px; filter: drop-shadow(0 0 10px rgba(255,180,0,0.5)); }
         .sub-brand { font-family: 'Oswald', sans-serif; color: var(--accent); text-transform: uppercase; letter-spacing: 6px; margin-top: 15px; font-size: 1.5rem; }
         
-        /* NEW: TIMESTAMP STYLE */
-        .last-updated {
-            font-size: 0.8rem;
-            color: #666;
-            margin-top: 10px;
-            font-family: 'Roboto', sans-serif;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
+        /* TIMESTAMP */
+        .last-updated { font-size: 0.9rem; color: #888; margin-top: 15px; font-family: 'Roboto', sans-serif; text-transform: uppercase; letter-spacing: 1px; }
 
-        /* LIVE GRID */
-        .tap-container { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); 
-            gap: 30px; 
-            max-width: 1300px; 
-            margin: 40px auto; 
-            padding: 20px;
-        }
+        /* GRID */
+        .tap-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 30px; max-width: 1300px; margin: 40px auto; padding: 20px; }
 
-        .beer-card { 
-            background: var(--card); border-radius: 20px; overflow: hidden; 
-            border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
-            display: flex; flex-direction: column;
-        }
-        .label-art { 
-            width: 100%; height: 350px; 
-            background-size: contain; background-repeat: no-repeat; 
-            background-position: center; background-color: #000; 
-            border-bottom: 3px solid var(--accent); 
-        }
+        .beer-card { background: var(--card); border-radius: 20px; overflow: hidden; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; flex-direction: column; }
+        .label-art { width: 100%; height: 350px; background-size: contain; background-repeat: no-repeat; background-position: center; background-color: #000; border-bottom: 3px solid var(--accent); }
         .details { padding: 25px; flex-grow: 1; display: flex; flex-direction: column; }
         .tap-id-tag { font-size: 0.85rem; color: #888; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 5px; }
         .beer-name { font-family: 'Oswald', sans-serif; font-size: 2.2rem; margin: 0 0 5px 0; text-transform: uppercase; line-height: 1.1; }
@@ -73,36 +38,14 @@
         .volume-bar { background: linear-gradient(90deg, #b8860b, var(--accent)); height: 100%; transition: width 1.5s ease; }
         .volume-text { position: absolute; width: 100%; text-align: center; top: 8px; font-weight: bold; color: white; text-shadow: 1px 1px 3px black; }
 
-        /* ARCHIVE TOGGLE BUTTON */
-        .toggle-btn {
-            display: block; width: 250px; margin: 40px auto; padding: 15px;
-            background: transparent; border: 2px solid var(--accent); color: var(--accent);
-            font-family: 'Oswald', sans-serif; font-size: 1.2rem; text-transform: uppercase;
-            letter-spacing: 2px; cursor: pointer; border-radius: 50px; transition: all 0.3s;
-        }
+        /* ARCHIVE */
+        .toggle-btn { display: block; width: 250px; margin: 40px auto; padding: 15px; background: transparent; border: 2px solid var(--accent); color: var(--accent); font-family: 'Oswald', sans-serif; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; border-radius: 50px; transition: all 0.3s; }
         .toggle-btn:hover { background: var(--accent); color: black; box-shadow: 0 0 20px rgba(255,180,0,0.4); }
-
-        /* ARCHIVE SECTION */
-        #archive-wrapper { 
-            max-height: 0; overflow: hidden; transition: max-height 0.8s ease-out; background: rgba(0,0,0,0.2);
-        }
+        #archive-wrapper { max-height: 0; overflow: hidden; transition: max-height 0.8s ease-out; background: rgba(0,0,0,0.2); }
         #archive-wrapper.open { max-height: 10000px; padding-top: 40px; padding-bottom: 60px; }
-
-        .archive-grid {
-            display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 25px; max-width: 1200px; margin: 0 auto; padding: 20px;
-        }
-        .archive-card { 
-            background: #1a1a1a; border-radius: 15px; border: 1px solid #333; 
-            text-align: center; overflow: hidden; display: flex; flex-direction: column;
-        }
-        .archive-art { 
-            width: 100%; height: 220px; 
-            background-size: contain; background-repeat: no-repeat; 
-            background-position: center; background-color: #080808;
-            border-bottom: 1px solid #333;
-        }
+        .archive-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 25px; max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .archive-card { background: #1a1a1a; border-radius: 15px; border: 1px solid #333; text-align: center; overflow: hidden; display: flex; flex-direction: column; }
+        .archive-art { width: 100%; height: 220px; background-size: contain; background-repeat: no-repeat; background-position: center; background-color: #080808; border-bottom: 1px solid #333; }
         .archive-details { padding: 15px; }
         .archive-name { font-family: 'Oswald', sans-serif; font-size: 1.2rem; margin: 0; text-transform: uppercase; color: #fff; line-height: 1.2; }
         .archive-stats { color: var(--accent); font-family: 'Oswald', sans-serif; font-size: 0.9rem; margin-top: 5px; }
@@ -113,7 +56,7 @@
     <div class="header-container">
         <img src="https://github.com/lawbrewing/LawBrewing/blob/main/LBC%20-%20Black%20Transparent%20(1).png?raw=true" alt="Law Brewing Logo" class="backlit-logo">
         <div class="sub-brand">Liquid Attitude Taps</div>
-        <div id="last-updated-text" class="last-updated">Waiting for data...</div>
+        <div id="last-updated-text" class="last-updated">WAITING FOR DATA...</div>
     </div>
 
     <div class="tap-container" id="tap-display"></div>
@@ -152,6 +95,7 @@
 
         async function updateDisplay() {
             try {
+                // Cache Buster forces the browser to get fresh data
                 const cacheBuster = new Date().getTime();
                 const [wRes, sRes] = await Promise.all([
                     fetch('tap_weights.json?t=' + cacheBuster),
@@ -164,7 +108,7 @@
                 const tapContainer = document.getElementById('tap-display');
                 const archiveContainer = document.getElementById('archive-display');
                 
-                // --- NEW: Update the Time ---
+                // --- UPDATE TIMESTAMP ---
                 if (weights.last_updated) {
                     document.getElementById('last-updated-text').innerText = "Last Updated: " + weights.last_updated;
                 }
@@ -184,6 +128,11 @@
 
                     if (tapID && tapID !== "") {
                         const pct = weights[tapID] || 0;
+                        
+                        // --- MATH: CONVERT % TO PINTS ---
+                        // Full Sixtel = 41 Pints
+                        const pints = Math.round((pct / 100) * 41);
+
                         tapContainer.innerHTML += `
                             <div class="beer-card">
                                 <div class="label-art" style="background-image: url('${bImage}');"></div>
@@ -194,7 +143,7 @@
                                     <p class="description">${bDesc}</p>
                                     <div class="volume-container">
                                         <div class="volume-bar" style="width: ${pct}%"></div>
-                                        <div class="volume-text">${pct}% REMAINING</div>
+                                        <div class="volume-text">${pints} PINTS REMAINING</div>
                                     </div>
                                 </div>
                             </div>`;
