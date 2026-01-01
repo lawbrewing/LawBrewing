@@ -30,6 +30,16 @@
         }
         .backlit-logo { max-width: 280px; filter: drop-shadow(0 0 10px rgba(255,180,0,0.5)); }
         .sub-brand { font-family: 'Oswald', sans-serif; color: var(--accent); text-transform: uppercase; letter-spacing: 6px; margin-top: 15px; font-size: 1.5rem; }
+        
+        /* NEW: TIMESTAMP STYLE */
+        .last-updated {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 10px;
+            font-family: 'Roboto', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
 
         /* LIVE GRID */
         .tap-container { 
@@ -103,6 +113,7 @@
     <div class="header-container">
         <img src="https://github.com/lawbrewing/LawBrewing/blob/main/LBC%20-%20Black%20Transparent%20(1).png?raw=true" alt="Law Brewing Logo" class="backlit-logo">
         <div class="sub-brand">Liquid Attitude Taps</div>
+        <div id="last-updated-text" class="last-updated">Waiting for data...</div>
     </div>
 
     <div class="tap-container" id="tap-display"></div>
@@ -153,6 +164,11 @@
                 const tapContainer = document.getElementById('tap-display');
                 const archiveContainer = document.getElementById('archive-display');
                 
+                // --- NEW: Update the Time ---
+                if (weights.last_updated) {
+                    document.getElementById('last-updated-text').innerText = "Last Updated: " + weights.last_updated;
+                }
+                
                 tapContainer.innerHTML = '';
                 archiveContainer.innerHTML = '';
 
@@ -193,7 +209,7 @@
                             </div>`;
                     }
                 }
-            } catch (err) { console.log("Updating..."); }
+            } catch (err) { console.log("Updating...", err); }
         }
 
         updateDisplay();
