@@ -23,11 +23,12 @@
         .stats { font-family: 'Oswald', sans-serif; color: var(--accent); font-size: 1.1rem; margin: 10px 0; display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding-bottom: 10px; }
         .description { font-size: 0.95rem; color: #ccc; line-height: 1.5; margin-bottom: 20px; flex-grow: 1; white-space: pre-wrap; }
         
+        /* STAR LINKS */
         .rating-box { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 12px; margin-bottom: 20px; text-align: center; border: 1px solid #333; }
-        .stars { display: flex; flex-direction: row-reverse; justify-content: center; gap: 2px; }
-        .stars label { font-size: 2.2rem; color: #333; cursor: pointer; transition: 0.2s; }
-        .stars label:hover, .stars label:hover ~ label { color: var(--accent); }
-        .thanks-msg { display: none; font-family: 'Oswald'; color: var(--accent); font-size: 1.1rem; }
+        .rating-label { font-size: 0.8rem; color: #888; text-transform: uppercase; margin-bottom: 5px; display: block; }
+        .star-links { display: flex; flex-direction: row; justify-content: center; gap: 5px; }
+        .star-links a { font-size: 2.2rem; color: #333; text-decoration: none; transition: 0.2s; }
+        .star-links a:hover { color: var(--accent); transform: scale(1.2); }
 
         .volume-container { background: #000; height: 32px; border-radius: 16px; position: relative; overflow: hidden; border: 2px solid #444; margin-top: auto; }
         .volume-bar { background: linear-gradient(90deg, #b8860b, var(--accent)); height: 100%; transition: width 1.5s ease; }
@@ -38,7 +39,6 @@
         .expand-section { max-height: 0; overflow: hidden; transition: max-height 0.8s ease-out; background: rgba(0,0,0,0.3); }
         .expand-section.open { max-height: 20000px; padding: 40px 0; }
 
-        /* GAMES STYLING */
         .games-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; max-width: 1300px; margin: 0 auto; padding: 0 20px; }
         .game-card { background: #202020; border-radius: 15px; border: 1px solid #444; overflow: hidden; display: flex; flex-direction: column; }
         .game-img { width: 100%; height: 200px; object-fit: contain; background: #000; padding: 10px; }
@@ -78,7 +78,7 @@
     </div>
 
     <script>
-        const FORM_BASE = "https://docs.google.com/forms/d/e/1FAIpQLSfx4apNIy6wi1CrFW-B8u01vJ_2ci1fcStPSWcWLFK9DpRs8g/formResponse";
+        const FORM_BASE = "https://docs.google.com/forms/d/e/1FAIpQLSfx4apNIy6wi1CrFW-B8u01vJ_2ci1fcStPSWcWLFK9DpRs8g/viewform";
         const ENTRY_BEER = "entry.1650190471";
         const ENTRY_SCORE = "entry.958548151";
         const MAIN_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQWqyJ5-pMWhRUkkZLoHdmFPtOHJozHRJkL9c0ivSSY9J7Fp0lto4W05tH-XbFelBL-htJZXedhv7i3/pub?output=csv';
@@ -96,16 +96,6 @@
             }
             if (col || row.length) { row.push(col); result.push(row); }
             return result;
-        }
-
-        function submitRating(beerName, score, cardId) {
-            const url = `${FORM_BASE}?${ENTRY_BEER}=${encodeURIComponent(beerName)}&${ENTRY_SCORE}=${score}&submit=Submit`;
-            
-            // Pop-under method: guaranteed to send data
-            const win = window.open(url, "hidden_submit", "width=100,height=100,left=10000,top=10000");
-            setTimeout(() => { if(win) win.close(); }, 1000);
-
-            document.getElementById(`ui-${cardId}`).innerHTML = '<div class="thanks-msg" style="display:block">Cheers! 🍻</div>';
         }
 
         async function updateDisplay() {
@@ -138,15 +128,18 @@
 
                     const avg = ratingMap[bName] ? `<span class="avg-badge">⭐ ${ratingMap[bName]}</span>` : '';
 
+                    const getRatingLink = (val) => `${FORM_BASE}?usp=pp_url&${ENTRY_BEER}=${encodeURIComponent(bName)}&${ENTRY_SCORE}=${val}`;
+
                     const ratingHTML = `
                         <div class="rating-box">
-                            <div id="ui-${i}"><div class="stars">
-                                <span onclick="submitRating('${bName}', 5, ${i})">★</span>
-                                <span onclick="submitRating('${bName}', 4, ${i})">★</span>
-                                <span onclick="submitRating('${bName}', 3, ${i})">★</span>
-                                <span onclick="submitRating('${bName}', 2, ${i})">★</span>
-                                <span onclick="submitRating('${bName}', 1, ${i})">★</span>
-                            </div></div>
+                            <span class="rating-label">Rate this Brew</span>
+                            <div class="star-links">
+                                <a href="${getRatingLink(1)}" target="_blank">★</a>
+                                <a href="${getRatingLink(2)}" target="_blank">★</a>
+                                <a href="${getRatingLink(3)}" target="_blank">★</a>
+                                <a href="${getRatingLink(4)}" target="_blank">★</a>
+                                <a href="${getRatingLink(5)}" target="_blank">★</a>
+                            </div>
                         </div>`;
 
                     if (tapID.toLowerCase().includes("tap")) {
