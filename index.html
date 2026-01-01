@@ -17,10 +17,11 @@
         
         .label-art { width: 100%; height: 350px; background-size: contain; background-repeat: no-repeat; background-position: center; background-color: #000; border-bottom: 3px solid var(--accent); }
         .details { padding: 25px; flex-grow: 1; display: flex; flex-direction: column; }
-        .beer-name { font-family: 'Oswald', sans-serif; font-size: 2.2rem; margin: 0; text-transform: uppercase; line-height: 1.1; }
+        .beer-name { font-family: 'Oswald', sans-serif; font-size: 2.2rem; margin: 0; text-transform: uppercase; line-height: 1.1; display: flex; justify-content: space-between; align-items: flex-start; }
         .stats { font-family: 'Oswald', sans-serif; color: var(--accent); font-size: 1.1rem; margin: 10px 0; display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding-bottom: 10px; }
         .description { font-size: 0.95rem; color: #ccc; line-height: 1.5; margin-bottom: 20px; flex-grow: 1; white-space: pre-wrap; }
         
+        /* STAR RATING UI */
         .rating-box { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 12px; margin-bottom: 20px; text-align: center; border: 1px solid #333; }
         .stars { display: flex; flex-direction: row-reverse; justify-content: center; gap: 2px; }
         .stars input { display: none; }
@@ -35,10 +36,9 @@
         .button-center { display: flex; justify-content: center; gap: 20px; margin: 40px auto; }
         .toggle-btn { padding: 12px 30px; background: transparent; border: 2px solid var(--accent); color: var(--accent); font-family: 'Oswald'; cursor: pointer; border-radius: 50px; text-transform: uppercase; }
         .expand-section { max-height: 0; overflow: hidden; transition: max-height 0.8s ease-out; background: rgba(0,0,0,0.3); }
-        .expand-section.open { max-height: 10000px; padding: 40px 0; }
+        .expand-section.open { max-height: 20000px; padding: 40px 0; }
         
-        .archive-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 25px; max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .archive-card { background: #1a1a1a; border-radius: 15px; border: 1px solid #333; text-align: center; overflow: hidden; padding-bottom: 15px; }
+        .archive-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; max-width: 1300px; margin: 0 auto; padding: 20px; }
     </style>
 </head>
 <body>
@@ -55,7 +55,7 @@
     </div>
 
     <div id="archive-wrapper" class="expand-section">
-        <h2 style="text-align:center; font-family:'Oswald'; color:var(--accent); letter-spacing:4px; font-size:2.5rem;">PAST BREWS</h2>
+        <h2 style="text-align:center; font-family:'Oswald'; color:var(--accent); letter-spacing:4px; font-size:2.5rem;">PAST BREWS & BOTTLES</h2>
         <div class="archive-grid" id="archive-display"></div>
     </div>
 
@@ -68,14 +68,10 @@
         const FORM_ID = "1FAIpQLSfx4apNIy6wi1CrFW-B8u01vJ_2ci1fcStPSWcWLFK9DpRs8g";
         const ENTRY_BEER = "entry.1650190471";
         const ENTRY_SCORE = "entry.958548151";
-        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQWqyJ5-pMWhRUkkZLoHdmFPtOHJozHRJkL9c0ivSSY9J7Fp0lto4W05tH-XbFelBL-htJZXedhv7i3/pub?output=csv';
+        const MAIN_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQWqyJ5-pMWhRUkkZLoHdmFPtOHJozHRJkL9c0ivSSY9J7Fp0lto4W05tH-XbFelBL-htJZXedhv7i3/pub?output=csv';
 
-        // THE ULTIMATE CSV PARSER (Ignores line breaks inside quotes)
         function parseCSV(data) {
-            const result = [];
-            let row = [];
-            let col = '';
-            let inQuotes = false;
+            const result = []; let row = []; let col = ''; let inQuotes = false;
             for (let i = 0; i < data.length; i++) {
                 let char = data[i], next = data[i+1];
                 if (char === '"' && inQuotes && next === '"') { col += '"'; i++; }
@@ -96,26 +92,37 @@
 
         async function updateDisplay() {
             try {
-                const cacheBuster = new Date().getTime();
-                const [wRes, sRes] = await Promise.all([
-                    fetch('tap_weights.json?t=' + cacheBuster),
-                    fetch(CSV_URL + '&t=' + cacheBuster)
+                const cb = new Date().getTime();
+                const [wRes, mRes] = await Promise.all([
+                    fetch('tap_weights.json?t=' + cb),
+                    fetch(MAIN_CSV + '&t=' + cb)
                 ]);
                 const weights = await wRes.json();
-                const csvData = parseCSV(await sRes.text());
+                const beerData = parseCSV(await mRes.text());
                 
                 const tapContainer = document.getElementById('tap-display');
                 const archiveContainer = document.getElementById('archive-display');
                 tapContainer.innerHTML = ''; archiveContainer.innerHTML = '';
 
-                csvData.forEach((row, i) => {
+                beerData.forEach((row, i) => {
                     if (i === 0 || row.length < 3) return;
-                    
                     const tapID = (row[0] || "").trim();
                     const bName = (row[2] || "").trim();
                     if (!bName) return;
 
-                    // IF IT HAS A TAP ID: Put in main display
+                    const ratingHTML = `
+                        <div class="rating-box">
+                            <div id="ui-${i}">
+                                <div class="stars">
+                                    <input type="radio" id="s5-${i}" onclick="submitRating('${bName}', 5, ${i})"><label for="s5-${i}">★</label>
+                                    <input type="radio" id="s4-${i}" onclick="submitRating('${bName}', 4, ${i})"><label for="s4-${i}">★</label>
+                                    <input type="radio" id="s3-${i}" onclick="submitRating('${bName}', 3, ${i})"><label for="s3-${i}">★</label>
+                                    <input type="radio" id="s2-${i}" onclick="submitRating('${bName}', 2, ${i})"><label for="s2-${i}">★</label>
+                                    <input type="radio" id="s1-${i}" onclick="submitRating('${bName}', 1, ${i})"><label for="s1-${i}">★</label>
+                                </div>
+                            </div>
+                        </div>`;
+
                     if (tapID.toLowerCase().includes("tap")) {
                         const pct = weights[tapID] || 0;
                         tapContainer.innerHTML += `
@@ -126,29 +133,22 @@
                                     <h2 class="beer-name">${bName}</h2>
                                     <div class="stats"><span>${row[6]}</span><span>ABV: ${row[3]}</span></div>
                                     <p class="description">${row[5]}</p>
-                                    <div class="rating-box">
-                                        <div id="ui-${i}"><div class="stars">
-                                            <input type="radio" id="s5-${i}" onclick="submitRating('${bName}', 5, ${i})"><label for="s5-${i}">★</label>
-                                            <input type="radio" id="s4-${i}" onclick="submitRating('${bName}', 4, ${i})"><label for="s4-${i}">★</label>
-                                            <input type="radio" id="s3-${i}" onclick="submitRating('${bName}', 3, ${i})"><label for="s3-${i}">★</label>
-                                            <input type="radio" id="s2-${i}" onclick="submitRating('${bName}', 2, ${i})"><label for="s2-${i}">★</label>
-                                            <input type="radio" id="s1-${i}" onclick="submitRating('${bName}', 1, ${i})"><label for="s1-${i}">★</label>
-                                        </div></div>
-                                    </div>
+                                    ${ratingHTML}
                                     <div class="volume-container">
                                         <div class="volume-bar" style="width:${pct}%"></div>
                                         <div class="volume-text">${Math.round((pct/100)*41)} PINTS LEFT</div>
                                     </div>
                                 </div>
                             </div>`;
-                    } 
-                    // IF NO TAP ID BUT HAS NAME: Put in Cellar
-                    else {
+                    } else {
                         archiveContainer.innerHTML += `
-                            <div class="archive-card">
-                                <div class="label-art" style="height:200px; background-image: url('${row[4]}');"></div>
-                                <h3 style="font-family:Oswald; color:white; font-size:1.2rem; margin:10px 0;">${bName}</h3>
-                                <div style="color:var(--accent); font-size:0.9rem;">${row[6]} | ABV: ${row[3]}</div>
+                            <div class="beer-card archive-card">
+                                <div class="label-art" style="height:250px; background-image: url('${row[4]}');"></div>
+                                <div class="details">
+                                    <h2 class="beer-name" style="font-size:1.5rem;">${bName}</h2>
+                                    <div class="stats"><span>${row[6]}</span><span>ABV: ${row[3]}</span></div>
+                                    ${ratingHTML}
+                                </div>
                             </div>`;
                     }
                 });
