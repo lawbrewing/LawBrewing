@@ -1,99 +1,93 @@
 import socket
 import json
-import requests
-import re
 import os
+import time
 
 # --- CONFIGURATION ---
-HUB_URL = "http://localhost:5000/update_weight"
-# The file that gets pushed to GitHub
-WEIGHTS_FILE = "tap_weights.json"
+# Ensure these paths match your Raspberry Pi setup
+WEIGHTS_FILE = '/home/lawmj04/law-brewing/weights.json'
+PORT = 1234
+# Calibration: (Raw Value - Offset) / Scale
+# Adjust these numbers based on your specific scale calibration
+calibration_factor = 1000 
 
-TAP_CONFIG = {
-    '192.168.86.47':  {'name': 'Law Tap',   'empty': 480, 'full': 4150},
-    '192.168.86.116': {'name': 'Wisco Tap', 'empty': 500, 'full': 4000},
-    '192.168.86.45':  {'name': 'Nitro Tap', 'empty': 450, 'full': 4200}
+current_weights = {
+    "law_tap": 0,
+    "guest_tap": 0,
+    "last_updated": ""
 }
 
-# Current state to prevent constant re-syncing if weights haven't changed
-current_weights = {"Law Tap": 0, "Wisco Tap": 0, "Nitro Tap": 0}
-
-def calculate_percent(raw_val, tap_ip):
-    conf = TAP_CONFIG.get(tap_ip, {'empty': 500, 'full': 4000})
-    # If the scale sends absolute garbage (scientific notation), default to 0
-    if raw_val > 10000 or raw_val < -500: 
-        return 0 
-    
-    pct = ((raw_val - conf['empty']) / (conf['full'] - conf['empty'])) * 100
-    return max(0, min(100, round(pct)))
-
 def sync_to_github():
-    """Syncs with GitHub by pulling changes before pushing weights"""
+    """Forces a pull from GitHub before pushing to prevent sync errors"""
     try:
+        # 1. Save the local JSON file
+        current_weights["last_updated"] = time.strftime("%Y-%m-%d %H:%M:%S")
         with open(WEIGHTS_FILE, 'w') as f:
-            json.dump(current_weights, f)
+            json.dump(current_weights, f, indent=4)
 
-        # This command pulls the new website code first, 
-        # then adds the weights and pushes back.
-        # It prevents the 'out of sync' error that locks the Pi.
+        print(f"💾 Local weights saved. Syncing to GitHub...")
+
+        # 2. The Self-Healing Git Command
+        # We use 'master' because the logs showed the site tracks origin/master
         cmd = (
-            "git pull origin main --rebase && "
-            f"git add {WEIGHTS_FILE} && "
-            "git commit -m 'Scale Sync' && "
-            "git push origin main"
+            "git add . && "
+            "git commit -m 'Scale Update' && "
+            "git pull origin master --rebase && "
+            "git push origin master"
         )
         
-        os.system(cmd)
-        print("🌍 GitHub Sync Complete")
+        result = os.system(cmd)
+        
+        if result == 0:
+            print("🌍 GitHub Sync Successful")
+        else:
+            print("⚠️ GitHub Sync encountered a warning (Check logs)")
+            
     except Exception as e:
-        print(f"⚠️ GitHub Sync Failed: {e}")
+        print(f"❌ Error during sync: {e}")
+
 def start_server():
+    """Starts the socket server to listen for scale data"""
+    # Create a TCP/IP socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    
+    # Allow immediate reuse of the port after a crash
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.bind(('0.0.0.0', 1234))
-    sock.listen(5)
-    print("🚀 3-Tap Brain (Fixed Parser + Sync) Live...")
+    
+    try:
+        sock.bind(('0.0.0.0', PORT))
+        sock.listen(5)
+        print(f"🧠 Brain is online. Listening on Port {PORT}...")
+    except OSError as e:
+        print(f"❌ Could not bind to port {PORT}: {e}")
+        return
 
     while True:
-        conn, addr = sock.accept()
+        client, address = sock.accept()
         try:
-            # 1. Send the 5-byte "Success" handshake to keep scale online
-            conn.sendall(b'\x00\x00\x01\x00\xc8') 
-
-            # 2. Receive the raw message
-            raw_data = conn.recv(1024).decode('utf-8', errors='ignore')
-            if not raw_data: continue
-
-            # 3. FIX: Only grab the first 1-4 digits found (the weight)
-            # This ignores the long serial/ID numbers that caused the 8.7M error
-            match = re.search(r"(\d{1,4})", raw_data)
-            
-            if match:
-                raw_weight = float(match.group(1))
-                tap_ip = addr[0]
+            data = client.recv(1024).decode('utf-8')
+            if data:
+                # Assuming data comes in as "ScaleID:Value"
+                # Example: "LAW:23.4"
+                print(f"📡 Raw Data Received: {data}")
                 
-                if tap_ip in TAP_CONFIG:
-                    tap_name = TAP_CONFIG[tap_ip]['name']
-                    percent = calculate_percent(raw_weight, tap_ip)
-
-                    # Only update if the percentage has changed
-                    if current_weights[tap_name] != percent:
-                        current_weights[tap_name] = percent
-                        print(f"📡 {tap_name} ({tap_ip}): {raw_weight}g -> {percent}%")
-                        
-                        # Update Local Hub
-                        try:
-                            requests.post(HUB_URL, json={'tap': tap_name, 'percent': percent}, timeout=1)
-                        except:
-                            print("⚠️ Local Hub unreachable (Port 5000)")
-
-                        # Update Public GitHub
-                        sync_to_github()
-
+                parts = data.split(':')
+                if len(parts) == 2:
+                    tap_id = parts[0].strip().lower()
+                    weight_val = float(parts[1].strip())
+                    
+                    if tap_id == "law":
+                        current_weights["law_tap"] = weight_val
+                    elif tap_id == "guest":
+                        current_weights["guest_tap"] = weight_val
+                    
+                    # Sync to website immediately upon receiving data
+                    sync_to_github()
+                    
         except Exception as e:
-            print(f"❌ Error: {e}")
+            print(f"⚠️ Error handling data: {e}")
         finally:
-            conn.close()
+            client.close()
 
 if __name__ == "__main__":
     start_server()
