@@ -8,7 +8,6 @@ import time
 WEIGHTS_FILE = "/home/lawmj04/law-brewing/tap_weights.json"
 PORT = 1234
 
-# MAP IPs TO TAP NAMES
 TAP_CONFIG = {
     '192.168.86.47':  {'name': 'Law Tap',   'empty': 480, 'full': 4150},
     '192.168.86.116': {'name': 'Wisco Tap', 'empty': 500, 'full': 4000},
@@ -37,7 +36,6 @@ def sync_to_github():
         # Git Sync
         os.system("git config user.email 'bot@lawbrewing.com'")
         os.system("git config user.name 'BeerBot'")
-        
         cmd = (
             f"git add {WEIGHTS_FILE} && "
             "git commit -m 'Scale Update' && "
@@ -61,48 +59,52 @@ def start_server():
         print(f"❌ Port Error: {e}")
         return
 
-    while True: # Main Server Loop (Accepts new calls)
+    while True:
         try:
             conn, addr = sock.accept()
             tap_ip = addr[0]
-            conn.settimeout(10.0) # Give them 10 seconds to talk
+            conn.settimeout(10.0) 
 
-            # --- INNER LOOP: Keep talking to THIS scale ---
             while True:
                 raw_data = conn.recv(1024).decode('utf-8', errors='ignore')
-                if not raw_data: break # Scale hung up
+                if not raw_data: break 
                 
-                clean_data = raw_data.strip()
-                # Debug print to see the conversation
-                print(f"🔍 {tap_ip} sent: {clean_data}")
+                # DEBUG: Use repr() to reveal hidden characters like \r \n \x00
+                print(f"🔍 {tap_ip} RAW: {repr(raw_data)}")
 
-                # 1. Check for "vw" (The Weight!)
-                weight_match = re.search(r"vw(-?\d+(\.\d+)?)", clean_data)
+                # THE FIX: Regex now allows garbage between 'vw' and the number
+                # It matches "vw", then any junk (.*?), then a number
+                weight_match = re.search(r"vw.*?(-?\d+\.?\d*)", raw_data)
 
                 if weight_match and tap_ip in TAP_CONFIG:
-                    # found the gold!
-                    raw_weight = float(weight_match.group(1))
-                    tap_name = TAP_CONFIG[tap_ip]['name']
-                    percent = calculate_percent(raw_weight, tap_ip)
-                    
-                    current_weights[f"{tap_name}_updated"] = time.strftime("%H:%M:%S")
+                    try:
+                        raw_weight = float(weight_match.group(1))
+                        tap_name = TAP_CONFIG[tap_ip]['name']
+                        percent = calculate_percent(raw_weight, tap_ip)
+                        
+                        current_weights[f"{tap_name}_updated"] = time.strftime("%H:%M:%S")
 
-                    if current_weights.get(tap_name) != percent:
-                        current_weights[tap_name] = percent
-                        print(f"🍺 {tap_name} Update: {raw_weight}g -> {percent}%")
-                        sync_to_github()
-                    
-                    # Send ACK and Keep Listening (Scale might send more)
-                    conn.sendall(b'\x00\x00\x01\x00\xc8')
+                        # We found a valid weight!
+                        if current_weights.get(tap_name) != percent:
+                            current_weights[tap_name] = percent
+                            print(f"🍺 {tap_name} Update: {raw_weight}g -> {percent}%")
+                            sync_to_github()
+                        else:
+                             print(f"✅ {tap_name} Steady: {raw_weight}g")
 
-                elif len(clean_data) > 5:
-                    # Likely a Token or Version info
-                    # Just say "OK" and WAIT for the next message
-                    print("   -> Handshake/Info. Sending ACK & Listening...")
+                        # Send ACK
+                        conn.sendall(b'\x00\x00\x01\x00\xc8')
+                    except ValueError:
+                        pass # Regex found something that wasn't a float
+
+                elif len(raw_data) > 5:
+                    # Token/Handshake logic
+                    if "vw" in raw_data:
+                        print(f"⚠️ Saw 'vw' but couldn't parse number: {repr(raw_data)}")
+                    
                     conn.sendall(b'\x00\x00\x01\x00\xc8')
 
         except Exception as e:
-            # print(f"⚠️ Session Ended: {e}")
             pass
         finally:
             try: conn.close()
