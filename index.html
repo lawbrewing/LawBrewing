@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Law Brewing Co. | Live Taproom</title>
-    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Roboto:wght@300;400&family=Bebas+Neue&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Roboto:wght@300;400&family=Bebas+Neue&family=Roboto+Slab:wght@700&display=swap" rel="stylesheet">
     <style>
         :root { --accent: #ffb400; --bg: #121212; --card: #1e1e1e; --text: #ffffff; }
         body { background: var(--bg); color: var(--text); font-family: 'Roboto', sans-serif; margin: 0; padding-bottom: 80px; }
@@ -17,24 +17,26 @@
         
         .label-art { width: 100%; height: 350px; background-size: contain; background-repeat: no-repeat; background-position: center; background-color: #000; border-bottom: 3px solid var(--accent); }
         .details { padding: 25px; flex-grow: 1; display: flex; flex-direction: column; }
-        .beer-name { font-family: 'Oswald', sans-serif; font-size: 2.1rem; margin: 0; text-transform: uppercase; line-height: 1.1; display: flex; justify-content: space-between; align-items: center; }
-        .avg-badge { background: rgba(255,180,0,0.15); color: var(--accent); padding: 2px 8px; border-radius: 5px; font-size: 1.1rem; border: 1px solid rgba(255,180,0,0.3); }
+        .beer-name-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 5px; }
+        .beer-name { font-family: 'Oswald', sans-serif; font-size: 2.1rem; margin: 0; text-transform: uppercase; line-height: 1.1; }
+        .avg-badge { background: rgba(255,180,0,0.15); color: var(--accent); padding: 4px 10px; border-radius: 8px; font-size: 1.1rem; border: 1px solid rgba(255,180,0,0.4); font-family: 'Oswald'; font-weight: bold; white-space: nowrap; }
 
         .stats { font-family: 'Oswald', sans-serif; color: var(--accent); font-size: 1.1rem; margin: 10px 0; display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding-bottom: 10px; }
         .description { font-size: 0.95rem; color: #ccc; line-height: 1.5; margin-bottom: 20px; flex-grow: 1; white-space: pre-wrap; }
         
-        .rating-box { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 12px; margin-bottom: 20px; text-align: center; border: 1px solid #333; }
-        .star-links { display: flex; justify-content: center; gap: 8px; }
-        .star-links a { font-size: 2rem; color: #333; text-decoration: none; transition: 0.2s; }
-        .star-links a:hover { color: var(--accent); transform: scale(1.1); }
+        .rating-box { background: rgba(255,255,255,0.03); padding: 12px; border-radius: 12px; margin-bottom: 20px; text-align: center; border: 1px solid #333; }
+        .star-links { display: flex; justify-content: center; gap: 10px; flex-direction: row-reverse; }
+        .star-links a { font-size: 2.2rem; color: #333; text-decoration: none; transition: 0.2s; line-height: 1; }
+        .star-links a:hover, .star-links a:hover ~ a { color: var(--accent); transform: scale(1.1); text-shadow: 0 0 15px rgba(255,180,0,0.5); }
 
         .volume-container { background: #000; height: 32px; border-radius: 16px; position: relative; overflow: hidden; border: 2px solid #444; margin-top: auto; }
         .volume-bar { background: linear-gradient(90deg, #b8860b, var(--accent)); height: 100%; transition: width 1.5s ease; }
         .volume-text { position: absolute; width: 100%; text-align: center; top: 6px; font-weight: bold; font-size: 0.9rem; color: white; text-shadow: 1px 1px 3px black; }
-        .tap-timestamp { font-size: 0.7rem; color: #555; text-align: center; margin-top: 8px; text-transform: uppercase; letter-spacing: 1px; }
+        .tap-timestamp { font-size: 0.75rem; color: #777; text-align: center; margin-top: 10px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: bold; border-top: 1px solid #2a2a2a; padding-top: 8px; }
 
         .button-center { display: flex; justify-content: center; gap: 20px; margin: 40px auto; flex-wrap: wrap; }
-        .toggle-btn { padding: 12px 30px; background: transparent; border: 2px solid var(--accent); color: var(--accent); font-family: 'Oswald'; cursor: pointer; border-radius: 50px; text-transform: uppercase; letter-spacing: 1px; }
+        .toggle-btn { padding: 12px 30px; background: transparent; border: 2px solid var(--accent); color: var(--accent); font-family: 'Oswald'; cursor: pointer; border-radius: 50px; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s; }
+        .toggle-btn:hover { background: var(--accent); color: #000; }
         .expand-section { max-height: 0; overflow: hidden; transition: max-height 0.8s ease-out; background: rgba(0,0,0,0.3); }
         .expand-section.open { max-height: 20000px; padding: 40px 0; }
 
@@ -61,11 +63,11 @@
     </div>
     <div id="game-wrapper" class="expand-section">
         <div class="games-grid">
-            <div class="game-card"><img src="https://github.com/lawbrewing/LawBrewing/blob/main/Gemini_Generated_Image_f46i9af46i9af46i.png?raw=true" class="game-img"><div style="padding:20px; text-align:center;"><h3 style="color:white;">Sheriff of Taps</h3><a href="defender.html" class="game-btn">Play Defender</a></div></div>
-            <div class="game-card"><img src="1766341219164~2.jpg" class="game-img"><div style="padding:20px; text-align:center;"><h3 style="color:white;">Beer Flight Card Game</h3><a href="Thetaproom.html" class="game-btn">Play Taproom</a></div></div>
-            <div class="game-card"><img src="https://github.com/lawbrewing/LawBrewing/blob/main/bardice%20(2).png?raw=true" class="game-img"><div style="padding:20px; text-align:center;"><h3 style="color:white;">Bar Dice</h3><a href="bardice.html" class="game-btn">Play Bar Dice</a></div></div>
-            <div class="game-card"><img src="https://github.com/lawbrewing/LawBrewing/blob/main/ttt.png?raw=true" class="game-img"><div style="padding:20px; text-align:center;"><h3 style="color:white;">Tic Tac Toe</h3><a href="tictactoe.html" class="game-btn">Play Tic Tac Toe</a></div></div>
-            <div class="game-card"><img src="https://github.com/lawbrewing/LawBrewing/blob/main/taproomchaos.png?raw=true" class="game-img"><div style="padding:20px; text-align:center;"><h3 style="color:white;">Taproom Chaos</h3><a href="taproomchaosgame.html" class="game-btn">Play Chaos</a></div></div>
+            <div class="game-card"><img src="https://github.com/lawbrewing/LawBrewing/blob/main/Gemini_Generated_Image_f46i9af46i9af46i.png?raw=true" class="game-img"><div style="padding:20px; text-align:center;"><h3 style="color:white; font-family:'Roboto Slab'; font-size:1.2rem;">Sheriff of Taps</h3><a href="defender.html" class="game-btn">Play Defender</a></div></div>
+            <div class="game-card"><img src="1766341219164~2.jpg" class="game-img"><div style="padding:20px; text-align:center;"><h3 style="color:white; font-family:'Roboto Slab'; font-size:1.2rem;">Beer Flight Card Game</h3><a href="Thetaproom.html" class="game-btn">Play Taproom</a></div></div>
+            <div class="game-card"><img src="https://github.com/lawbrewing/LawBrewing/blob/main/bardice%20(2).png?raw=true" class="game-img"><div style="padding:20px; text-align:center;"><h3 style="color:white; font-family:'Roboto Slab'; font-size:1.2rem;">Bar Dice</h3><a href="bardice.html" class="game-btn">Play Bar Dice</a></div></div>
+            <div class="game-card"><img src="https://github.com/lawbrewing/LawBrewing/blob/main/ttt.png?raw=true" class="game-img"><div style="padding:20px; text-align:center;"><h3 style="color:white; font-family:'Roboto Slab'; font-size:1.2rem;">Tic Tac Toe</h3><a href="tictactoe.html" class="game-btn">Play Tic Tac Toe</a></div></div>
+            <div class="game-card"><img src="https://github.com/lawbrewing/LawBrewing/blob/main/taproomchaos.png?raw=true" class="game-img"><div style="padding:20px; text-align:center;"><h3 style="color:white; font-family:'Roboto Slab'; font-size:1.2rem;">Taproom Chaos</h3><a href="taproomchaosgame.html" class="game-btn">Play Chaos</a></div></div>
         </div>
     </div>
 
@@ -102,19 +104,21 @@
                 try {
                     const rRes = await fetch(SCOREBOARD_URL + '&t=' + cb);
                     const ratingText = await rRes.text();
-                    // If Google says "Not Published", this will fail gracefully
-                    if (ratingText && !ratingText.includes("Not Published") && !ratingText.includes("DOCTYPE")) {
+                    if (ratingText && !ratingText.includes("DOCTYPE")) {
                         parseCSV(ratingText).forEach(r => {
                             if(r[0] && r[1]) ratingMap[r[0].trim()] = parseFloat(r[1]).toFixed(1);
                         });
                     }
-                } catch(e) { console.warn("Scoreboard not yet available"); }
+                } catch(e) {}
 
                 const weights = await wRes.json();
                 const beerData = parseCSV(await mRes.text());
                 const tapContainer = document.getElementById('tap-display');
                 const archiveContainer = document.getElementById('archive-display');
                 tapContainer.innerHTML = ''; archiveContainer.innerHTML = '';
+
+                // Universal Sync Time
+                let universalSync = weights["last_updated"] || weights["updated"] || weights["time"] || "--:--";
 
                 beerData.forEach((row, i) => {
                     if (i === 0 || row.length < 3) return;
@@ -127,30 +131,32 @@
 
                     const ratingHTML = `
                         <div class="rating-box">
-                            <span style="font-size:0.7rem; color:#666; text-transform:uppercase; display:block; margin-bottom:5px;">Tap to Rate</span>
+                            <span style="font-size:0.75rem; color:#888; text-transform:uppercase; display:block; margin-bottom:10px; font-weight:bold;">Rate This Brew</span>
                             <div class="star-links">
-                                <a href="${getRatingLink(1)}" target="_blank">★</a>
-                                <a href="${getRatingLink(2)}" target="_blank">★</a>
-                                <a href="${getRatingLink(3)}" target="_blank">★</a>
-                                <a href="${getRatingLink(4)}" target="_blank">★</a>
                                 <a href="${getRatingLink(5)}" target="_blank">★</a>
+                                <a href="${getRatingLink(4)}" target="_blank">★</a>
+                                <a href="${getRatingLink(3)}" target="_blank">★</a>
+                                <a href="${getRatingLink(2)}" target="_blank">★</a>
+                                <a href="${getRatingLink(1)}" target="_blank">★</a>
                             </div>
                         </div>`;
 
                     if (tapID.toLowerCase().includes("tap")) {
                         const pct = weights[tapID] || 0;
-                        const syncTime = weights[tapID + "_updated"] || "--:--";
                         tapContainer.innerHTML += `
                             <div class="beer-card">
                                 <div class="label-art" style="background-image: url('${row[4]}');"></div>
                                 <div class="details">
                                     <div style="font-size:0.8rem; color:#888; letter-spacing:2px; margin-bottom:5px;">${tapID}</div>
-                                    <h2 class="beer-name">${bName} ${avg}</h2>
+                                    <div class="beer-name-row">
+                                        <h2 class="beer-name">${bName}</h2>
+                                        ${avg}
+                                    </div>
                                     <div class="stats"><span>${row[6]}</span><span>ABV: ${row[3]}</span></div>
                                     <p class="description">${row[5]}</p>
                                     ${ratingHTML}
                                     <div class="volume-container"><div class="volume-bar" style="width:${pct}%"></div><div class="volume-text">${Math.round((pct/100)*41)} PINTS LEFT</div></div>
-                                    <div class="tap-timestamp">Sync: ${syncTime}</div>
+                                    <div class="tap-timestamp">Sync: ${universalSync}</div>
                                 </div>
                             </div>`;
                     } else {
@@ -158,7 +164,10 @@
                             <div class="beer-card">
                                 <div class="label-art" style="height:250px; background-image: url('${row[4]}');"></div>
                                 <div class="details">
-                                    <h2 class="beer-name" style="font-size:1.5rem;">${bName} ${avg}</h2>
+                                    <div class="beer-name-row">
+                                        <h2 class="beer-name" style="font-size:1.5rem;">${bName}</h2>
+                                        ${avg}
+                                    </div>
                                     <div class="stats"><span>${row[6]}</span><span>ABV: ${row[3]}</span></div>
                                     ${ratingHTML}
                                 </div>
