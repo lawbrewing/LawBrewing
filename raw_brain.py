@@ -7,6 +7,7 @@ import time
 # --- CONFIGURATION ---
 WEIGHTS_FILE = "/home/lawmj04/law-brewing/tap_weights.json"
 PORT = 1234
+PUSH_COOLDOWN = 15  # Seconds to wait between GitHub pushes
 
 # MAP IPs TO TAP NAMES
 TAP_CONFIG = {
@@ -22,20 +23,31 @@ current_weights = {
     "last_updated": ""
 }
 
+last_sync_time = 0
+
 def calculate_percent(raw_val, tap_ip):
     conf = TAP_CONFIG.get(tap_ip, {'empty': 500, 'full': 4000})
-    # Filter insane values (e.g. if scale sends 999999 or negative noise)
+    # Filter insane values (noise)
     if raw_val > 20000 or raw_val < -500: return 0 
     
     pct = ((raw_val - conf['empty']) / (conf['full'] - conf['empty'])) * 100
     return max(0, min(100, round(pct)))
 
 def sync_to_github():
+    global last_sync_time
+    
+    # Always update the local timestamp
+    current_weights["last_updated"] = time.strftime("%Y-%m-%d %H:%M:%S")
+    
+    # Save to file locally (Always do this so local checking works)
+    with open(WEIGHTS_FILE, 'w') as f:
+        json.dump(current_weights, f, indent=4)
+
+    # TRAFFIC CONTROL: Only push to GitHub if 15 seconds have passed
+    if time.time() - last_sync_time < PUSH_COOLDOWN:
+        return
+
     try:
-        current_weights["last_updated"] = time.strftime("%Y-%m-%d %H:%M:%S")
-        with open(WEIGHTS_FILE, 'w') as f:
-            json.dump(current_weights, f, indent=4)
-        
         # Git Sync (Auto-Fix Identity)
         os.system("git config user.email 'bot@lawbrewing.com'")
         os.system("git config user.name 'BeerBot'")
@@ -48,6 +60,9 @@ def sync_to_github():
         )
         os.system(cmd)
         print("🌍 GitHub Sync Initiated")
+        
+        last_sync_time = time.time() # Reset timer
+        
     except Exception as e:
         print(f"⚠️ GitHub Sync Failed: {e}")
 
@@ -76,7 +91,7 @@ def start_server():
                 # THE FIX: Delete invisible Null bytes that break numbers
                 clean_data = raw_data.replace('\x00', '').strip()
                 
-                # Find "vw" followed by ANY characters until a number appears
+                # Regex: Find "vw", ignore garbage, find number
                 weight_match = re.search(r"vw.*?(-?\d+\.?\d*)", clean_data)
 
                 if weight_match and tap_ip in TAP_CONFIG:
@@ -87,12 +102,13 @@ def start_server():
                         
                         current_weights[f"{tap_name}_updated"] = time.strftime("%H:%M:%S")
 
-                        # Only sync if percentage changed
+                        # Update data and try to sync
                         if current_weights.get(tap_name) != percent:
                             current_weights[tap_name] = percent
                             print(f"🍺 {tap_name} Update: {raw_weight}g -> {percent}%")
                             sync_to_github()
                         else:
+                             # Just print to screen to prove it works
                              print(f"✅ {tap_name} Steady: {raw_weight}g ({percent}%)")
 
                         conn.sendall(b'\x00\x00\x01\x00\xc8') # ACK
@@ -104,7 +120,6 @@ def start_server():
                     conn.sendall(b'\x00\x00\x01\x00\xc8')
 
         except Exception as e:
-            # print(f"Connection Reset: {e}")
             pass
         finally:
             try: conn.close()
