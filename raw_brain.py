@@ -1,93 +1,104 @@
 import socket
 import json
 import os
+import re
 import time
 
 # --- CONFIGURATION ---
-# Ensure these paths match your Raspberry Pi setup
-WEIGHTS_FILE = '/home/lawmj04/law-brewing/tap_weights.json'
+# The file that the website reads
+WEIGHTS_FILE = "/home/lawmj04/law-brewing/tap_weights.json"
 PORT = 1234
-# Calibration: (Raw Value - Offset) / Scale
-# Adjust these numbers based on your specific scale calibration
-calibration_factor = 1000 
 
-current_weights = {
-    "law_tap": 0,
-    "guest_tap": 0,
-    "last_updated": ""
+# MAP IPs TO TAP NAMES
+# This is how we know which tap is which
+TAP_CONFIG = {
+    '192.168.86.47':  {'name': 'Law Tap',   'empty': 480, 'full': 4150},
+    '192.168.86.116': {'name': 'Wisco Tap', 'empty': 500, 'full': 4000},
+    '192.168.86.45':  {'name': 'Nitro Tap', 'empty': 450, 'full': 4200}
 }
 
+# Default State
+current_weights = {"Law Tap": 0, "Wisco Tap": 0, "Nitro Tap": 0}
+
+def calculate_percent(raw_val, tap_ip):
+    conf = TAP_CONFIG.get(tap_ip, {'empty': 500, 'full': 4000})
+    
+    # Filter out garbage noise from scale
+    if raw_val > 10000 or raw_val < -500: 
+        return 0 
+    
+    pct = ((raw_val - conf['empty']) / (conf['full'] - conf['empty'])) * 100
+    return max(0, min(100, round(pct)))
+
 def sync_to_github():
-    """Forces a pull from GitHub before pushing to prevent sync errors"""
+    """Syncs with GitHub using the Master branch and Rebase to prevent jams"""
     try:
-        # 1. Save the local JSON file
+        # Save timestamp
         current_weights["last_updated"] = time.strftime("%Y-%m-%d %H:%M:%S")
+        
         with open(WEIGHTS_FILE, 'w') as f:
             json.dump(current_weights, f, indent=4)
 
-        print(f"💾 Local weights saved. Syncing to GitHub...")
-
-        # 2. The Self-Healing Git Command
-        # We use 'master' because the logs showed the site tracks origin/master
+        # THE FIX: Pull first, then Push to MASTER
         cmd = (
-            "git add . && "
+            f"git add {WEIGHTS_FILE} && "
             "git commit -m 'Scale Update' && "
             "git pull origin master --rebase && "
             "git push origin master"
         )
         
-        result = os.system(cmd)
-        
-        if result == 0:
-            print("🌍 GitHub Sync Successful")
-        else:
-            print("⚠️ GitHub Sync encountered a warning (Check logs)")
-            
+        # Run it (blocking, not background, to ensure safety)
+        os.system(cmd)
+        print("🌍 GitHub Sync Complete")
     except Exception as e:
-        print(f"❌ Error during sync: {e}")
+        print(f"⚠️ GitHub Sync Failed: {e}")
 
 def start_server():
-    """Starts the socket server to listen for scale data"""
-    # Create a TCP/IP socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    
-    # Allow immediate reuse of the port after a crash
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     
     try:
         sock.bind(('0.0.0.0', PORT))
         sock.listen(5)
-        print(f"🧠 Brain is online. Listening on Port {PORT}...")
+        print(f"🧠 Brain Online. Listening for Taps: {list(TAP_CONFIG.keys())}")
     except OSError as e:
-        print(f"❌ Could not bind to port {PORT}: {e}")
+        print(f"❌ Port Error: {e}")
         return
 
     while True:
-        client, address = sock.accept()
+        conn, addr = sock.accept()
+        tap_ip = addr[0] # Get the IP address of the scale
+        
         try:
-            data = client.recv(1024).decode('utf-8')
-            if data:
-                # Assuming data comes in as "ScaleID:Value"
-                # Example: "LAW:23.4"
-                print(f"📡 Raw Data Received: {data}")
+            # 1. Send Handshake (Keep-Alive for scale)
+            conn.sendall(b'\x00\x00\x01\x00\xc8') 
+
+            # 2. Receive Data
+            raw_data = conn.recv(1024).decode('utf-8', errors='ignore')
+            if not raw_data: continue
+
+            # 3. Find the weight number in the string
+            match = re.search(r"(\d{1,4})", raw_data)
+            
+            if match and tap_ip in TAP_CONFIG:
+                raw_weight = float(match.group(1))
+                tap_name = TAP_CONFIG[tap_ip]['name']
                 
-                parts = data.split(':')
-                if len(parts) == 2:
-                    tap_id = parts[0].strip().lower()
-                    weight_val = float(parts[1].strip())
-                    
-                    if tap_id == "law":
-                        current_weights["law_tap"] = weight_val
-                    elif tap_id == "guest":
-                        current_weights["guest_tap"] = weight_val
-                    
-                    # Sync to website immediately upon receiving data
+                # Calculate percent
+                percent = calculate_percent(raw_weight, tap_ip)
+                
+                # Only update/sync if the weight changed
+                if current_weights.get(tap_name) != percent:
+                    current_weights[tap_name] = percent
+                    print(f"📡 {tap_name} ({tap_ip}): {raw_weight}g -> {percent}%")
                     sync_to_github()
-                    
+            elif tap_ip not in TAP_CONFIG:
+                print(f"⚠️ Unknown Scale IP connected: {tap_ip}")
+
         except Exception as e:
-            print(f"⚠️ Error handling data: {e}")
+            print(f"❌ Error: {e}")
         finally:
-            client.close()
+            conn.close()
 
 if __name__ == "__main__":
     start_server()
