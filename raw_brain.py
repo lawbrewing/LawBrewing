@@ -10,9 +10,11 @@ PORT = 1234
 PUSH_COOLDOWN = 15  # Seconds to wait between GitHub pushes
 
 TAP_CONFIG = {
-    '192.168.86.47':  {'name': 'Law Tap',   'empty': 480, 'full': 4150},
-    '192.168.86.116': {'name': 'Wisco Tap', 'empty': 500, 'full': 4000},
-    '192.168.86.45':  {'name': 'Nitro Tap', 'empty': 450, 'full': 4200}
+    # 4500g = ~9.9lbs (Empty Shell)
+    # 23600g = ~52lbs (Full Keg)
+    '192.168.86.47':  {'name': 'Law Tap',   'empty': 4500, 'full': 23600},
+    '192.168.86.116': {'name': 'Wisco Tap', 'empty': 4500, 'full': 23600},
+    '192.168.86.45':  {'name': 'Nitro Tap', 'empty': 4500, 'full': 23600}
 }
 
 current_weights = {
@@ -25,27 +27,24 @@ current_weights = {
 last_sync_time = 0
 
 def calculate_percent(raw_val, tap_ip):
-    conf = TAP_CONFIG.get(tap_ip, {'empty': 500, 'full': 4000})
-    if raw_val > 20000 or raw_val < -500: return 0 
+    conf = TAP_CONFIG.get(tap_ip, {'empty': 4500, 'full': 23600})
     pct = ((raw_val - conf['empty']) / (conf['full'] - conf['empty'])) * 100
     return max(0, min(100, round(pct)))
 
 def sync_to_github():
     global last_sync_time
     
-    # 1. CHECK TIMER: If 15 seconds haven't passed, DO NOT TOUCH THE FILE.
+    # COOLDOWN CHECK
     if time.time() - last_sync_time < PUSH_COOLDOWN:
         return
 
     try:
-        # 2. Update Timestamp & Write File ONLY when we are ready to push
         current_weights["last_updated"] = time.strftime("%Y-%m-%d %H:%M:%S")
         
         with open(WEIGHTS_FILE, 'w') as f:
             json.dump(current_weights, f, indent=4)
         
-        # 3. Git Sync (Synchronous - No '&' at the end)
-        # We wait for this to finish so we don't crash into ourselves
+        # Git Sync
         os.system("git config user.email 'bot@lawbrewing.com'")
         os.system("git config user.name 'BeerBot'")
         
@@ -53,12 +52,12 @@ def sync_to_github():
             f"git add {WEIGHTS_FILE} && "
             "git commit -m 'Scale Update' && "
             "git pull origin master --rebase && "
-            "git push origin master" # <--- Removed the '&' here
+            "git push origin master"
         )
         os.system(cmd)
         print("🌍 GitHub Sync Complete")
         
-        last_sync_time = time.time() # Reset timer
+        last_sync_time = time.time()
         
     except Exception as e:
         print(f"⚠️ GitHub Sync Failed: {e}")
@@ -85,25 +84,32 @@ def start_server():
                 raw_data = conn.recv(1024).decode('utf-8', errors='ignore')
                 if not raw_data: break 
                 
-                # Clean Data (Remove Null Bytes)
-                clean_data = raw_data.replace('\x00', '').strip()
+                # 1. Clean Data: Replace Nulls with SPACE (avoids merging numbers)
+                clean_data = raw_data.replace('\x00', ' ').strip()
                 
-                # Parse Data
+                # 2. Extract any number found after "vw"
                 weight_match = re.search(r"vw.*?(-?\d+\.?\d*)", clean_data)
 
                 if weight_match and tap_ip in TAP_CONFIG:
                     try:
                         raw_weight = float(weight_match.group(1))
+                        
+                        # --- THE BOUNCER (Strict Filter) ---
+                        # If it's not a keg (3.5kg to 30kg), ignore it.
+                        if raw_weight < 3500 or raw_weight > 30000:
+                            # print(f"🗑️ Ignoring Garbage: {raw_weight}")
+                            continue
+                        
+                        # If we get here, it's REAL DATA
                         tap_name = TAP_CONFIG[tap_ip]['name']
                         percent = calculate_percent(raw_weight, tap_ip)
                         
-                        # Update Memory
                         current_weights[f"{tap_name}_updated"] = time.strftime("%H:%M:%S")
 
                         if current_weights.get(tap_name) != percent:
                             current_weights[tap_name] = percent
                             print(f"🍺 {tap_name} Update: {raw_weight}g -> {percent}%")
-                            sync_to_github() # Checks timer inside function
+                            sync_to_github()
                         else:
                              # print(f"✅ {tap_name} Steady: {raw_weight}g")
                              pass
