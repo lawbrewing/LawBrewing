@@ -9,7 +9,6 @@ WEIGHTS_FILE = "/home/lawmj04/law-brewing/tap_weights.json"
 PORT = 1234
 PUSH_COOLDOWN = 15  # Seconds to wait between GitHub pushes
 
-# MAP IPs TO TAP NAMES
 TAP_CONFIG = {
     '192.168.86.47':  {'name': 'Law Tap',   'empty': 480, 'full': 4150},
     '192.168.86.116': {'name': 'Wisco Tap', 'empty': 500, 'full': 4000},
@@ -27,28 +26,26 @@ last_sync_time = 0
 
 def calculate_percent(raw_val, tap_ip):
     conf = TAP_CONFIG.get(tap_ip, {'empty': 500, 'full': 4000})
-    # Filter insane values (noise)
     if raw_val > 20000 or raw_val < -500: return 0 
-    
     pct = ((raw_val - conf['empty']) / (conf['full'] - conf['empty'])) * 100
     return max(0, min(100, round(pct)))
 
 def sync_to_github():
     global last_sync_time
     
-    # Always update the local timestamp
-    current_weights["last_updated"] = time.strftime("%Y-%m-%d %H:%M:%S")
-    
-    # Save to file locally (Always do this so local checking works)
-    with open(WEIGHTS_FILE, 'w') as f:
-        json.dump(current_weights, f, indent=4)
-
-    # TRAFFIC CONTROL: Only push to GitHub if 15 seconds have passed
+    # 1. CHECK TIMER: If 15 seconds haven't passed, DO NOT TOUCH THE FILE.
     if time.time() - last_sync_time < PUSH_COOLDOWN:
         return
 
     try:
-        # Git Sync (Auto-Fix Identity)
+        # 2. Update Timestamp & Write File ONLY when we are ready to push
+        current_weights["last_updated"] = time.strftime("%Y-%m-%d %H:%M:%S")
+        
+        with open(WEIGHTS_FILE, 'w') as f:
+            json.dump(current_weights, f, indent=4)
+        
+        # 3. Git Sync (Synchronous - No '&' at the end)
+        # We wait for this to finish so we don't crash into ourselves
         os.system("git config user.email 'bot@lawbrewing.com'")
         os.system("git config user.name 'BeerBot'")
         
@@ -56,10 +53,10 @@ def sync_to_github():
             f"git add {WEIGHTS_FILE} && "
             "git commit -m 'Scale Update' && "
             "git pull origin master --rebase && "
-            "git push origin master &" # Run in background
+            "git push origin master" # <--- Removed the '&' here
         )
         os.system(cmd)
-        print("🌍 GitHub Sync Initiated")
+        print("🌍 GitHub Sync Complete")
         
         last_sync_time = time.time() # Reset timer
         
@@ -78,20 +75,20 @@ def start_server():
         print(f"❌ Port Error: {e}")
         return
 
-    while True: # Main Server Loop
+    while True:
         try:
             conn, addr = sock.accept()
             tap_ip = addr[0]
-            conn.settimeout(10.0) # 10s Timeout
+            conn.settimeout(10.0)
 
-            while True: # Keep-Alive Loop
+            while True:
                 raw_data = conn.recv(1024).decode('utf-8', errors='ignore')
                 if not raw_data: break 
                 
-                # THE FIX: Delete invisible Null bytes that break numbers
+                # Clean Data (Remove Null Bytes)
                 clean_data = raw_data.replace('\x00', '').strip()
                 
-                # Regex: Find "vw", ignore garbage, find number
+                # Parse Data
                 weight_match = re.search(r"vw.*?(-?\d+\.?\d*)", clean_data)
 
                 if weight_match and tap_ip in TAP_CONFIG:
@@ -100,23 +97,22 @@ def start_server():
                         tap_name = TAP_CONFIG[tap_ip]['name']
                         percent = calculate_percent(raw_weight, tap_ip)
                         
+                        # Update Memory
                         current_weights[f"{tap_name}_updated"] = time.strftime("%H:%M:%S")
 
-                        # Update data and try to sync
                         if current_weights.get(tap_name) != percent:
                             current_weights[tap_name] = percent
                             print(f"🍺 {tap_name} Update: {raw_weight}g -> {percent}%")
-                            sync_to_github()
+                            sync_to_github() # Checks timer inside function
                         else:
-                             # Just print to screen to prove it works
-                             print(f"✅ {tap_name} Steady: {raw_weight}g ({percent}%)")
+                             # print(f"✅ {tap_name} Steady: {raw_weight}g")
+                             pass
 
-                        conn.sendall(b'\x00\x00\x01\x00\xc8') # ACK
+                        conn.sendall(b'\x00\x00\x01\x00\xc8')
                     except ValueError:
                         pass
 
                 elif len(clean_data) > 5:
-                    # Token/Handshake - just say OK and keep listening
                     conn.sendall(b'\x00\x00\x01\x00\xc8')
 
         except Exception as e:
