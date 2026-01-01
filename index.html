@@ -28,10 +28,12 @@
         .stats { font-family: 'Oswald', sans-serif; color: var(--accent); font-size: 1.1rem; margin: 10px 0; display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding-bottom: 10px; }
         .description { font-size: 0.95rem; color: #ccc; line-height: 1.5; margin-bottom: 20px; flex-grow: 1; white-space: pre-wrap; }
         
-        .rating-box { background: rgba(255,255,255,0.03); padding: 12px; border-radius: 12px; margin-bottom: 20px; text-align: center; border: 1px solid #333; }
-        .star-links { display: flex; justify-content: center; gap: 10px; flex-direction: row-reverse; }
-        .star-links a { font-size: 2.2rem; color: #333; text-decoration: none; transition: 0.2s; line-height: 1; }
-        .star-links a:hover, .star-links a:hover ~ a { color: var(--accent); transform: scale(1.1); text-shadow: 0 0 15px rgba(255,180,0,0.5); }
+        .rating-box { background: rgba(255,255,255,0.03); padding: 12px; border-radius: 12px; margin-bottom: 20px; text-align: center; border: 1px solid #333; min-height: 70px; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        .stars { display: flex; flex-direction: row-reverse; justify-content: center; gap: 5px; }
+        .stars input { display: none; }
+        .stars label { font-size: 2.3rem; color: #333; cursor: pointer; transition: 0.2s; line-height: 1; }
+        .stars label:hover, .stars label:hover ~ label, .stars input:checked ~ label { color: var(--accent); text-shadow: 0 0 10px rgba(255,180,0,0.5); }
+        .thanks-msg { display: none; font-family: 'Oswald'; color: var(--accent); font-size: 1.3rem; font-weight: bold; letter-spacing: 1px; }
 
         .volume-container { background: #000; height: 32px; border-radius: 16px; position: relative; overflow: hidden; border: 2px solid #444; margin-top: auto; }
         .volume-bar { background: linear-gradient(90deg, #b8860b, var(--accent)); height: 100%; transition: width 1.5s ease; }
@@ -52,15 +54,19 @@
         <img src="https://github.com/lawbrewing/LawBrewing/blob/main/LBC%20-%20Black%20Transparent%20(1).png?raw=true" alt="Law Brewing" class="backlit-logo">
         <div class="sub-brand">Liquid Attitude Taps</div>
     </div>
+
     <div class="tap-container" id="tap-display"></div>
+
     <div class="button-center">
         <button class="toggle-btn" onclick="toggleSection('archive-wrapper')">View The Cellar</button>
         <button class="toggle-btn" onclick="toggleSection('game-wrapper')">Bar Games</button>
     </div>
+
     <div id="archive-wrapper" class="expand-section">
         <h2 style="text-align:center; font-family:'Oswald'; color:var(--accent); letter-spacing:4px; font-size:2.5rem; margin-bottom:30px;">PAST BREWS & BOTTLES</h2>
         <div id="archive-display" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; max-width: 1300px; margin: 0 auto; padding: 20px;"></div>
     </div>
+
     <div id="game-wrapper" class="expand-section">
         <div class="games-grid">
             <div class="game-card"><img src="https://github.com/lawbrewing/LawBrewing/blob/main/Gemini_Generated_Image_f46i9af46i9af46i.png?raw=true" style="height:200px; object-fit:contain; background:#000; padding:10px;"><div style="padding:20px; text-align:center;"><h3 style="color:white; font-family:'Roboto Slab'; font-size:1.2rem;">Sheriff of Taps</h3><a href="defender.html" style="display:block; background:var(--accent); color:#1a1a1a; padding:12px; text-align:center; text-decoration:none; font-family:'Bebas Neue'; font-size:1.4rem;">Play Defender</a></div></div>
@@ -71,10 +77,13 @@
         </div>
     </div>
 
+    <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
+    <form id="rating_form" action="https://docs.google.com/forms/d/e/1FAIpQLSfx4apNIy6wi1CrFW-B8u01vJ_2ci1fcStPSWcWLFK9DpRs8g/formResponse" method="POST" target="hidden_iframe" style="display:none;">
+        <input type="hidden" name="entry.1650190471" id="form_beer">
+        <input type="hidden" name="entry.958548151" id="form_score">
+    </form>
+
     <script>
-        const FORM_BASE = "https://docs.google.com/forms/d/e/1FAIpQLSfx4apNIy6wi1CrFW-B8u01vJ_2ci1fcStPSWcWLFK9DpRs8g/viewform";
-        const ENTRY_BEER = "entry.1650190471";
-        const ENTRY_SCORE = "entry.958548151";
         const MAIN_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQWqyJ5-pMWhRUkkZLoHdmFPtOHJozHRJkL9c0ivSSY9J7Fp0lto4W05tH-XbFelBL-htJZXedhv7i3/pub?output=csv';
         const SCOREBOARD_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRHD6zTvSE5HfErbLPAHhb0NyXDLuvt_cpOEQxr76BFNpN-KgbL3y68LIogt1aEhVAxIP4JU9t1Kte1/pub?gid=1912157964&single=true&output=csv";
 
@@ -90,6 +99,15 @@
             }
             if (col || row.length) { row.push(col); result.push(row); }
             return result;
+        }
+
+        function submitRating(beerName, score, cardId) {
+            document.getElementById('form_beer').value = beerName;
+            document.getElementById('form_score').value = score;
+            document.getElementById('rating_form').submit();
+            
+            const box = document.getElementById(`box-${cardId}`);
+            box.innerHTML = '<div class="thanks-msg" style="display:block">CHEERS! 🍻</div>';
         }
 
         async function updateDisplay() {
@@ -132,15 +150,51 @@
                     const isTop = (bName === topBeer && maxRating > 0);
                     const topRibbon = isTop ? `<div class="top-rated-ribbon">Top Rated</div>` : '';
                     const avg = ratingMap[bName] ? `<span class="avg-badge">⭐ ${ratingMap[bName]}</span>` : '';
-                    const getRatingLink = (v) => `${FORM_BASE}?usp=sf_link&${ENTRY_BEER}=${encodeURIComponent(bName)}&${ENTRY_SCORE}=${v}`;
 
-                    const ratingHTML = `<div class="rating-box"><span style="font-size:0.75rem; color:#888; text-transform:uppercase; display:block; margin-bottom:10px; font-weight:bold;">Rate This Brew</span><div class="star-links"><a href="${getRatingLink(5)}" target="_blank">★</a><a href="${getRatingLink(4)}" target="_blank">★</a><a href="${getRatingLink(3)}" target="_blank">★</a><a href="${getRatingLink(2)}" target="_blank">★</a><a href="${getRatingLink(1)}" target="_blank">★</a></div></div>`;
+                    const ratingHTML = `
+                        <div class="rating-box" id="box-${i}">
+                            <div class="stars">
+                                <input type="radio" id="s5-${i}" onclick="submitRating('${bName}', 5, ${i})"><label for="s5-${i}">★</label>
+                                <input type="radio" id="s4-${i}" onclick="submitRating('${bName}', 4, ${i})"><label for="s4-${i}">★</label>
+                                <input type="radio" id="s3-${i}" onclick="submitRating('${bName}', 3, ${i})"><label for="s3-${i}">★</label>
+                                <input type="radio" id="s2-${i}" onclick="submitRating('${bName}', 2, ${i})"><label for="s2-${i}">★</label>
+                                <input type="radio" id="s1-${i}" onclick="submitRating('${bName}', 1, ${i})"><label for="s1-${i}">★</label>
+                            </div>
+                        </div>`;
 
                     if (tapID.toLowerCase().includes("tap")) {
                         const pct = weights[tapID] || 0;
-                        tapContainer.innerHTML += `<div class="beer-card">${topRibbon}<div class="label-art" style="background-image: url('${row[4]}');"></div><div class="details"><div style="font-size:0.8rem; color:#888; letter-spacing:2px; margin-bottom:5px;">${tapID}</div><div class="beer-name-row"><h2 class="beer-name">${bName}</h2>${avg}</div><div class="stats"><span>${row[6]}</span><span>ABV: ${row[3]}</span></div><p class="description">${row[5]}</p>${ratingHTML}<div class="volume-container"><div class="volume-bar" style="width:${pct}%"></div><div class="volume-text">${Math.round((pct/100)*41)} PINTS LEFT</div></div><div class="tap-timestamp">Sync: ${universalSync}</div></div></div>`;
+                        tapContainer.innerHTML += `
+                            <div class="beer-card">
+                                ${topRibbon}
+                                <div class="label-art" style="background-image: url('${row[4]}');"></div>
+                                <div class="details">
+                                    <div style="font-size:0.8rem; color:#888; letter-spacing:2px; margin-bottom:5px;">${tapID}</div>
+                                    <div class="beer-name-row">
+                                        <h2 class="beer-name">${bName}</h2>
+                                        ${avg}
+                                    </div>
+                                    <div class="stats"><span>${row[6]}</span><span>ABV: ${row[3]}</span></div>
+                                    <p class="description">${row[5]}</p>
+                                    ${ratingHTML}
+                                    <div class="volume-container"><div class="volume-bar" style="width:${pct}%"></div><div class="volume-text">${Math.round((pct/100)*41)} PINTS LEFT</div></div>
+                                    <div class="tap-timestamp">Sync: ${universalSync}</div>
+                                </div>
+                            </div>`;
                     } else {
-                        archiveContainer.innerHTML += `<div class="beer-card">${topRibbon}<div class="label-art" style="height:250px; background-image: url('${row[4]}');"></div><div class="details"><div class="beer-name-row"><h2 class="beer-name" style="font-size:1.5rem;">${bName}</h2>${avg}</div><div class="stats"><span>${row[6]}</span><span>ABV: ${row[3]}</span></div>${ratingHTML}</div></div>`;
+                        archiveContainer.innerHTML += `
+                            <div class="beer-card">
+                                ${topRibbon}
+                                <div class="label-art" style="height:250px; background-image: url('${row[4]}');"></div>
+                                <div class="details">
+                                    <div class="beer-name-row">
+                                        <h2 class="beer-name" style="font-size:1.5rem;">${bName}</h2>
+                                        ${avg}
+                                    </div>
+                                    <div class="stats"><span>${row[6]}</span><span>ABV: ${row[3]}</span></div>
+                                    ${ratingHTML}
+                                </div>
+                            </div>`;
                     }
                 });
             } catch (e) { console.error(e); }
