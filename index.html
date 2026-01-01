@@ -25,9 +25,8 @@
         
         .rating-box { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 12px; margin-bottom: 20px; text-align: center; border: 1px solid #333; }
         .stars { display: flex; flex-direction: row-reverse; justify-content: center; gap: 2px; }
-        .stars input { display: none; }
-        .stars label { font-size: 2rem; color: #333; cursor: pointer; line-height: 1; transition: 0.2s; }
-        .stars label:hover, .stars label:hover ~ label, .stars input:checked ~ label { color: var(--accent); }
+        .stars label { font-size: 2.2rem; color: #333; cursor: pointer; transition: 0.2s; }
+        .stars label:hover, .stars label:hover ~ label { color: var(--accent); }
         .thanks-msg { display: none; font-family: 'Oswald'; color: var(--accent); font-size: 1.1rem; }
 
         .volume-container { background: #000; height: 32px; border-radius: 16px; position: relative; overflow: hidden; border: 2px solid #444; margin-top: auto; }
@@ -38,6 +37,13 @@
         .toggle-btn { padding: 12px 30px; background: transparent; border: 2px solid var(--accent); color: var(--accent); font-family: 'Oswald'; cursor: pointer; border-radius: 50px; text-transform: uppercase; letter-spacing: 1px; }
         .expand-section { max-height: 0; overflow: hidden; transition: max-height 0.8s ease-out; background: rgba(0,0,0,0.3); }
         .expand-section.open { max-height: 20000px; padding: 40px 0; }
+
+        /* GAMES STYLING */
+        .games-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; max-width: 1300px; margin: 0 auto; padding: 0 20px; }
+        .game-card { background: #202020; border-radius: 15px; border: 1px solid #444; overflow: hidden; display: flex; flex-direction: column; }
+        .game-img { width: 100%; height: 200px; object-fit: contain; background: #000; padding: 10px; }
+        .game-btn { display: block; background: var(--accent); color: #1a1a1a; padding: 12px; text-align: center; text-decoration: none; font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; }
+
         .archive-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; max-width: 1300px; margin: 0 auto; padding: 20px; }
     </style>
 </head>
@@ -55,21 +61,26 @@
         <button class="toggle-btn" onclick="toggleSection('game-wrapper')">Bar Games</button>
     </div>
 
-    <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
-    <form id="stealth_form" action="https://docs.google.com/forms/d/e/1FAIpQLSfx4apNIy6wi1CrFW-B8u01vJ_2ci1fcStPSWcWLFK9DpRs8g/formResponse" method="POST" target="hidden_iframe" style="display:none;">
-        <input type="text" name="entry.1650190471" id="form_beer">
-        <input type="text" name="entry.958548151" id="form_score">
-    </form>
-
     <div id="archive-wrapper" class="expand-section">
         <h2 style="text-align:center; font-family:'Oswald'; color:var(--accent); letter-spacing:4px; font-size:2.5rem; margin-bottom:30px;">PAST BREWS & BOTTLES</h2>
         <div class="archive-grid" id="archive-display"></div>
     </div>
 
     <div id="game-wrapper" class="expand-section">
+        <h2 style="text-align:center; font-family:'Bebas Neue'; color:var(--accent); font-size:3rem; letter-spacing:5px; margin-bottom:30px;">BAR GAMES</h2>
+        <div class="games-grid">
+            <div class="game-card"><img src="https://github.com/lawbrewing/LawBrewing/blob/main/Gemini_Generated_Image_f46i9af46i9af46i.png?raw=true" class="game-img"><div style="padding:20px; text-align:center;"><h3 style="color:white;">Sheriff of Taps</h3><a href="defender.html" class="game-btn">Play Defender</a></div></div>
+            <div class="game-card"><img src="1766341219164~2.jpg" class="game-img"><div style="padding:20px; text-align:center;"><h3 style="color:white;">Beer Flight Card Game</h3><a href="Thetaproom.html" class="game-btn">Play Taproom</a></div></div>
+            <div class="game-card"><img src="https://github.com/lawbrewing/LawBrewing/blob/main/bardice%20(2).png?raw=true" class="game-img"><div style="padding:20px; text-align:center;"><h3 style="color:white;">Bar Dice</h3><a href="bardice.html" class="game-btn">Play Bar Dice</a></div></div>
+            <div class="game-card"><img src="https://github.com/lawbrewing/LawBrewing/blob/main/ttt.png?raw=true" class="game-img"><div style="padding:20px; text-align:center;"><h3 style="color:white;">Tic Tac Toe</h3><a href="tictactoe.html" class="game-btn">Play Tic Tac Toe</a></div></div>
+            <div class="game-card"><img src="https://github.com/lawbrewing/LawBrewing/blob/main/taproomchaos.png?raw=true" class="game-img"><div style="padding:20px; text-align:center;"><h3 style="color:white;">Taproom Chaos</h3><a href="taproomchaosgame.html" class="game-btn">Play Chaos</a></div></div>
         </div>
+    </div>
 
     <script>
+        const FORM_BASE = "https://docs.google.com/forms/d/e/1FAIpQLSfx4apNIy6wi1CrFW-B8u01vJ_2ci1fcStPSWcWLFK9DpRs8g/formResponse";
+        const ENTRY_BEER = "entry.1650190471";
+        const ENTRY_SCORE = "entry.958548151";
         const MAIN_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQWqyJ5-pMWhRUkkZLoHdmFPtOHJozHRJkL9c0ivSSY9J7Fp0lto4W05tH-XbFelBL-htJZXedhv7i3/pub?output=csv';
         const SCOREBOARD_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRHD6zTvSE5HfErbLPAHhb0NyXDLuvt_cpOEQxr76BFNpN-KgbL3y68LIogt1aEhVAxIP4JU9t1Kte1/pub?gid=1912157964&single=true&output=csv";
 
@@ -88,14 +99,12 @@
         }
 
         function submitRating(beerName, score, cardId) {
-            // Populate the stealth form
-            document.getElementById('form_beer').value = beerName;
-            document.getElementById('form_score').value = score;
+            const url = `${FORM_BASE}?${ENTRY_BEER}=${encodeURIComponent(beerName)}&${ENTRY_SCORE}=${score}&submit=Submit`;
             
-            // Submit the form
-            document.getElementById('stealth_form').submit();
-            
-            // Update UI
+            // Pop-under method: guaranteed to send data
+            const win = window.open(url, "hidden_submit", "width=100,height=100,left=10000,top=10000");
+            setTimeout(() => { if(win) win.close(); }, 1000);
+
             document.getElementById(`ui-${cardId}`).innerHTML = '<div class="thanks-msg" style="display:block">Cheers! 🍻</div>';
         }
 
@@ -114,9 +123,7 @@
 
                 const ratingMap = {};
                 ratingData.forEach(r => {
-                    if(r[0] && r[1] && !isNaN(r[1])) {
-                        ratingMap[r[0].trim()] = parseFloat(r[1]).toFixed(1);
-                    }
+                    if(r[0] && r[1]) ratingMap[r[0].trim()] = parseFloat(r[1]).toFixed(1);
                 });
                 
                 const tapContainer = document.getElementById('tap-display');
@@ -129,19 +136,17 @@
                     const bName = (row[2] || "").trim();
                     if (!bName) return;
 
-                    const avgScore = ratingMap[bName] ? `<span class="avg-badge">⭐ ${ratingMap[bName]}</span>` : '';
+                    const avg = ratingMap[bName] ? `<span class="avg-badge">⭐ ${ratingMap[bName]}</span>` : '';
 
                     const ratingHTML = `
                         <div class="rating-box">
-                            <div id="ui-${i}">
-                                <div class="stars">
-                                    <input type="radio" id="s5-${i}" onclick="submitRating('${bName}', 5, ${i})"><label for="s5-${i}">★</label>
-                                    <input type="radio" id="s4-${i}" onclick="submitRating('${bName}', 4, ${i})"><label for="s4-${i}">★</label>
-                                    <input type="radio" id="s3-${i}" onclick="submitRating('${bName}', 3, ${i})"><label for="s3-${i}">★</label>
-                                    <input type="radio" id="s2-${i}" onclick="submitRating('${bName}', 2, ${i})"><label for="s2-${i}">★</label>
-                                    <input type="radio" id="s1-${i}" onclick="submitRating('${bName}', 1, ${i})"><label for="s1-${i}">★</label>
-                                </div>
-                            </div>
+                            <div id="ui-${i}"><div class="stars">
+                                <span onclick="submitRating('${bName}', 5, ${i})">★</span>
+                                <span onclick="submitRating('${bName}', 4, ${i})">★</span>
+                                <span onclick="submitRating('${bName}', 3, ${i})">★</span>
+                                <span onclick="submitRating('${bName}', 2, ${i})">★</span>
+                                <span onclick="submitRating('${bName}', 1, ${i})">★</span>
+                            </div></div>
                         </div>`;
 
                     if (tapID.toLowerCase().includes("tap")) {
@@ -151,14 +156,11 @@
                                 <div class="label-art" style="background-image: url('${row[4]}');"></div>
                                 <div class="details">
                                     <div style="font-size:0.8rem; color:#888; letter-spacing:2px; margin-bottom:5px;">${tapID}</div>
-                                    <h2 class="beer-name">${bName} ${avgScore}</h2>
+                                    <h2 class="beer-name">${bName} ${avg}</h2>
                                     <div class="stats"><span>${row[6]}</span><span>ABV: ${row[3]}</span></div>
                                     <p class="description">${row[5]}</p>
                                     ${ratingHTML}
-                                    <div class="volume-container">
-                                        <div class="volume-bar" style="width:${pct}%"></div>
-                                        <div class="volume-text">${Math.round((pct/100)*41)} PINTS LEFT</div>
-                                    </div>
+                                    <div class="volume-container"><div class="volume-bar" style="width:${pct}%"></div><div class="volume-text">${Math.round((pct/100)*41)} PINTS LEFT</div></div>
                                 </div>
                             </div>`;
                     } else {
@@ -166,7 +168,7 @@
                             <div class="beer-card">
                                 <div class="label-art" style="height:250px; background-image: url('${row[4]}');"></div>
                                 <div class="details">
-                                    <h2 class="beer-name" style="font-size:1.5rem;">${bName} ${avgScore}</h2>
+                                    <h2 class="beer-name" style="font-size:1.5rem;">${bName} ${avg}</h2>
                                     <div class="stats"><span>${row[6]}</span><span>ABV: ${row[3]}</span></div>
                                     ${ratingHTML}
                                 </div>
