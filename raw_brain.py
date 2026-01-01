@@ -5,7 +5,7 @@ import time
 
 # --- CONFIGURATION ---
 # Ensure these paths match your Raspberry Pi setup
-WEIGHTS_FILE = '/home/lawmj04/law-brewing/weights.json'
+WEIGHTS_FILE = '/home/lawmj04/law-brewing/tap_weights.json'
 PORT = 1234
 # Calibration: (Raw Value - Offset) / Scale
 # Adjust these numbers based on your specific scale calibration
