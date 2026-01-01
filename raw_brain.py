@@ -76,7 +76,9 @@ def start_server():
             # 2. Receive Data
             raw_data = conn.recv(1024).decode('utf-8', errors='ignore')
             if not raw_data: continue
-
+# --- ADD THIS LINE HERE ---
+            print(f"🔍 DEBUG: Received from {tap_ip}: {raw_data}") 
+            # --------------------------
             # 3. Find the weight number in the string
             match = re.search(r"(\d{1,4})", raw_data)
             
