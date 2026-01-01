@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Law Brewing Co. | Live Taproom</title>
-    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Roboto:wght@300;400&family=Bebas+Neue&family=Roboto+Slab:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Roboto:wght@300;400&family=Bebas+Neue&display=swap" rel="stylesheet">
     <style>
         :root { --accent: #ffb400; --bg: #121212; --card: #1e1e1e; --text: #ffffff; }
         body { background: var(--bg); color: var(--text); font-family: 'Roboto', sans-serif; margin: 0; padding-bottom: 80px; }
@@ -46,32 +46,26 @@
     </style>
 </head>
 <body>
-
     <div class="header-container">
         <img src="https://github.com/lawbrewing/LawBrewing/blob/main/LBC%20-%20Black%20Transparent%20(1).png?raw=true" alt="Law Brewing" class="backlit-logo">
         <div class="sub-brand">Liquid Attitude Taps</div>
     </div>
-
     <div class="tap-container" id="tap-display"></div>
-
     <div class="button-center">
         <button class="toggle-btn" onclick="toggleSection('archive-wrapper')">View The Cellar</button>
         <button class="toggle-btn" onclick="toggleSection('game-wrapper')">Bar Games</button>
     </div>
-
     <div id="archive-wrapper" class="expand-section">
         <h2 style="text-align:center; font-family:'Oswald'; color:var(--accent); letter-spacing:4px; font-size:2.5rem; margin-bottom:30px;">PAST BREWS & BOTTLES</h2>
         <div class="archive-grid" id="archive-display"></div>
     </div>
-
     <div id="game-wrapper" class="expand-section">
-        <h2 style="text-align:center; font-family:'Bebas Neue'; color:var(--accent); font-size:3rem; letter-spacing:5px; margin-bottom:30px;">BAR GAMES</h2>
         <div class="games-grid">
-            <div class="game-card"><img src="https://github.com/lawbrewing/LawBrewing/blob/main/Gemini_Generated_Image_f46i9af46i9af46i.png?raw=true" class="game-img"><div style="padding:20px; text-align:center;"><h3 style="color:white; font-family:'Roboto Slab'; font-size:1.2rem;">Sheriff of Taps</h3><a href="defender.html" class="game-btn">Play Defender</a></div></div>
-            <div class="game-card"><img src="1766341219164~2.jpg" class="game-img"><div style="padding:20px; text-align:center;"><h3 style="color:white; font-family:'Roboto Slab'; font-size:1.2rem;">Beer Flight Card Game</h3><a href="Thetaproom.html" class="game-btn">Play Taproom</a></div></div>
-            <div class="game-card"><img src="https://github.com/lawbrewing/LawBrewing/blob/main/bardice%20(2).png?raw=true" class="game-img"><div style="padding:20px; text-align:center;"><h3 style="color:white; font-family:'Roboto Slab'; font-size:1.2rem;">Bar Dice</h3><a href="bardice.html" class="game-btn">Play Bar Dice</a></div></div>
-            <div class="game-card"><img src="https://github.com/lawbrewing/LawBrewing/blob/main/ttt.png?raw=true" class="game-img"><div style="padding:20px; text-align:center;"><h3 style="color:white; font-family:'Roboto Slab'; font-size:1.2rem;">Tic Tac Toe</h3><a href="tictactoe.html" class="game-btn">Play Tic Tac Toe</a></div></div>
-            <div class="game-card"><img src="https://github.com/lawbrewing/LawBrewing/blob/main/taproomchaos.png?raw=true" class="game-img"><div style="padding:20px; text-align:center;"><h3 style="color:white; font-family:'Roboto Slab'; font-size:1.2rem;">Taproom Chaos</h3><a href="taproomchaosgame.html" class="game-btn">Play Chaos</a></div></div>
+            <div class="game-card"><img src="https://github.com/lawbrewing/LawBrewing/blob/main/Gemini_Generated_Image_f46i9af46i9af46i.png?raw=true" class="game-img"><div style="padding:20px; text-align:center;"><h3 style="color:white;">Sheriff of Taps</h3><a href="defender.html" class="game-btn">Play Defender</a></div></div>
+            <div class="game-card"><img src="1766341219164~2.jpg" class="game-img"><div style="padding:20px; text-align:center;"><h3 style="color:white;">Beer Flight Card Game</h3><a href="Thetaproom.html" class="game-btn">Play Taproom</a></div></div>
+            <div class="game-card"><img src="https://github.com/lawbrewing/LawBrewing/blob/main/bardice%20(2).png?raw=true" class="game-img"><div style="padding:20px; text-align:center;"><h3 style="color:white;">Bar Dice</h3><a href="bardice.html" class="game-btn">Play Bar Dice</a></div></div>
+            <div class="game-card"><img src="https://github.com/lawbrewing/LawBrewing/blob/main/ttt.png?raw=true" class="game-img"><div style="padding:20px; text-align:center;"><h3 style="color:white;">Tic Tac Toe</h3><a href="tictactoe.html" class="game-btn">Play Tic Tac Toe</a></div></div>
+            <div class="game-card"><img src="https://github.com/lawbrewing/LawBrewing/blob/main/taproomchaos.png?raw=true" class="game-img"><div style="padding:20px; text-align:center;"><h3 style="color:white;">Taproom Chaos</h3><a href="taproomchaosgame.html" class="game-btn">Play Chaos</a></div></div>
         </div>
     </div>
 
@@ -108,17 +102,16 @@
                 try {
                     const rRes = await fetch(SCOREBOARD_URL + '&t=' + cb);
                     const ratingText = await rRes.text();
-                    if (!ratingText.includes("Not Published") && !ratingText.includes("DOCTYPE")) {
-                        const ratingData = parseCSV(ratingText);
-                        ratingData.forEach(r => {
+                    // If Google says "Not Published", this will fail gracefully
+                    if (ratingText && !ratingText.includes("Not Published") && !ratingText.includes("DOCTYPE")) {
+                        parseCSV(ratingText).forEach(r => {
                             if(r[0] && r[1]) ratingMap[r[0].trim()] = parseFloat(r[1]).toFixed(1);
                         });
                     }
-                } catch(e) { console.log("Ratings not ready yet"); }
+                } catch(e) { console.warn("Scoreboard not yet available"); }
 
                 const weights = await wRes.json();
                 const beerData = parseCSV(await mRes.text());
-                
                 const tapContainer = document.getElementById('tap-display');
                 const archiveContainer = document.getElementById('archive-display');
                 tapContainer.innerHTML = ''; archiveContainer.innerHTML = '';
