@@ -14,20 +14,21 @@
         .sub-brand { font-family: 'Oswald', sans-serif; color: var(--accent); text-transform: uppercase; letter-spacing: 6px; margin-top: 15px; font-size: 1.5rem; }
         
         .tap-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 30px; max-width: 1300px; margin: 40px auto; padding: 20px; align-items: stretch; }
+        
         .beer-card { background: var(--card); border-radius: 20px; border: 1px solid #333; display: flex; flex-direction: column; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); height: 100%; }
         
-        .top-rated-ribbon { position: absolute; top: 15px; right: -35px; background: var(--accent); color: #000; padding: 5px 40px; transform: rotate(45deg); font-family: 'Oswald'; font-weight: bold; font-size: 0.8rem; z-index: 10; box-shadow: 0 0 15px rgba(0,0,0,0.5); text-transform: uppercase; animation: pulse-glow 2s infinite ease-in-out; }
-        @keyframes pulse-glow { 0% { box-shadow: 0 0 10px rgba(255,180,0,0.4); } 50% { box-shadow: 0 0 25px rgba(255,180,0,0.8); } 100% { box-shadow: 0 0 10px rgba(255,180,0,0.4); } }
-        
+        .top-rated-ribbon { position: absolute; top: 15px; right: -35px; background: var(--accent); color: #000; padding: 5px 40px; transform: rotate(45deg); font-family: 'Oswald'; font-weight: bold; font-size: 0.8rem; z-index: 10; box-shadow: 0 0 15px rgba(0,0,0,0.5); text-transform: uppercase; }
+
         .beer-name { font-family: 'Oswald', sans-serif; font-size: 2.1rem; margin: 0; text-transform: none !important; line-height: 1.1; }
         .label-art { width: 100%; height: 350px; background-size: contain; background-repeat: no-repeat; background-position: center; background-color: #000; border-bottom: 3px solid var(--accent); }
         .details { padding: 25px; flex-grow: 1; display: flex; flex-direction: column; }
         .beer-name-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 5px; }
         .avg-badge { background: rgba(255,180,0,0.15); color: var(--accent); padding: 4px 10px; border-radius: 8px; font-size: 1.1rem; border: 1px solid rgba(255,180,0,0.4); font-family: 'Oswald'; font-weight: bold; }
+        
         .stats { font-family: 'Oswald', sans-serif; color: var(--accent); font-size: 1.1rem; margin: 10px 0; display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding-bottom: 10px; }
         .description { font-size: 0.95rem; color: #ccc; line-height: 1.5; margin-bottom: 20px; flex-grow: 1; white-space: pre-wrap; }
         
-        .rating-box { background: rgba(255,255,255,0.03); padding: 12px; border-radius: 12px; margin-bottom: 20px; text-align: center; border: 1px solid #333; display: flex; align-items: center; justify-content: center; min-height: 70px; }
+        .rating-box { background: rgba(255,255,255,0.03); padding: 12px; border-radius: 12px; margin-bottom: 20px; text-align: center; border: 1px solid #333; min-height: 70px; display: flex; align-items: center; justify-content: center; }
         .stars { display: flex; flex-direction: row-reverse; justify-content: center; gap: 5px; }
         .stars input { display: none; }
         .stars label { font-size: 2.3rem; color: #333; cursor: pointer; transition: 0.2s; line-height: 1; }
@@ -137,7 +138,6 @@
 
                 const tapContainer = document.getElementById('tap-display');
                 const archiveContainer = document.getElementById('archive-display');
-                
                 if (!tapContainer) return;
 
                 const tapMapping = {
@@ -213,7 +213,7 @@
                     archivedBeers.forEach(b => archiveContainer.innerHTML += b.html);
                 }
 
-            } catch (e) { console.error(e); }
+            } catch (e) { console.error("Update error: ", e); }
         }
 
         function toggleSection(id) {
