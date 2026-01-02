@@ -15,7 +15,7 @@
         .tap-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 30px; max-width: 1300px; margin: 40px auto; padding: 20px; align-items: stretch; }
         .beer-card { background: var(--card); border-radius: 20px; border: 1px solid #333; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); height: 100%; position: relative; }
         
-        /* CENTERED TOP RATED RIBBON */
+        /* RIBBON FIX: VERTICAL CENTERING */
         .top-rated-ribbon { 
             position: absolute; top: 15px; right: -35px; background: var(--accent); color: #000; 
             padding: 5px 40px; transform: rotate(45deg); font-family: 'Oswald'; font-weight: bold; 
@@ -157,6 +157,9 @@
                     const bName = (row[2] || "").trim();
                     if (!bName) return;
 
+                    // FIX: Escape single quotes for JS compatibility
+                    const escapedName = bName.replace(/'/g, "\\'");
+
                     const isTop = top3Names.includes(bName);
                     const topRibbon = isTop ? `<div class="top-rated-ribbon">Top Rated</div>` : '';
                     const avg = ratingMap[bName] ? `<span class="avg-badge">⭐ ${ratingMap[bName]}</span>` : '';
@@ -164,11 +167,11 @@
                     const ratingHTML = `
                         <div class="rating-box" id="box-${i}">
                             <div class="stars">
-                                <input type="radio" id="s5-${i}" onclick="submitRating('${bName}', 5, ${i})"><label for="s5-${i}">★</label>
-                                <input type="radio" id="s4-${i}" onclick="submitRating('${bName}', 4, ${i})"><label for="s4-${i}">★</label>
-                                <input type="radio" id="s3-${i}" onclick="submitRating('${bName}', 3, ${i})"><label for="s3-${i}">★</label>
-                                <input type="radio" id="s2-${i}" onclick="submitRating('${bName}', 2, ${i})"><label for="s2-${i}">★</label>
-                                <input type="radio" id="s1-${i}" onclick="submitRating('${bName}', 1, ${i})"><label for="s1-${i}">★</label>
+                                <input type="radio" id="s5-${i}" onclick="submitRating('${escapedName}', 5, ${i})"><label for="s5-${i}">★</label>
+                                <input type="radio" id="s4-${i}" onclick="submitRating('${escapedName}', 4, ${i})"><label for="s4-${i}">★</label>
+                                <input type="radio" id="s3-${i}" onclick="submitRating('${escapedName}', 3, ${i})"><label for="s3-${i}">★</label>
+                                <input type="radio" id="s2-${i}" onclick="submitRating('${escapedName}', 2, ${i})"><label for="s2-${i}">★</label>
+                                <input type="radio" id="s1-${i}" onclick="submitRating('${escapedName}', 1, ${i})"><label for="s1-${i}">★</label>
                             </div>
                         </div>`;
 
