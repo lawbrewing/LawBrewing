@@ -53,7 +53,7 @@
 
     <div id="archive-wrapper" class="expand-section">
         <h2 style="text-align:center; font-family:'Oswald'; color:var(--accent); letter-spacing:4px; font-size:2.5rem; margin-bottom:30px;">Beer Archives</h2>
-        <div id="archive-display" class="tap-container"></div>
+        <div id="archive-display" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; max-width: 1300px; margin: 0 auto; padding: 20px;"></div>
     </div>
 
     <div id="game-wrapper" class="expand-section">
@@ -92,8 +92,7 @@
 
         function submitRating(beerName, score, cardId) {
             if(localStorage.getItem('voted_' + beerName)) {
-                alert("You've already rated this brew! Cheers!");
-                return;
+                alert("Cheers! You've already rated this one."); return;
             }
             document.getElementById('form_beer').value = beerName;
             document.getElementById('form_score').value = score;
@@ -106,12 +105,11 @@
             try {
                 const cb = new Date().getTime();
                 const [wRes, mRes] = await Promise.all([
-                    fetch('tap_weights.json?t=' + cb).then(r => r.json()).catch(() => ({})),
-                    fetch(MAIN_CSV + '&t=' + cb).then(r => r.text()).catch(() => "")
+                    fetch('tap_weights.json?t=' + cb),
+                    fetch(MAIN_CSV + '&t=' + cb)
                 ]);
-                
-                const weights = wRes;
-                const beerData = parseCSV(mRes);
+                const weights = await wRes.json();
+                const beerData = parseCSV(await mRes.text());
                 
                 let ratingMap = {}; let maxRating = 0; let topBeer = "";
                 try {
@@ -130,47 +128,42 @@
 
                 const tapContainer = document.getElementById('tap-display');
                 const archiveContainer = document.getElementById('archive-display');
-                if (!tapContainer) return;
+                tapContainer.innerHTML = ''; archiveContainer.innerHTML = '';
 
-                const tapMapping = {
-                    "tap 1": { label: "Law", weightKey: "Law Tap" },
-                    "tap 2": { label: "Wisco", weightKey: "Wisco Tap" },
-                    "tap 3": { label: "Nitro", weightKey: "Nitro Tap" }
+                let universalSync = weights["last_updated"] || "--:--";
+
+                // Mapping Sheet Tap 1/2/3 to JSON Keys
+                const tapMap = {
+                    "tap 1": { jsonKey: "Law Tap", brand: "Law" },
+                    "tap 2": { jsonKey: "Wisco Tap", brand: "Wisco" },
+                    "tap 3": { jsonKey: "Nitro Tap", brand: "Nitro" }
                 };
 
-                let activeSlots = { "tap 1": null, "tap 2": null, "tap 3": null };
+                // Create placeholder arrays for sorting
+                let activeTaps = [null, null, null]; // Position 0=Law, 1=Wisco, 2=Nitro
                 let archivedBeers = [];
 
                 beerData.forEach((row, i) => {
                     if (i === 0 || row.length < 3) return;
-                    const rawID = (row[0] || "").trim().toLowerCase();
+                    const tapID = (row[0] || "").trim().toLowerCase();
                     const bName = (row[2] || "").trim();
                     if (!bName) return;
 
                     const isTop = (bName === topBeer && maxRating > 0);
-                    const ribbon = isTop ? `<div class="top-rated-ribbon">Most Popular</div>` : '';
-                    const avg = ratingMap[bName] ? `<span class="avg-badge">⭐ ${ratingMap[bName]}</span>` : '';
-                    const untappdID = (row[1] || "").trim();
-                    const untappdLink = untappdID ? `https://untappd.com/qr/beer/${untappdID}` : null;
-                    
-                    let weightPercent = 0;
-                    let displayName = rawID.toUpperCase();
-                    if (tapMapping[rawID]) {
-                        weightPercent = weights[tapMapping[rawID].weightKey] || 0;
-                        displayName = tapMapping[rawID].label;
-                    }
+                    const untappdUrl = (row[1] || "").trim() ? `https://untappd.com/qr/beer/${row[1].trim()}` : null;
+                    const avgBadge = ratingMap[bName] ? `<span class="avg-badge">⭐ ${ratingMap[bName]}</span>` : '';
 
-                    const cardHTML = `
+                    let cardHTML = `
                         <div class="beer-card">
-                            ${ribbon}
-                            ${untappdLink ? `<a href="${untappdLink}" target="_blank">` : ''}
-                                <div class="label-art" style="background-image: url('${row[4]}'); ${rawID.includes('tap') ? '' : 'height:250px;'}"></div>
-                            ${untappdLink ? `</a>` : ''}
+                            ${isTop ? '<div class="top-rated-ribbon">Most Popular</div>' : ''}
+                            ${untappdUrl ? `<a href="${untappdUrl}" target="_blank">` : ''}
+                                <div class="label-art" style="background-image: url('${row[4]}'); ${!tapID.includes('tap') ? 'height:250px;' : ''}"></div>
+                            ${untappdUrl ? `</a>` : ''}
                             <div class="details">
-                                ${rawID.includes('tap') ? `<div style="font-size:0.8rem; color:#888; letter-spacing:2px; margin-bottom:5px;">${displayName}</div>` : ''}
-                                <div class="beer-name-row"><h2 class="beer-name">${bName}</h2>${avg}</div>
+                                ${tapMap[tapID] ? `<div style="font-size:0.8rem; color:#888; letter-spacing:2px; margin-bottom:5px;">${tapMap[tapID].brand}</div>` : ''}
+                                <div class="beer-name-row"><h2 class="beer-name">${bName}</h2>${avgBadge}</div>
                                 <div class="stats"><span>${row[6]}</span><span>ABV: ${row[3]}</span></div>
-                                ${rawID.includes('tap') ? `<p class="description">${row[5]}</p>` : ''}
+                                ${tapID.includes('tap') ? `<p class="description">${row[5]}</p>` : ''}
                                 <div class="rating-box" id="box-${i}">
                                     <div class="stars">
                                         <input type="radio" id="s5-${i}" onclick="submitRating('${bName}', 5, ${i})"><label for="s5-${i}">★</label>
@@ -180,32 +173,26 @@
                                         <input type="radio" id="s1-${i}" onclick="submitRating('${bName}', 1, ${i})"><label for="s1-${i}">★</label>
                                     </div>
                                 </div>
-                                ${rawID.includes('tap') ? `
-                                    <div class="volume-container"><div class="volume-bar" style="width:${weightPercent}%"></div><div class="volume-text">${Math.round((weightPercent/100)*41)} PINTS LEFT</div></div>
-                                    <div class="tap-timestamp">Sync: ${weights["last_updated"] || '--:--'}</div>
+                                ${tapMap[tapID] ? `
+                                    <div class="volume-container"><div class="volume-bar" style="width:${weights[tapMap[tapID].jsonKey] || 0}%"></div><div class="volume-text">${Math.round(((weights[tapMap[tapID].jsonKey] || 0)/100)*41)} PINTS LEFT</div></div>
+                                    <div class="tap-timestamp">Sync: ${universalSync}</div>
                                 ` : ''}
                             </div>
                         </div>`;
 
-                    if (activeSlots.hasOwnProperty(rawID)) {
-                        activeSlots[rawID] = cardHTML;
-                    } else {
-                        archivedBeers.push({ html: cardHTML, rating: parseFloat(ratingMap[bName] || 0) });
-                    }
+                    if (tapID === "tap 1") activeTaps[0] = cardHTML;
+                    else if (tapID === "tap 2") activeTaps[1] = cardHTML;
+                    else if (tapID === "tap 3") activeTaps[2] = cardHTML;
+                    else archivedBeers.push({ html: cardHTML, score: parseFloat(ratingMap[bName] || 0) });
                 });
 
-                tapContainer.innerHTML = '';
-                ["tap 1", "tap 2", "tap 3"].forEach(id => {
-                    if (activeSlots[id]) tapContainer.innerHTML += activeSlots[id];
-                });
+                // Render Active Taps in fixed order
+                activeTaps.forEach(html => { if(html) tapContainer.innerHTML += html; });
 
-                if (archiveContainer) {
-                    archiveContainer.innerHTML = '';
-                    archivedBeers.sort((a, b) => b.rating - a.rating);
-                    archivedBeers.forEach(b => archiveContainer.innerHTML += b.html);
-                }
+                // Render Archives sorted by score
+                archivedBeers.sort((a,b) => b.score - a.score).forEach(obj => { archiveContainer.innerHTML += obj.html; });
 
-            } catch (e) { console.error("Script Failed: ", e); }
+            } catch (e) { console.error("Update failed:", e); }
         }
 
         function toggleSection(id) {
