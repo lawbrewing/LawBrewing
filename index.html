@@ -9,16 +9,14 @@
         :root { --accent: #ffb400; --bg: #121212; --card: #1e1e1e; --text: #ffffff; }
         body { background: var(--bg); color: var(--text); font-family: 'Roboto', sans-serif; margin: 0; padding-bottom: 80px; }
         
-        /* Branding & Header */
         .header-container { text-align: center; padding: 50px 0 30px; background: radial-gradient(circle, #2a2a2a 0%, #121212 80%); border-bottom: 2px solid var(--accent); }
         .backlit-logo { max-width: 280px; filter: drop-shadow(0 0 10px rgba(255,180,0,0.5)); }
         .sub-brand { font-family: 'Oswald', sans-serif; color: var(--accent); text-transform: uppercase; letter-spacing: 6px; margin-top: 15px; font-size: 1.5rem; }
         
-        /* Layout */
         .tap-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 30px; max-width: 1300px; margin: 40px auto; padding: 20px; align-items: stretch; }
         .beer-card { background: var(--card); border-radius: 20px; border: 1px solid #333; display: flex; flex-direction: column; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); height: 100%; }
         
-        /* Top Rated Ribbon (Perfect Centering) */
+        /* Top Rated Ribbon (Perfectly Centered) */
         .top-rated-ribbon { 
             position: absolute; top: 18px; right: -35px; 
             background: var(--accent); color: #000; 
@@ -142,15 +140,22 @@
                                 const s = parseFloat(r[1]);
                                 const name = r[0].trim();
                                 ratingMap[name] = s.toFixed(1);
-                                ratingsArray.push({ name: name, score: s });
+                                if (s > 0) ratingsArray.push({ name: name, score: s });
                             }
                         });
-                        // Pick Top 3
-                        topRatedNames = ratingsArray
-                            .sort((a, b) => b.score - a.score)
-                            .slice(0, 3)
-                            .filter(b => b.score > 0)
-                            .map(b => b.name);
+
+                        ratingsArray.sort((a, b) => b.score - a.score);
+
+                        if (ratingsArray.length > 0) {
+                            // Find the score threshold for the 3rd place beer
+                            const thresholdIndex = Math.min(2, ratingsArray.length - 1);
+                            const thresholdScore = ratingsArray[thresholdIndex].score;
+
+                            // Take everyone with a score equal to or better than 3rd place
+                            topRatedNames = ratingsArray
+                                .filter(b => b.score >= thresholdScore)
+                                .map(b => b.name);
+                        }
                     }
                 } catch(e) {}
 
@@ -171,7 +176,6 @@
                     const untappdUrl = untappdID ? `https://untappd.com/qr/beer/${untappdID}` : null;
                     const avgBadge = ratingMap[bName] ? `<span class="avg-badge">⭐ ${ratingMap[bName]}</span>` : '';
 
-                    // Weight Lookup from tap_weights.json
                     const pct = weights[tapID] || 0;
 
                     let cardHTML = `
