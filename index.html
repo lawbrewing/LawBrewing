@@ -15,7 +15,7 @@
         .tap-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 30px; max-width: 1300px; margin: 40px auto; padding: 20px; align-items: stretch; }
         .beer-card { background: var(--card); border-radius: 20px; border: 1px solid #333; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); height: 100%; position: relative; }
         
-        /* CENTERED TOP RATED RIBBON */
+        /* IMPROVEMENT 1: VERTICAL TEXT CENTERING */
         .top-rated-ribbon { 
             position: absolute; top: 15px; right: -35px; background: var(--accent); color: #000; 
             padding: 5px 40px; transform: rotate(45deg); font-family: 'Oswald'; font-weight: bold; 
@@ -107,32 +107,19 @@
             return result;
         }
 
-        // CORRECTED RATING FUNCTION
+        // IMPROVEMENT 2: SPAM FIX (LOCAL STORAGE)
         function submitRating(beerName, score, cardId) {
-            // Spam protection
             if (localStorage.getItem('voted_' + beerName)) {
                 alert("Cheers! You've already rated this brew.");
                 return;
             }
-
-            const beerInput = document.getElementById('form_beer');
-            const scoreInput = document.getElementById('form_score');
-            const form = document.getElementById('rating_form');
-
-            if (beerInput && scoreInput && form) {
-                beerInput.value = beerName;
-                scoreInput.value = score;
-                form.submit();
-                
-                // Mark locally as voted
-                localStorage.setItem('voted_' + beerName, 'true');
-
-                // Swap stars for Cheers
-                const box = document.getElementById("box-" + cardId);
-                if (box) {
-                    box.innerHTML = '<div class="thanks-msg" style="display:block">CHEERS! 🍻</div>';
-                }
-            }
+            document.getElementById('form_beer').value = beerName;
+            document.getElementById('form_score').value = score;
+            document.getElementById('rating_form').submit();
+            
+            localStorage.setItem('voted_' + beerName, 'true');
+            const box = document.getElementById(`box-${cardId}`);
+            if (box) box.innerHTML = '<div class="thanks-msg" style="display:block">CHEERS! 🍻</div>';
         }
 
         async function updateDisplay() {
@@ -160,7 +147,7 @@
                     }
                 } catch(e) {}
 
-                // INCLUSIVE TOP 3 LOGIC
+                // IMPROVEMENT 3: INCLUSIVE TOP 3 LOGIC
                 ratingsArray.sort((a, b) => b.score - a.score);
                 const top3Names = ratingsArray.slice(0, 3).map(r => r.name);
 
@@ -180,9 +167,7 @@
                     const topRibbon = isTop ? `<div class="top-rated-ribbon">Top Rated</div>` : '';
                     const avg = ratingMap[bName] ? `<span class="avg-badge">⭐ ${ratingMap[bName]}</span>` : '';
 
-                    // Check if already voted to determine what to show
                     const hasVoted = localStorage.getItem('voted_' + bName);
-                    
                     const ratingHTML = `
                         <div class="rating-box" id="box-${i}">
                             ${hasVoted ? 
