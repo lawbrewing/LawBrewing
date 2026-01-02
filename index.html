@@ -16,16 +16,17 @@
         
         /* LAYOUT */
         .tap-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 30px; max-width: 1300px; margin: 40px auto; padding: 20px; align-items: stretch; }
-        .beer-card { background: var(--card); border-radius: 20px; border: 1px solid #333; display: flex; flex-direction: column; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.5); height: 100%; overflow: visible; }
+        .beer-card { background: var(--card); border-radius: 20px; border: 1px solid #333; display: flex; flex-direction: column; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); height: 100%; }
         
-        /* RIBBON & CASE SENSITIVITY */
-        .top-rated-ribbon { position: absolute; top: 15px; right: -10px; background: var(--accent); color: #000; padding: 5px 35px; transform: rotate(15deg); font-family: 'Oswald'; font-weight: bold; font-size: 0.8rem; letter-spacing: 1px; z-index: 10; box-shadow: 0 4px 10px rgba(0,0,0,0.4); text-transform: uppercase; animation: pulse-glow 2s infinite ease-in-out; }
+        /* RIBBON & TITLES */
+        .top-rated-ribbon { position: absolute; top: 15px; right: -35px; background: var(--accent); color: #000; padding: 5px 40px; transform: rotate(45deg); font-family: 'Oswald'; font-weight: bold; font-size: 0.8rem; z-index: 10; box-shadow: 0 0 15px rgba(0,0,0,0.5); text-transform: uppercase; animation: pulse-glow 2s infinite ease-in-out; }
         @keyframes pulse-glow { 0% { box-shadow: 0 0 10px rgba(255,180,0,0.4); } 50% { box-shadow: 0 0 25px rgba(255,180,0,0.8); } 100% { box-shadow: 0 0 10px rgba(255,180,0,0.4); } }
         .beer-name { font-family: 'Oswald', sans-serif; font-size: 2.1rem; margin: 0; text-transform: none !important; line-height: 1.1; }
 
-        /* ART & DETAILS */
-        .label-art { width: 100%; height: 350px; background-size: contain; background-repeat: no-repeat; background-position: center; background-color: #000; border-bottom: 3px solid var(--accent); border-top-left-radius: 20px; border-top-right-radius: 20px; transition: transform 0.3s; }
-        .label-art:hover { transform: scale(1.02); }
+        /* ART */
+        .label-art { width: 100%; height: 350px; background-size: contain; background-repeat: no-repeat; background-position: center; background-color: #000; border-bottom: 3px solid var(--accent); transition: transform 0.3s; }
+        
+        /* DETAILS */
         .details { padding: 25px; flex-grow: 1; display: flex; flex-direction: column; }
         .beer-name-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 5px; }
         .avg-badge { background: rgba(255,180,0,0.15); color: var(--accent); padding: 4px 10px; border-radius: 8px; font-size: 1.1rem; border: 1px solid rgba(255,180,0,0.4); font-family: 'Oswald'; font-weight: bold; }
@@ -46,7 +47,7 @@
         .volume-text { position: absolute; width: 100%; text-align: center; top: 6px; font-weight: bold; font-size: 0.9rem; color: white; text-shadow: 1px 1px 3px black; }
         .tap-timestamp { font-size: 0.75rem; color: #777; text-align: center; margin-top: 10px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: bold; border-top: 1px solid #2a2a2a; padding-top: 8px; }
 
-        /* BUTTONS & ARCHIVE */
+        /* TOGGLE BUTTONS */
         .button-center { display: flex; justify-content: center; gap: 20px; margin: 40px auto; flex-wrap: wrap; }
         .toggle-btn { padding: 12px 30px; background: transparent; border: 2px solid var(--accent); color: var(--accent); font-family: 'Oswald'; cursor: pointer; border-radius: 50px; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s; }
         .toggle-btn:hover { background: var(--accent); color: #000; }
@@ -147,71 +148,77 @@
                 const archiveContainer = document.getElementById('archive-display');
                 tapContainer.innerHTML = ''; archiveContainer.innerHTML = '';
 
-                let activeBeers = [];
+                const tapMapping = {
+                    "tap 1": { label: "Law", weightKey: "Law Tap" },
+                    "tap 2": { label: "Wisco", weightKey: "Wisco Tap" },
+                    "tap 3": { label: "Nitro", weightKey: "Nitro Tap" }
+                };
+
+                let activeSlots = { "tap 1": null, "tap 2": null, "tap 3": null };
                 let archivedBeers = [];
-                let universalSync = weights["last_updated"] || "--:--";
 
                 beerData.forEach((row, i) => {
                     if (i === 0 || row.length < 3) return;
-                    const tapID = (row[0] || "").trim().toLowerCase();
+                    const rawID = (row[0] || "").trim().toLowerCase();
                     const bName = (row[2] || "").trim();
                     if (!bName) return;
 
-                    // DIRECT WEIGHT MAPPING
-                    let pct = 0; let label = "";
-                    if (tapID === "tap 1") { pct = weights["Law Tap"]; label = "Law"; }
-                    else if (tapID === "tap 2") { pct = weights["Wisco Tap"]; label = "Wisco"; }
-                    else if (tapID === "tap 3") { pct = weights["Nitro Tap"]; label = "Nitro"; }
-
-                    const beerObj = {
-                        id: i, name: bName, tapID: tapID, displayName: label || tapID.toUpperCase(),
-                        untappd: (row[1] || "").trim() ? `https://untappd.com/qr/beer/${row[1].trim()}` : null,
-                        abv: row[3], label: row[4], desc: row[5], style: row[6],
-                        rating: parseFloat(ratingMap[bName] || 0), percent: pct || 0
-                    };
-
-                    if (tapID.includes("tap")) activeBeers.push(beerObj);
-                    else archivedBeers.push(beerObj);
-                });
-
-                // SORTING
-                const sortOrder = ["tap 1", "tap 2", "tap 3"];
-                activeBeers.sort((a, b) => sortOrder.indexOf(a.tapID) - sortOrder.indexOf(b.tapID));
-                archivedBeers.sort((a, b) => b.rating - a.rating);
-
-                const render = (beer, isArchive) => {
-                    const isTop = (beer.name === topBeer && maxRating > 0);
+                    const isTop = (bName === topBeer && maxRating > 0);
                     const ribbon = isTop ? `<div class="top-rated-ribbon">Most Popular</div>` : '';
-                    const avg = ratingMap[beer.name] ? `<span class="avg-badge">⭐ ${ratingMap[beer.name]}</span>` : '';
-                    const artStyle = `background-image: url('${beer.label}'); ${isArchive ? 'height:250px;' : ''}`;
+                    const avg = ratingMap[bName] ? `<span class="avg-badge">⭐ ${ratingMap[bName]}</span>` : '';
+                    const untappdID = (row[1] || "").trim();
+                    const untappdLink = untappdID ? `https://untappd.com/qr/beer/${untappdID}` : null;
                     
-                    const imgHTML = beer.untappd ? `<a href="${beer.untappd}" target="_blank"><div class="label-art" style="${artStyle}"></div></a>` : `<div class="label-art" style="${artStyle}"></div>`;
+                    let weightPercent = 0;
+                    let displayName = rawID.toUpperCase();
+                    if (tapMapping[rawID]) {
+                        weightPercent = weights[tapMapping[rawID].weightKey] || 0;
+                        displayName = tapMapping[rawID].label;
+                    }
 
-                    return `
+                    const cardHTML = `
                         <div class="beer-card">
                             ${ribbon}
-                            ${imgHTML}
+                            ${untappdLink ? `<a href="${untappdLink}" target="_blank">` : ''}
+                                <div class="label-art" style="background-image: url('${row[4]}'); ${rawID.includes('tap') ? '' : 'height:250px;'}"></div>
+                            ${untappdLink ? `</a>` : ''}
                             <div class="details">
-                                ${!isArchive ? `<div style="font-size:0.8rem; color:#888; letter-spacing:2px; margin-bottom:5px;">${beer.displayName}</div>` : ''}
-                                <div class="beer-name-row"><h2 class="beer-name">${beer.name}</h2>${avg}</div>
-                                <div class="stats"><span>${beer.style}</span><span>ABV: ${beer.abv}</span></div>
-                                ${!isArchive ? `<p class="description">${beer.desc}</p>` : ''}
-                                <div class="rating-box" id="box-${beer.id}">
+                                ${rawID.includes('tap') ? `<div style="font-size:0.8rem; color:#888; letter-spacing:2px; margin-bottom:5px;">${displayName}</div>` : ''}
+                                <div class="beer-name-row"><h2 class="beer-name">${bName}</h2>${avg}</div>
+                                <div class="stats"><span>${row[6]}</span><span>ABV: ${row[3]}</span></div>
+                                ${rawID.includes('tap') ? `<p class="description">${row[5]}</p>` : ''}
+                                <div class="rating-box" id="box-${i}">
                                     <div class="stars">
-                                        <input type="radio" id="s5-${beer.id}" onclick="submitRating('${beer.name}', 5, ${beer.id})"><label for="s5-${beer.id}">★</label>
-                                        <input type="radio" id="s4-${beer.id}" onclick="submitRating('${beer.name}', 4, ${beer.id})"><label for="s4-${beer.id}">★</label>
-                                        <input type="radio" id="s3-${beer.id}" onclick="submitRating('${beer.name}', 3, ${beer.id})"><label for="s3-${beer.id}">★</label>
-                                        <input type="radio" id="s2-${beer.id}" onclick="submitRating('${beer.name}', 2, ${beer.id})"><label for="s2-${beer.id}">★</label>
-                                        <input type="radio" id="s1-${beer.id}" onclick="submitRating('${beer.name}', 1, ${beer.id})"><label for="s1-${beer.id}">★</label>
+                                        <input type="radio" id="s5-${i}" onclick="submitRating('${bName}', 5, ${i})"><label for="s5-${i}">★</label>
+                                        <input type="radio" id="s4-${i}" onclick="submitRating('${bName}', 4, ${i})"><label for="s4-${i}">★</label>
+                                        <input type="radio" id="s3-${i}" onclick="submitRating('${bName}', 3, ${i})"><label for="s3-${i}">★</label>
+                                        <input type="radio" id="s2-${i}" onclick="submitRating('${bName}', 2, ${i})"><label for="s2-${i}">★</label>
+                                        <input type="radio" id="s1-${i}" onclick="submitRating('${bName}', 1, ${i})"><label for="s1-${i}">★</label>
                                     </div>
                                 </div>
-                                ${!isArchive ? `<div class="volume-container"><div class="volume-bar" style="width:${beer.percent}%"></div><div class="volume-text">${Math.round((beer.percent/100)*41)} PINTS LEFT</div></div><div class="tap-timestamp">Sync: ${universalSync}</div>` : ''}
+                                ${rawID.includes('tap') ? `
+                                    <div class="volume-container"><div class="volume-bar" style="width:${weightPercent}%"></div><div class="volume-text">${Math.round((weightPercent/100)*41)} PINTS LEFT</div></div>
+                                    <div class="tap-timestamp">Sync: ${weights["last_updated"] || '--:--'}</div>
+                                ` : ''}
                             </div>
                         </div>`;
-                };
 
-                activeBeers.forEach(b => tapContainer.innerHTML += render(b, false));
-                archivedBeers.forEach(b => archiveContainer.innerHTML += render(b, true));
+                    if (activeSlots.hasOwnProperty(rawID)) {
+                        activeSlots[rawID] = cardHTML;
+                    } else {
+                        archivedBeers.push({ html: cardHTML, rating: parseFloat(ratingMap[bName] || 0) });
+                    }
+                });
+
+                // RENDER ACTIVE SLOTS IN ORDER
+                ["tap 1", "tap 2", "tap 3"].forEach(id => {
+                    if (activeSlots[id]) tapContainer.innerHTML += activeSlots[id];
+                });
+
+                // RENDER ARCHIVE BY POPULARITY
+                archivedBeers.sort((a, b) => b.rating - a.rating);
+                archivedBeers.forEach(b => archiveContainer.innerHTML += b.html);
+
             } catch (e) { console.error(e); }
         }
 

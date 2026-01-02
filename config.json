@@ -1,0 +1,24 @@
+{
+    "FAUXMO": {
+        "ip_address": "auto"
+    },
+    "PLUGINS": {
+        "CommandLinePlugin": {
+            "path": "~/law-brewing/config.json",
+            "DEVICES": [
+                {
+                    "name": "Bar Display",
+                    "port": 49991,
+                    "on_cmd": "python3 ~/law-brewing/hub_controller.py --room 'Bar'",
+                    "off_cmd": "echo 'off'"
+                },
+                {
+                    "name": "Kitchen Display",
+                    "port": 49992,
+                    "on_cmd": "python3 ~/law-brewing/hub_controller.py --room 'Kitchen Display'",
+                    "off_cmd": "echo 'off'"
+                }
+            ]
+        }
+    }
+}
