@@ -10,8 +10,6 @@ PORT = 1234
 PUSH_COOLDOWN = 15  # Seconds to wait between GitHub pushes
 
 TAP_CONFIG = {
-    # 4500g = ~9.9lbs (Empty Shell)
-    # 23600g = ~52lbs (Full Keg)
     '192.168.86.47':  {'name': 'Law Tap',   'empty': 4500, 'full': 23600},
     '192.168.86.116': {'name': 'Wisco Tap', 'empty': 4500, 'full': 23600},
     '192.168.86.45':  {'name': 'Nitro Tap', 'empty': 4500, 'full': 23600}
@@ -44,10 +42,11 @@ def sync_to_github():
         with open(WEIGHTS_FILE, 'w') as f:
             json.dump(current_weights, f, indent=4)
         
-        # Git Sync
+        # Git Sync Logic
         os.system("git config user.email 'bot@lawbrewing.com'")
         os.system("git config user.name 'BeerBot'")
         
+        # Pull with rebase ensures we don't get 'rejected' errors
         cmd = (
             f"git add {WEIGHTS_FILE} && "
             "git commit -m 'Scale Update' && "
@@ -63,6 +62,7 @@ def sync_to_github():
         print(f"⚠️ GitHub Sync Failed: {e}")
 
 def start_server():
+    print("🚀 Initializing Socket...")
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     
@@ -78,29 +78,28 @@ def start_server():
         try:
             conn, addr = sock.accept()
             tap_ip = addr[0]
+            # Increased timeout to 10s to prevent 'Connection timed out' errors
             conn.settimeout(10.0)
 
             while True:
                 raw_data = conn.recv(1024).decode('utf-8', errors='ignore')
                 if not raw_data: break 
                 
-                # 1. Clean Data: Replace Nulls with SPACE (avoids merging numbers)
+                # Clean Data: Replace Nulls with SPACE
                 clean_data = raw_data.replace('\x00', ' ').strip()
                 
-                # 2. Extract any number found after "vw"
+                # Extract number after "vw"
                 weight_match = re.search(r"vw.*?(-?\d+\.?\d*)", clean_data)
 
                 if weight_match and tap_ip in TAP_CONFIG:
                     try:
                         raw_weight = float(weight_match.group(1))
                         
-                        # --- THE BOUNCER (Strict Filter) ---
-                        # If it's not a keg (3.5kg to 30kg), ignore it.
-                        if raw_weight < 3500 or raw_weight > 30000:
-                            # print(f"🗑️ Ignoring Garbage: {raw_weight}")
+                        # --- THE BOUNCER ---
+                        # Allow 0 (removed scale) OR 3.5kg-30kg (active kegs)
+                        if raw_weight != 0 and (raw_weight < 3500 or raw_weight > 30000):
                             continue
                         
-                        # If we get here, it's REAL DATA
                         tap_name = TAP_CONFIG[tap_ip]['name']
                         percent = calculate_percent(raw_weight, tap_ip)
                         
@@ -110,10 +109,8 @@ def start_server():
                             current_weights[tap_name] = percent
                             print(f"🍺 {tap_name} Update: {raw_weight}g -> {percent}%")
                             sync_to_github()
-                        else:
-                             # print(f"✅ {tap_name} Steady: {raw_weight}g")
-                             pass
-
+                        
+                        # Send acknowledgment back to scale
                         conn.sendall(b'\x00\x00\x01\x00\xc8')
                     except ValueError:
                         pass
@@ -122,7 +119,9 @@ def start_server():
                     conn.sendall(b'\x00\x00\x01\x00\xc8')
 
         except Exception as e:
-            pass
+            # Only print error if it's not a standard silent timeout
+            if "timed out" not in str(e):
+                print(f"⚠️ Connection Error: {e}")
         finally:
             try: conn.close()
             except: pass
