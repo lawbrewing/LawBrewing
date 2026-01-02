@@ -9,25 +9,22 @@
         :root { --accent: #ffb400; --bg: #121212; --card: #1e1e1e; --text: #ffffff; }
         body { background: var(--bg); color: var(--text); font-family: 'Roboto', sans-serif; margin: 0; padding-bottom: 80px; }
         
-        /* Branding & Header */
         .header-container { text-align: center; padding: 50px 0 30px; background: radial-gradient(circle, #2a2a2a 0%, #121212 80%); border-bottom: 2px solid var(--accent); }
         .backlit-logo { max-width: 280px; filter: drop-shadow(0 0 10px rgba(255,180,0,0.5)); }
         .sub-brand { font-family: 'Oswald', sans-serif; color: var(--accent); text-transform: uppercase; letter-spacing: 6px; margin-top: 15px; font-size: 1.5rem; }
         
-        /* Layout & Taps */
         .tap-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 30px; max-width: 1300px; margin: 40px auto; padding: 20px; align-items: stretch; }
         .beer-card { background: var(--card); border-radius: 20px; border: 1px solid #333; display: flex; flex-direction: column; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); height: 100%; }
         
-        /* Top Rated Ribbon (Perfect Corner Placement) */
         .top-rated-ribbon { position: absolute; top: 15px; right: -35px; background: var(--accent); color: #000; padding: 5px 40px; transform: rotate(45deg); font-family: 'Oswald'; font-weight: bold; font-size: 0.8rem; z-index: 10; box-shadow: 0 0 15px rgba(0,0,0,0.5); text-transform: uppercase; }
         
-        /* Case Sensitive Name */
-        .beer-name { font-family: 'Oswald', sans-serif; font-size: 2.1rem; margin: 0; text-transform: none !important; line-height: 1.1; }
-        
+        /* Fixed Header Row for Name & Rating */
+        .beer-name-row { display: flex; justify-content: space-between; align-items: center; gap: 15px; margin-bottom: 5px; width: 100%; }
+        .beer-name { font-family: 'Oswald', sans-serif; font-size: 1.9rem; margin: 0; text-transform: none !important; line-height: 1.1; flex: 1; }
+        .avg-badge { background: rgba(255,180,0,0.15); color: var(--accent); padding: 4px 12px; border-radius: 8px; font-size: 1.1rem; border: 1px solid rgba(255,180,0,0.4); font-family: 'Oswald'; font-weight: bold; white-space: nowrap; flex-shrink: 0; }
+
         .label-art { width: 100%; height: 350px; background-size: contain; background-repeat: no-repeat; background-position: center; background-color: #000; border-bottom: 3px solid var(--accent); }
         .details { padding: 25px; flex-grow: 1; display: flex; flex-direction: column; }
-        .beer-name-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 5px; }
-        .avg-badge { background: rgba(255,180,0,0.15); color: var(--accent); padding: 4px 10px; border-radius: 8px; font-size: 1.1rem; border: 1px solid rgba(255,180,0,0.4); font-family: 'Oswald'; font-weight: bold; }
         .stats { font-family: 'Oswald', sans-serif; color: var(--accent); font-size: 1.1rem; margin: 10px 0; display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding-bottom: 10px; }
         .description { font-size: 0.95rem; color: #ccc; line-height: 1.5; margin-bottom: 20px; flex-grow: 1; white-space: pre-wrap; }
         
@@ -144,11 +141,11 @@
 
                 let universalSync = weights["last_updated"] || "--:--";
                 
-                // Map Google Sheet Tap IDs to Brand Names & JSON keys
-                const tapConfig = {
-                    "tap 1": { brand: "Law", weightKey: "Law Tap" },
-                    "tap 2": { brand: "Wisco", weightKey: "Wisco Tap" },
-                    "tap 3": { brand: "Nitro", weightKey: "Nitro Tap" }
+                // MAPPING: Ensure these match your JSON keys EXACTLY
+                const tapMap = {
+                    "tap 1": { weightKey: "Law Tap", brand: "Law" },
+                    "tap 2": { weightKey: "Wisco Tap", brand: "Wisco" },
+                    "tap 3": { weightKey: "Nitro Tap", brand: "Nitro" }
                 };
 
                 beerData.forEach((row, i) => {
@@ -161,12 +158,12 @@
                     const untappdUrl = (row[1] || "").trim() ? `https://untappd.com/qr/beer/${row[1].trim()}` : null;
                     const avgBadge = ratingMap[bName] ? `<span class="avg-badge">⭐ ${ratingMap[bName]}</span>` : '';
 
-                    // Get weight data
+                    // Weight logic
                     let weightPct = 0;
-                    let subBrand = tapID.toUpperCase();
-                    if (tapConfig[tapID]) {
-                        weightPct = weights[tapConfig[tapID].weightKey] || 0;
-                        subBrand = tapConfig[tapID].brand;
+                    let brandLabel = tapID.toUpperCase();
+                    if (tapMap[tapID]) {
+                        weightPct = weights[tapMap[tapID].weightKey] || 0;
+                        brandLabel = tapMap[tapID].brand;
                     }
 
                     const cardHTML = `
@@ -176,8 +173,11 @@
                                 <div class="label-art" style="background-image: url('${row[4]}'); ${!tapID.includes('tap') ? 'height:250px;' : ''}"></div>
                             ${untappdUrl ? `</a>` : ''}
                             <div class="details">
-                                ${tapID.includes('tap') ? `<div style="font-size:0.8rem; color:#888; letter-spacing:2px; margin-bottom:5px;">${subBrand}</div>` : ''}
-                                <div class="beer-name-row"><h2 class="beer-name">${bName}</h2>${avgBadge}</div>
+                                ${tapID.includes('tap') ? `<div style="font-size:0.8rem; color:#888; letter-spacing:2px; margin-bottom:5px;">${brandLabel}</div>` : ''}
+                                <div class="beer-name-row">
+                                    <h2 class="beer-name">${bName}</h2>
+                                    ${avgBadge}
+                                </div>
                                 <div class="stats"><span>${row[6]}</span><span>ABV: ${row[3]}</span></div>
                                 ${tapID.includes('tap') ? `<p class="description">${row[5]}</p>` : ''}
                                 <div class="rating-box" id="box-${i}">
@@ -202,7 +202,7 @@
                         archiveContainer.innerHTML += cardHTML;
                     }
                 });
-            } catch (e) { console.error("Update error: ", e); }
+            } catch (e) { console.error("Display Update Error:", e); }
         }
 
         function toggleSection(id) {
