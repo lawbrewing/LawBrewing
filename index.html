@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Law Brewing Co. | Live Taproom</title>
+    <title>Law Brewing | Live Taproom</title>
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Roboto:wght@300;400&family=Bebas+Neue&family=Roboto+Slab:wght@700&display=swap" rel="stylesheet">
     <style>
         :root { --accent: #ffb400; --bg: #121212; --card: #1e1e1e; --text: #ffffff; }
@@ -15,14 +15,18 @@
         .tap-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 30px; max-width: 1300px; margin: 40px auto; padding: 20px; align-items: stretch; }
         .beer-card { background: var(--card); border-radius: 20px; border: 1px solid #333; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); height: 100%; position: relative; }
         
-        /* TOP RATED GLOWING RIBBON */
+        /* HALL OF FAME / MOST POPULAR RIBBON */
         .top-rated-ribbon { position: absolute; top: 15px; right: -35px; background: var(--accent); color: #000; padding: 5px 40px; transform: rotate(45deg); font-family: 'Oswald'; font-weight: bold; font-size: 0.8rem; letter-spacing: 1px; z-index: 10; box-shadow: 0 0 20px rgba(255,180,0,0.6); text-transform: uppercase; animation: pulse-glow 2s infinite ease-in-out; }
         @keyframes pulse-glow { 0% { box-shadow: 0 0 10px rgba(255,180,0,0.4); } 50% { box-shadow: 0 0 25px rgba(255,180,0,0.8); } 100% { box-shadow: 0 0 10px rgba(255,180,0,0.4); } }
 
-        .label-art { width: 100%; height: 350px; background-size: contain; background-repeat: no-repeat; background-position: center; background-color: #000; border-bottom: 3px solid var(--accent); }
+        /* CASE SENSITIVE NAME */
+        .beer-name { font-family: 'Oswald', sans-serif; font-size: 2.1rem; margin: 0; text-transform: none !important; line-height: 1.1; }
+
+        .label-art { width: 100%; height: 350px; background-size: contain; background-repeat: no-repeat; background-position: center; background-color: #000; border-bottom: 3px solid var(--accent); transition: transform 0.3s; }
+        .label-art:hover { transform: scale(1.02); }
+        
         .details { padding: 25px; flex-grow: 1; display: flex; flex-direction: column; }
         .beer-name-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 5px; }
-        .beer-name { font-family: 'Oswald', sans-serif; font-size: 2.1rem; margin: 0; text-transform: uppercase; line-height: 1.1; }
         .avg-badge { background: rgba(255,180,0,0.15); color: var(--accent); padding: 4px 10px; border-radius: 8px; font-size: 1.1rem; border: 1px solid rgba(255,180,0,0.4); font-family: 'Oswald'; font-weight: bold; white-space: nowrap; }
 
         .stats { font-family: 'Oswald', sans-serif; color: var(--accent); font-size: 1.1rem; margin: 10px 0; display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding-bottom: 10px; }
@@ -63,7 +67,7 @@
     </div>
 
     <div id="archive-wrapper" class="expand-section">
-        <h2 style="text-align:center; font-family:'Oswald'; color:var(--accent); letter-spacing:4px; font-size:2.5rem; margin-bottom:30px;">PAST BREWS & BOTTLES</h2>
+        <h2 style="text-align:center; font-family:'Oswald'; color:var(--accent); letter-spacing:4px; font-size:2.5rem; margin-bottom:30px;">Beer Archives</h2>
         <div id="archive-display" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; max-width: 1300px; margin: 0 auto; padding: 20px;"></div>
     </div>
 
@@ -86,6 +90,9 @@
     <script>
         const MAIN_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQWqyJ5-pMWhRUkkZLoHdmFPtOHJozHRJkL9c0ivSSY9J7Fp0lto4W05tH-XbFelBL-htJZXedhv7i3/pub?output=csv';
         const SCOREBOARD_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRHD6zTvSE5HfErbLPAHhb0NyXDLuvt_cpOEQxr76BFNpN-KgbL3y68LIogt1aEhVAxIP4JU9t1Kte1/pub?gid=1912157964&single=true&output=csv";
+        
+        // Define our fixed tap display order
+        const tapOrderMap = { "tap 1": "Law", "tap 2": "Wisco", "tap 3": "Nitro" };
 
         function parseCSV(data) {
             const result = []; let row = []; let col = ''; let inQuotes = false;
@@ -102,10 +109,19 @@
         }
 
         function submitRating(beerName, score, cardId) {
+            // SPAM PROTECTION: Local Storage check
+            if(localStorage.getItem('voted_' + beerName)) {
+                alert("You've already rated " + beerName + "! Cheers!");
+                return;
+            }
+
             document.getElementById('form_beer').value = beerName;
             document.getElementById('form_score').value = score;
             document.getElementById('rating_form').submit();
             
+            // Mark locally so they can't spam
+            localStorage.setItem('voted_' + beerName, 'true');
+
             const box = document.getElementById(`box-${cardId}`);
             box.innerHTML = '<div class="thanks-msg" style="display:block">CHEERS! 🍻</div>';
         }
@@ -129,6 +145,7 @@
                             if(r[0] && r[1]) {
                                 const s = parseFloat(r[1]);
                                 ratingMap[r[0].trim()] = s.toFixed(1);
+                                // Global winner logic
                                 if (s > maxRating) { maxRating = s; topBeer = r[0].trim(); }
                             }
                         });
@@ -137,66 +154,112 @@
 
                 const tapContainer = document.getElementById('tap-display');
                 const archiveContainer = document.getElementById('archive-display');
+                
                 tapContainer.innerHTML = ''; archiveContainer.innerHTML = '';
 
                 let universalSync = weights["last_updated"] || weights["updated"] || weights["time"] || "--:--";
 
+                let activeBeers = [];
+                let archivedBeers = [];
+
                 beerData.forEach((row, i) => {
                     if (i === 0 || row.length < 3) return;
-                    const tapID = (row[0] || "").trim();
+                    const tapID = (row[0] || "").trim().toLowerCase();
+                    const untappdID = (row[1] || "").trim(); // COLUMN 2: Untappd ID
                     const bName = (row[2] || "").trim();
                     if (!bName) return;
 
-                    const isTop = (bName === topBeer && maxRating > 0);
-                    const topRibbon = isTop ? `<div class="top-rated-ribbon">Top Rated</div>` : '';
-                    const avg = ratingMap[bName] ? `<span class="avg-badge">⭐ ${ratingMap[bName]}</span>` : '';
+                    const beerObj = {
+                        id: i,
+                        tapID: tapID,
+                        displayName: tapOrderMap[tapID] || tapID.toUpperCase(),
+                        name: bName,
+                        abv: row[3],
+                        label: row[4],
+                        desc: row[5],
+                        style: row[6],
+                        // Auto-generate URL from ID in Column 2
+                        untappd: untappdID ? `https://untappd.com/qr/beer/${untappdID}` : null,
+                        rating: parseFloat(ratingMap[bName] || 0)
+                    };
+
+                    if (tapID.includes("tap")) {
+                        activeBeers.push(beerObj);
+                    } else {
+                        archivedBeers.push(beerObj);
+                    }
+                });
+
+                // 1. Sort Active: Law -> Wisco -> Nitro
+                activeBeers.sort((a, b) => {
+                    const order = ["tap 1", "tap 2", "tap 3"];
+                    return order.indexOf(a.tapID) - order.indexOf(b.tapID);
+                });
+
+                // 2. Sort Archive: Highest Rating (Most Popular) first
+                archivedBeers.sort((a, b) => b.rating - a.rating);
+
+                const buildBeerHTML = (beer, isArchive = false) => {
+                    const isTop = (beer.name === topBeer && maxRating > 0);
+                    const topRibbon = isTop ? `<div class="top-rated-ribbon">Most Popular</div>` : '';
+                    const avg = ratingMap[beer.name] ? `<span class="avg-badge">⭐ ${ratingMap[beer.name]}</span>` : '';
+                    const pct = weights[beer.tapID] || 0;
+
+                    // Image wrapper logic
+                    const labelStyle = `background-image: url('${beer.label}'); ${isArchive ? 'height:250px;' : ''}`;
+                    const imgHTML = beer.untappd 
+                        ? `<a href="${beer.untappd}" target="_blank"><div class="label-art" style="${labelStyle}"></div></a>`
+                        : `<div class="label-art" style="${labelStyle}"></div>`;
 
                     const ratingHTML = `
-                        <div class="rating-box" id="box-${i}">
+                        <div class="rating-box" id="box-${beer.id}">
                             <div class="stars">
-                                <input type="radio" id="s5-${i}" onclick="submitRating('${bName}', 5, ${i})"><label for="s5-${i}">★</label>
-                                <input type="radio" id="s4-${i}" onclick="submitRating('${bName}', 4, ${i})"><label for="s4-${i}">★</label>
-                                <input type="radio" id="s3-${i}" onclick="submitRating('${bName}', 3, ${i})"><label for="s3-${i}">★</label>
-                                <input type="radio" id="s2-${i}" onclick="submitRating('${bName}', 2, ${i})"><label for="s2-${i}">★</label>
-                                <input type="radio" id="s1-${i}" onclick="submitRating('${bName}', 1, ${i})"><label for="s1-${i}">★</label>
+                                <input type="radio" id="s5-${beer.id}" onclick="submitRating('${beer.name}', 5, ${beer.id})"><label for="s5-${beer.id}">★</label>
+                                <input type="radio" id="s4-${beer.id}" onclick="submitRating('${beer.name}', 4, ${beer.id})"><label for="s4-${beer.id}">★</label>
+                                <input type="radio" id="s3-${beer.id}" onclick="submitRating('${beer.name}', 3, ${beer.id})"><label for="s3-${beer.id}">★</label>
+                                <input type="radio" id="s2-${beer.id}" onclick="submitRating('${beer.name}', 2, ${beer.id})"><label for="s2-${beer.id}">★</label>
+                                <input type="radio" id="s1-${beer.id}" onclick="submitRating('${beer.name}', 1, ${beer.id})"><label for="s1-${beer.id}">★</label>
                             </div>
                         </div>`;
 
-                    if (tapID.toLowerCase().includes("tap")) {
-                        const pct = weights[tapID] || 0;
-                        tapContainer.innerHTML += `
+                    if (!isArchive) {
+                        return `
                             <div class="beer-card">
                                 ${topRibbon}
-                                <div class="label-art" style="background-image: url('${row[4]}');"></div>
+                                ${imgHTML}
                                 <div class="details">
-                                    <div style="font-size:0.8rem; color:#888; letter-spacing:2px; margin-bottom:5px;">${tapID}</div>
+                                    <div style="font-size:0.8rem; color:#888; letter-spacing:2px; margin-bottom:5px;">${beer.displayName}</div>
                                     <div class="beer-name-row">
-                                        <h2 class="beer-name">${bName}</h2>
+                                        <h2 class="beer-name">${beer.name}</h2>
                                         ${avg}
                                     </div>
-                                    <div class="stats"><span>${row[6]}</span><span>ABV: ${row[3]}</span></div>
-                                    <p class="description">${row[5]}</p>
+                                    <div class="stats"><span>${beer.style}</span><span>ABV: ${beer.abv}</span></div>
+                                    <p class="description">${beer.desc}</p>
                                     ${ratingHTML}
                                     <div class="volume-container"><div class="volume-bar" style="width:${pct}%"></div><div class="volume-text">${Math.round((pct/100)*41)} PINTS LEFT</div></div>
                                     <div class="tap-timestamp">Sync: ${universalSync}</div>
                                 </div>
                             </div>`;
                     } else {
-                        archiveContainer.innerHTML += `
+                        return `
                             <div class="beer-card">
                                 ${topRibbon}
-                                <div class="label-art" style="height:250px; background-image: url('${row[4]}');"></div>
+                                ${imgHTML}
                                 <div class="details">
                                     <div class="beer-name-row">
-                                        <h2 class="beer-name" style="font-size:1.5rem;">${bName}</h2>
+                                        <h2 class="beer-name" style="font-size:1.5rem;">${beer.name}</h2>
                                         ${avg}
                                     </div>
-                                    <div class="stats"><span>${row[6]}</span><span>ABV: ${row[3]}</span></div>
+                                    <div class="stats"><span>${beer.style}</span><span>ABV: ${beer.abv}</span></div>
                                     ${ratingHTML}
                                 </div>
                             </div>`;
                     }
-                });
+                };
+
+                activeBeers.forEach(b => tapContainer.innerHTML += buildBeerHTML(b, false));
+                archivedBeers.forEach(b => archiveContainer.innerHTML += buildBeerHTML(b, true));
+
             } catch (e) { console.error(e); }
         }
 
