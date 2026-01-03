@@ -1,12 +1,12 @@
 {
-    "Law Tap": 0,
-    "Law Tap_temp": 0,
-    "Law Tap_updated": "Waiting...",
-    "Wisco Tap": 0,
+    "Law Tap": 32,
+    "Law Tap_temp": 43.2,
+    "Law Tap_updated": "9:51 AM",
+    "Wisco Tap": 14,
     "Wisco Tap_temp": 0,
-    "Wisco Tap_updated": "Waiting...",
+    "Wisco Tap_updated": "9:52 AM",
     "Nitro Tap": 13,
-    "Nitro Tap_temp": 0,
+    "Nitro Tap_temp": 49.5,
     "Nitro Tap_updated": "9:51 AM",
-    "last_updated": "2026-01-03 09:51:06"
+    "last_updated": "2026-01-03 09:52:34"
 }
