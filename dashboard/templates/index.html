@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Law Brewing Command</title>
+<style>
+    body { background: #1a1b1e; color: #c1c2c5; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+    .container { background: #25262b; padding: 2rem; border-radius: 12px; width: 100%; max-width: 400px; }
+    input, textarea, select, button { width: 100%; padding: 10px; margin-bottom: 10px; background: #2c2e33; border: 1px solid #373a40; color: white; border-radius: 4px; box-sizing: border-box; }
+    button { background: #339af0; cursor: pointer; font-weight: bold; border: none; }
+    button:hover { opacity: 0.9; }
+    .flash { padding: 10px; margin-bottom: 10px; border-radius: 4px; text-align: center; }
+    .success { background: rgba(64, 192, 87, 0.2); color: #40c057; }
+    .error { background: rgba(250, 82, 82, 0.2); color: #fa5252; }
+</style>
+</head>
+<body>
+<div class="container">
+    <h2 style="margin-top:0; text-align:center;">Admin Console</h2>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}{% for category, message in messages %}<div class="flash {{ category }}">{{ message }}</div>{% endfor %}{% endif %}
+    {% endwith %}
+    <form method="POST">
+        <select name="type"><option value="Info">ℹ️ Info</option><option value="Success">✅ Success</option><option value="Alert">⚠️ Alert</option></select>
+        <input type="text" name="title" placeholder="Title" required>
+        <textarea name="content" rows="4" placeholder="Message..." required></textarea>
+        <button type="submit">Broadcast</button>
+    </form>
+</div>
+</body>
+</html>

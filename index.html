@@ -61,6 +61,18 @@
         .expand-section.open { max-height: 20000px; padding: 40px 0; }
         .games-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; max-width: 1300px; margin: 0 auto; padding: 0 20px; }
         .game-card { background: #202020; border-radius: 15px; border: 1px solid #444; overflow: hidden; display: flex; flex-direction: column; }
+
+        /* --- AWARD MEDAL STYLES --- */
+        .medal-icon { display: inline-block; cursor: pointer; margin-left: 6px; transition: transform 0.2s; vertical-align: middle; }
+        .medal-national { font-size: 1.6em; filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.8)); animation: pulse-gold 2s infinite; }
+        .medal-state { font-size: 1.3em; filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.5)); }
+        .medal-local { font-size: 1.0em; opacity: 0.9; }
+        @keyframes pulse-gold { 0% { transform: scale(1); filter: drop-shadow(0 0 5px gold); } 50% { transform: scale(1.1); filter: drop-shadow(0 0 15px gold); } 100% { transform: scale(1); filter: drop-shadow(0 0 5px gold); } }
+
+        /* AWARD MODAL */
+        .award-group { margin-bottom: 25px; border-left: 4px solid #4caf50; padding-left: 15px; background: rgba(255, 255, 255, 0.05); padding: 10px; border-radius: 0 8px 8px 0; }
+        .award-group h3 { margin: 0 0 5px 0; color: #ffc107; font-family: serif; letter-spacing: 1px; }
+        .award-row { display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding: 8px 0; font-size: 0.9em; }
     </style>
 </head>
 <body>
@@ -74,6 +86,7 @@
     <div class="button-center">
         <button class="toggle-btn" onclick="toggleSection('archive-wrapper')">View The Cellar</button>
         <button class="toggle-btn" onclick="toggleSection('game-wrapper')">Bar Games</button>
+        <button class="toggle-btn" onclick="openAwardModal()">🏆 Awards</button>
     </div>
 
     <div id="archive-wrapper" class="expand-section">
@@ -91,6 +104,15 @@
         </div>
     </div>
 
+    <div id="award-modal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:2000; overflow-y:auto;">
+        <div class="modal-content" style="background:#1a1a1a; margin:10% auto; padding:20px; width:90%; max-width:600px; border-radius:10px; color:#fff;">
+            <h2 style="text-align:center; color:#d4af37; border-bottom:1px solid #333; padding-bottom:15px;">🏆 TROPHY CASE</h2>
+            <div id="award-content"></div>
+            <br>
+            <button onclick="closeAwardModal()" style="width:100%; padding:15px; background:#444; color:#fff; border:none; border-radius:5px; font-weight:bold;">CLOSE</button>
+        </div>
+    </div>
+
     <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
     <form id="rating_form" action="https://docs.google.com/forms/d/e/1FAIpQLSfx4apNIy6wi1CrFW-B8u01vJ_2ci1fcStPSWcWLFK9DpRs8g/formResponse" method="POST" target="hidden_iframe" style="display:none;">
         <input type="hidden" name="entry.1650190471" id="form_beer">
@@ -100,6 +122,7 @@
     <script>
         const MAIN_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQWqyJ5-pMWhRUkkZLoHdmFPtOHJozHRJkL9c0ivSSY9J7Fp0lto4W05tH-XbFelBL-htJZXedhv7i3/pub?output=csv';
         const SCOREBOARD_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRHD6zTvSE5HfErbLPAHhb0NyXDLuvt_cpOEQxr76BFNpN-KgbL3y68LIogt1aEhVAxIP4JU9t1Kte1/pub?gid=1912157964&single=true&output=csv";
+        let globalBeerData = [];
 
         function parseCSV(data) {
             const result = []; let row = []; let col = ''; let inQuotes = false;
@@ -129,6 +152,92 @@
             if (box) box.innerHTML = '<div class="thanks-msg" style="display:block">CHEERS! 🍻</div>';
         }
 
+        // --- AWARD LOGIC START ---
+        function getMedalClass(compName) {
+            const c = compName.toLowerCase();
+            if (c.includes('national') || c.includes('nhc')) return 'medal-national'; 
+            if (c.includes('state') || c.includes('wisconsin')) return 'medal-state'; 
+            return 'medal-local';
+        }
+
+        function getMedalIcon(medalName) {
+            const m = medalName.toLowerCase();
+            if (m.includes('gold')) return '🥇';
+            if (m.includes('silver')) return '🥈';
+            if (m.includes('bronze')) return '🥉';
+            return 'Ribbon'; 
+        }
+
+        function renderCardMedals(awardString) {
+            if (!awardString) return '';
+            const awards = awardString.split(',').map(s => {
+                const p = s.split('|');
+                if(p.length < 3) return null;
+                return { comp: p[0].trim(), medal: p[1].trim(), year: p[2].trim() };
+            }).filter(a => a);
+
+            let html = '';
+            awards.forEach(a => {
+                const cssClass = getMedalClass(a.comp);
+                const icon = getMedalIcon(a.medal);
+                html += `<span class="${cssClass} medal-icon" title="${a.year} ${a.comp} (${a.medal})">${icon}</span>`;
+            });
+            return html;
+        }
+
+        function openAwardModal() {
+            const content = document.getElementById('award-content');
+            let html = '';
+            let groups = {};
+            
+            globalBeerData.forEach(row => {
+                // Assuming col 7 is Awards_Log (0-based index)
+                const awardStr = row[7] || ""; 
+                const bName = row[2] || "Unknown";
+                if (!awardStr) return;
+
+                const awards = awardStr.split(',').map(s => {
+                    const p = s.split('|');
+                    if(p.length < 3) return null;
+                    return { comp: p[0].trim(), medal: p[1].trim(), year: p[2].trim() };
+                }).filter(a => a);
+
+                awards.forEach(a => {
+                    if (!groups[a.comp]) groups[a.comp] = [];
+                    groups[a.comp].push({ beer: bName, ...a });
+                });
+            });
+
+            const sortOrder = ['National', 'State', 'Manitowoc'];
+            const sortedKeys = Object.keys(groups).sort((a, b) => {
+                const getScore = (name) => {
+                    if (name.toLowerCase().includes('national')) return 3;
+                    if (name.toLowerCase().includes('state')) return 2;
+                    return 1;
+                };
+                return getScore(b) - getScore(a);
+            });
+
+            sortedKeys.forEach(comp => {
+                html += `<div class="award-group"><h3>${comp}</h3>`;
+                groups[comp].sort((a,b) => b.year - a.year);
+                groups[comp].forEach(win => {
+                    const icon = getMedalIcon(win.medal);
+                    html += `<div class="award-row">
+                        <span>${win.year} <strong>${win.beer}</strong></span>
+                        <span>${win.medal} ${icon}</span>
+                    </div>`;
+                });
+                html += `</div>`;
+            });
+
+            content.innerHTML = html || "<p style='text-align:center'>No awards recorded yet.</p>";
+            document.getElementById('award-modal').style.display = 'block';
+        }
+
+        function closeAwardModal() { document.getElementById('award-modal').style.display = 'none'; }
+        // --- AWARD LOGIC END ---
+
         async function updateDisplay() {
             try {
                 const cb = new Date().getTime();
@@ -138,6 +247,7 @@
                 ]);
                 const weights = await wRes.json();
                 const beerData = parseCSV(await mRes.text());
+                globalBeerData = beerData; // Save for awards modal
                 
                 let ratingMap = {}; let ratingsArray = [];
                 try {
@@ -165,6 +275,7 @@
                     if (i === 0 || row.length < 3) return;
                     const tapID = (row[0] || "").trim();
                     const bName = (row[2] || "").trim();
+                    const awardsStr = row[7] || ""; // Assuming col 7 is awards
                     if (!bName) return;
 
                     const escapedName = bName.replace(/'/g, "\\'");
@@ -172,6 +283,7 @@
                     const topRibbon = isTop ? `<div class="top-rated-ribbon">Top Rated</div>` : '';
                     const avg = ratingMap[bName] ? `<span class="avg-badge">⭐ ${ratingMap[bName]}</span>` : '';
                     const hasVoted = localStorage.getItem('voted_' + bName);
+                    const medalHTML = renderCardMedals(awardsStr);
                     
                     const ratingHTML = `
                         <div class="rating-box" id="box-${i}">
@@ -203,7 +315,7 @@
                                 <div class="details">
                                     <div style="font-size:0.8rem; color:#888; letter-spacing:2px; margin-bottom:5px;">${tapID}</div>
                                     <div class="beer-name-row">
-                                        <h2 class="beer-name">${bName}</h2>
+                                        <h2 class="beer-name">${bName} ${medalHTML}</h2>
                                         ${avg}
                                     </div>
                                     <div class="stats"><span>${row[6]}</span><span>ABV: ${row[3]}</span></div>
@@ -228,7 +340,7 @@
                                 <div class="label-art" style="height:250px; background-image: url('${row[4]}');"></div>
                                 <div class="details">
                                     <div class="beer-name-row">
-                                        <h2 class="beer-name" style="font-size:1.5rem;">${bName}</h2>
+                                        <h2 class="beer-name" style="font-size:1.5rem;">${bName} ${medalHTML}</h2>
                                         ${avg}
                                     </div>
                                     <div class="stats"><span>${row[6]}</span><span>ABV: ${row[3]}</span></div>
