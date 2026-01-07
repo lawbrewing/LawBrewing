@@ -71,7 +71,7 @@
         .medal-icon:hover { transform: scale(1.2); }
         
         /* TIER 0: GRAND CHAMPION (Platinum/Diamond Pulse) */
-        .medal-grand-champion { font-size: 1.8em; filter: drop-shadow(0 0 10px rgba(185, 242, 255, 0.9)); animation: pulse-prism 3s infinite alternate; }
+        .medal-grand-champion { font-size: 1.8em; filter: drop-shadow(0 0 10px rgba(185, 242, 255, 0.9)); animation: pulse-prism 2.5s infinite alternate; }
         
         /* TIER 1: NATIONAL (Gold Pulse) */
         .medal-national { font-size: 1.6em; filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.8)); animation: pulse-gold 2s infinite; }
@@ -170,11 +170,15 @@
             if (box) box.innerHTML = '<div class="thanks-msg" style="display:block">CHEERS! 🍻</div>';
         }
 
-        // --- AWARD LOGIC ---
-        function getMedalClass(compName) {
+        // --- AWARD LOGIC (FIXED) ---
+        function getMedalClass(compName, medalName) {
             const c = compName.toLowerCase();
-            // New "Grand Champion" Tier
-            if (c.includes('best of show') || c.includes('grand champion')) return 'medal-grand-champion';
+            const m = medalName.toLowerCase();
+            
+            // 1. Check Medal Name FIRST (Higher Priority)
+            if (m.includes('best of show') || m.includes('grand champion')) return 'medal-grand-champion';
+            
+            // 2. Then Check Competition Name
             if (c.includes('national') || c.includes('nhc')) return 'medal-national'; 
             if (c.includes('state') || c.includes('wisconsin')) return 'medal-state'; 
             return 'medal-local';
@@ -182,7 +186,6 @@
 
         function getMedalIcon(medalName) {
             const m = medalName.toLowerCase();
-            // Handle Grand Champion text or generic gold
             if (m.includes('best of show') || m.includes('grand')) return '🏆';
             if (m.includes('gold')) return '🥇';
             if (m.includes('silver')) return '🥈';
@@ -200,9 +203,9 @@
 
             let html = '';
             awards.forEach(a => {
-                const cssClass = getMedalClass(a.comp);
+                // PASS BOTH COMP AND MEDAL TO DETERMINE CLASS
+                const cssClass = getMedalClass(a.comp, a.medal);
                 const icon = getMedalIcon(a.medal);
-                // Added onClick to jump to trophy case
                 html += `<span class="${cssClass} medal-icon" onclick="goToAwards()" title="${a.year} ${a.comp} (${a.medal})">${icon}</span>`;
             });
             return html;
@@ -215,7 +218,7 @@
             let groups = {};
             
             globalBeerData.forEach(row => {
-                const awardStr = row[7] || ""; // Assuming col 7 is Awards_Log
+                const awardStr = row[7] || ""; 
                 const bName = row[2] || "Unknown";
                 if (!awardStr) return;
 
@@ -234,7 +237,6 @@
             const sortedKeys = Object.keys(groups).sort((a, b) => {
                 const getScore = (name) => {
                     const n = name.toLowerCase();
-                    if (n.includes('best of show') || n.includes('grand')) return 4;
                     if (n.includes('national')) return 3;
                     if (n.includes('state')) return 2;
                     return 1;
@@ -251,10 +253,14 @@
                 html += `<div class="award-group"><h3>${comp}</h3>`;
                 groups[comp].sort((a,b) => b.year - a.year);
                 groups[comp].forEach(win => {
+                    // PASS BOTH FOR TROPHY CASE DISPLAY TOO
+                    const cssClass = getMedalClass(win.comp, win.medal);
                     const icon = getMedalIcon(win.medal);
+                    
+                    // We need the icon to pulsate here too if it's Grand Champion
                     html += `<div class="award-row">
                         <span><span class="award-year">${win.year}</span> <span class="award-beer">${win.beer}</span></span>
-                        <span>${win.medal} ${icon}</span>
+                        <span class="${cssClass}">${win.medal} ${icon}</span>
                     </div>`;
                 });
                 html += `</div>`;
@@ -269,14 +275,10 @@
             el.classList.toggle('open');
         }
 
-        // Special function for Medal Clicks
         function goToAwards() {
             const el = document.getElementById('award-wrapper');
-            // Close others
             document.querySelectorAll('.expand-section').forEach(s => { if(s.id !== 'award-wrapper') s.classList.remove('open'); });
-            // Force open awards
             el.classList.add('open');
-            // Scroll to it
             setTimeout(() => {
                 el.scrollIntoView({ behavior: 'smooth' });
             }, 300);
@@ -292,8 +294,6 @@
                 const weights = await wRes.json();
                 const beerData = parseCSV(await mRes.text());
                 globalBeerData = beerData;
-                
-                // Render Trophy Case immediately after getting data
                 renderTrophyCase();
 
                 let ratingMap = {}; let ratingsArray = [];
