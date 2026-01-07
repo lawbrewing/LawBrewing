@@ -29,24 +29,43 @@
             font-weight: 600;
         }
 
-        .progress-bar { transition: width 0.2s linear; }
+        /* Modal Transitions */
+        .modal-enter { opacity: 0; pointer-events: none; }
+        .modal-enter .modal-content { transform: scale(0.95); }
+        .modal-active { opacity: 1; pointer-events: auto; }
+        .modal-active .modal-content { transform: scale(1); }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800 flex flex-col">
 
     <!-- Header -->
     <header class="bg-white shadow-sm z-50 flex-none relative">
-        <div class="max-w-md mx-auto px-4 py-3 flex justify-between items-center">
-            <h1 class="text-xl font-bold text-gray-900 flex items-center gap-2">
-                <i data-lucide="activity" class="text-blue-500"></i> Cardio & Back
-            </h1>
-            <div class="flex items-center gap-3">
-                <div class="text-xs text-gray-500 font-medium bg-gray-100 px-2 py-1 rounded-full" id="progress-indicator">0%</div>
-                <button onclick="window.app.resetAllProgress()" class="text-gray-400 hover:text-red-500" title="Reset All Progress">
-                    <i data-lucide="rotate-ccw" size="18"></i>
-                </button>
+        <div class="max-w-md mx-auto px-4 py-3">
+            <div class="flex justify-between items-center mb-3">
+                <h1 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <i data-lucide="activity" class="text-blue-500"></i> Cardio & Back
+                </h1>
+                <div class="flex items-center gap-3">
+                    <div class="text-xs text-gray-500 font-medium bg-gray-100 px-2 py-1 rounded-full" id="progress-indicator">0%</div>
+                    <!-- Trigger Custom Modal -->
+                    <button onclick="window.app.showResetModal()" class="text-gray-400 hover:text-red-500 p-1" title="Reset Current Day">
+                        <i data-lucide="rotate-ccw" size="20"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Level Toggle -->
+            <div class="flex items-center justify-between bg-gray-50 p-2 rounded-lg border border-gray-100 mb-2">
+                <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Difficulty Level</span>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs text-gray-600" id="lvl-text">Standard</span>
+                    <button onclick="window.app.toggleLevel()" class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none bg-gray-200" id="lvl-toggle-bg">
+                        <span aria-hidden="true" class="translate-x-0 pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out" id="lvl-toggle-dot"></span>
+                    </button>
+                </div>
             </div>
         </div>
+
         <div class="flex overflow-x-auto no-scrollbar border-b border-gray-200 max-w-md mx-auto bg-white">
             <button onclick="window.app.switchTab('day1')" id="tab-day1" class="flex-1 py-3 text-sm text-gray-500 font-medium text-center whitespace-nowrap active-tab">Day 1</button>
             <button onclick="window.app.switchTab('day2')" id="tab-day2" class="flex-1 py-3 text-sm text-gray-500 font-medium text-center whitespace-nowrap">Day 2</button>
@@ -61,7 +80,6 @@
             <div id="intro-card" class="mb-2">
                 <h2 class="text-2xl font-bold text-gray-900 mb-1" id="day-title">Loading...</h2>
                 <p class="text-gray-600 text-sm" id="day-desc">Initializing workout data...</p>
-                <!-- Error container hidden by default -->
                 <div id="error-msg" class="hidden mt-4 p-4 bg-red-100 text-red-700 rounded text-xs font-mono break-all"></div>
             </div>
             <div id="exercise-list" class="space-y-3"></div>
@@ -89,14 +107,30 @@
         </div>
     </div>
 
+    <!-- Custom Modal -->
+    <div id="custom-modal" class="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-50 modal-enter transition-opacity duration-200">
+        <div class="bg-white rounded-xl shadow-xl p-6 max-w-xs w-full mx-4 modal-content transition-transform duration-200">
+            <h3 class="text-lg font-bold text-gray-900 mb-2">Reset Today?</h3>
+            <p class="text-sm text-gray-600 mb-6">This will clear your progress for the current day only. This cannot be undone.</p>
+            <div class="flex gap-3">
+                <button onclick="window.app.hideResetModal()" class="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200">Cancel</button>
+                <button onclick="window.app.confirmReset()" class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700">Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-20 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-4 py-2 rounded-full shadow-lg text-sm opacity-0 transition-opacity duration-300 pointer-events-none z-[70]">
+        Action Completed
+    </div>
+
     <!-- Audio File -->
     <audio id="sound-complete" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
 
     <script>
-        // Wrap everything in a try-catch to ensure errors are shown
         try {
             // --- DATA ---
-            const buildDay3 = () => {
+            const buildDay3 = (isLevel2) => {
                 const warmUp = [
                     { id: 'd3-1', name: "Pigeon / Figure-4 (R)", reps: "60s", type: "timer", duration: 60, note: "Deep hip stretch." },
                     { id: 'd3-2', name: "Pigeon / Figure-4 (L)", reps: "60s", type: "timer", duration: 60, note: "Breathe into tension." },
@@ -106,14 +140,16 @@
                     { id: 'd3-6', name: "Happy Baby", reps: "60s", type: "timer", duration: 60, note: "Grab feet, knees wide." }
                 ];
 
+                const duration = isLevel2 ? 50 : 45; 
+
                 const circuitExercises = [
-                    { name: "High Knees", duration: 45, note: "Knees up!" },
+                    { name: "High Knees", duration: duration, note: "Knees up!" },
                     { name: "Rest", duration: 15, note: "Breathe." },
-                    { name: "Butt Kicks", duration: 45, note: "Heels to glutes." },
+                    { name: "Butt Kicks", duration: duration, note: "Heels to glutes." },
                     { name: "Rest", duration: 15, note: "Breathe." },
-                    { name: "Jumping Jacks", duration: 45, note: "Full extension." },
+                    { name: "Jumping Jacks", duration: duration, note: "Full extension." },
                     { name: "Rest", duration: 15, note: "Breathe." },
-                    { name: "Mountain Climbers", duration: 45, note: "Back flat, knees in." },
+                    { name: "Mountain Climbers", duration: duration, note: "Back flat, knees in." },
                     { name: "Rest", duration: 15, note: "Prepare for next round." }
                 ];
 
@@ -136,10 +172,10 @@
                 return fullRoutine;
             };
 
-            const workoutData = {
+            const getWorkoutData = (isLevel2) => ({
                 day1: {
-                    title: "Day 1: Mobility & Low Impact",
-                    desc: "Dynamic movement to warm up the spine.",
+                    title: isLevel2 ? "Day 1: Mobility & Cardio (Lvl 2)" : "Day 1: Mobility & Cardio",
+                    desc: "Dynamic movement + Zone 4 Cardio Work.",
                     exercises: [
                         { id: 'd1-1', name: "Cat-Cow Stretch", reps: "10 reps", type: "reps", note: "Move slowly segment by segment." },
                         { id: 'd1-2', name: "Bird-Dog (Right)", reps: "10 reps", type: "reps", note: "Extend opposite arm & leg." },
@@ -148,29 +184,48 @@
                         { id: 'd1-5', name: "Knee-to-Chest Hold", reps: "30s", type: "timer", duration: 30, note: "Both knees gentle pull." },
                         { id: 'd1-6', name: "Spinal Twist (Right)", reps: "30s", type: "timer", duration: 30, note: "Shoulders flat." },
                         { id: 'd1-7', name: "Spinal Twist (Left)", reps: "30s", type: "timer", duration: 30, note: "Relax into it." },
-                        { id: 'd1-8', name: "Cardio: Brisk Walk/Cycle", reps: "20 min", type: "timer", duration: 1200, note: "Steady, comfortable pace." } 
+                        { id: 'd1-8', name: "Cardio: Brisk Walk/Cycle", reps: isLevel2 ? "25 min" : "20 min", type: "timer", duration: isLevel2 ? 1500 : 1200, note: "Start timer ONLY when in Zone 4." } 
                     ]
                 },
                 day2: {
-                    title: "Day 2: Strength & Cardio",
-                    desc: "Core strength and moderate intensity cardio.",
+                    title: isLevel2 ? "Day 2: Strength & Weights (Lvl 2)" : "Day 2: Strength & Cardio",
+                    desc: isLevel2 ? "Bodyweight progression + DB Rows." : "Core strength + Zone 4 Cardio Work.",
                     exercises: [
-                        { id: 'd2-1', name: "Bridges", reps: "12 reps", type: "reps", note: "Squeeze glutes at top." },
+                        // UPDATED: Replaced Weighted Bridges with Single Leg Bridges to avoid PowerBlock issues
+                        { 
+                            id: 'd2-1', 
+                            name: isLevel2 ? "Single-Leg Bridge (R)" : "Bridges", 
+                            reps: "12 reps", 
+                            type: "reps", 
+                            note: isLevel2 ? "Lift left leg, drive through right heel." : "Squeeze glutes at top." 
+                        },
                         { id: 'd2-2', name: "Rest / Reset", reps: "30s", type: "timer", duration: 30, note: "Breathe." },
-                        { id: 'd2-3', name: "Bridges (Set 2)", reps: "12 reps", type: "reps", note: "Focus on form." },
+                        { 
+                            id: 'd2-3', 
+                            name: isLevel2 ? "Single-Leg Bridge (L)" : "Bridges (Set 2)", 
+                            reps: "12 reps", 
+                            type: "reps", 
+                            note: isLevel2 ? "Lift right leg, drive through left heel." : "Focus on form." 
+                        },
                         { id: 'd2-4', name: "Plank", reps: "45s", type: "timer", duration: 45, note: "Straight line head to heels." },
                         { id: 'd2-5', name: "Rest", reps: "15s", type: "timer", duration: 15, note: "Drop to knees." },
                         { id: 'd2-6', name: "Plank (Set 2)", reps: "45s", type: "timer", duration: 45, note: "Hold tight." },
                         { id: 'd2-7', name: "Side Plank (Right)", reps: "30s", type: "timer", duration: 30, note: "Lift hips high." },
                         { id: 'd2-8', name: "Side Plank (Left)", reps: "30s", type: "timer", duration: 30, note: "Lift hips high." },
-                        { id: 'd2-9', name: "Superman", reps: "10 reps", type: "reps", note: "Lift arms and legs gently." },
-                        { id: 'd2-10', name: "Cardio: Jog/Row", reps: "20 min", type: "timer", duration: 1200, note: "Moderate intensity." }
+                        { 
+                            id: 'd2-9', 
+                            name: isLevel2 ? "Supported DB Row" : "Superman", 
+                            reps: "10 reps/side", 
+                            type: "reps", 
+                            note: isLevel2 ? "Hand on bench. Flat back. Row to hip." : "Lift arms and legs gently." 
+                        },
+                        { id: 'd2-10', name: "Cardio: Jog/Row", reps: isLevel2 ? "25 min" : "20 min", type: "timer", duration: isLevel2 ? 1500 : 1200, note: "Start timer ONLY when in Zone 4." }
                     ]
                 },
                 day3: {
-                    title: "Day 3: Deep Flex & Circuit",
+                    title: isLevel2 ? "Day 3: Deep Flex & Circuit (Lvl 2)" : "Day 3: Deep Flex & Circuit",
                     desc: "Deep stretching followed by 4 rounds of interval cardio.",
-                    exercises: buildDay3()
+                    exercises: buildDay3(isLevel2)
                 },
                 cool: {
                     title: "Cool Down",
@@ -184,7 +239,7 @@
                         { id: 'c-6', name: "Seated Forward Fold", reps: "60s", type: "timer", duration: 60, note: "Reach for toes." }
                     ]
                 }
-            };
+            });
 
             class App {
                 constructor() {
@@ -192,6 +247,7 @@
                     this.exercises = [];
                     this.completedIds = new Set();
                     this.customDurations = {}; 
+                    this.isLevel2 = false;
                     this.activeIndex = -1; 
                     this.timerInterval = null;
                     this.timeLeft = 0;
@@ -205,21 +261,22 @@
                 init() {
                     this.loadProgress();
                     this.safeCreateIcons();
+                    this.updateLevelUI();
                     this.switchTab('day1');
                 }
 
                 loadProgress() {
                     try {
                         const saved = localStorage.getItem('workout_completed');
-                        if (saved) {
-                            this.completedIds = new Set(JSON.parse(saved));
-                        }
+                        if (saved) this.completedIds = new Set(JSON.parse(saved));
+                        
                         const savedTimes = localStorage.getItem('workout_durations');
-                        if (savedTimes) {
-                            this.customDurations = JSON.parse(savedTimes);
-                        }
+                        if (savedTimes) this.customDurations = JSON.parse(savedTimes);
+                        
+                        const savedLvl = localStorage.getItem('workout_level');
+                        this.isLevel2 = savedLvl === 'true';
                     } catch(e) {
-                        console.log("Local storage unavailable or empty", e);
+                        console.log("Local storage unavailable", e);
                     }
                 }
 
@@ -227,17 +284,79 @@
                     try {
                         localStorage.setItem('workout_completed', JSON.stringify([...this.completedIds]));
                         localStorage.setItem('workout_durations', JSON.stringify(this.customDurations));
+                        localStorage.setItem('workout_level', this.isLevel2);
                     } catch (e) {
                         console.log("Local storage write failed", e);
                     }
                 }
 
-                resetAllProgress() {
-                    if(confirm("Are you sure you want to reset all completed exercises and custom times?")) {
-                        this.completedIds.clear();
-                        this.customDurations = {};
-                        this.saveProgress();
-                        this.switchTab(this.currentDay);
+                // --- NEW UI BASED RESET ---
+                showResetModal() {
+                    const modal = document.getElementById('custom-modal');
+                    modal.classList.remove('pointer-events-none', 'opacity-0');
+                    modal.classList.add('modal-active');
+                }
+
+                hideResetModal() {
+                    const modal = document.getElementById('custom-modal');
+                    modal.classList.remove('modal-active');
+                    modal.classList.add('pointer-events-none', 'opacity-0');
+                }
+
+                confirmReset() {
+                    // Iterate through current exercises and remove them from completed set
+                    this.exercises.forEach(ex => {
+                        this.completedIds.delete(ex.id);
+                    });
+                    this.saveProgress();
+                    
+                    // Stop timer if running
+                    this.stopTimer();
+                    this.activeIndex = -1;
+                    this.closeHUD();
+                    
+                    // UI Cleanup
+                    this.hideResetModal();
+                    this.renderList();
+                    this.updateProgress();
+                    this.showToast("Day Reset Successfully");
+                }
+
+                showToast(msg) {
+                    const toast = document.getElementById('toast');
+                    toast.innerText = msg;
+                    toast.classList.remove('opacity-0');
+                    setTimeout(() => {
+                        toast.classList.add('opacity-0');
+                    }, 2000);
+                }
+
+                toggleLevel() {
+                    this.isLevel2 = !this.isLevel2;
+                    this.saveProgress();
+                    this.updateLevelUI();
+                    this.switchTab(this.currentDay); 
+                }
+
+                updateLevelUI() {
+                    const bg = document.getElementById('lvl-toggle-bg');
+                    const dot = document.getElementById('lvl-toggle-dot');
+                    const text = document.getElementById('lvl-text');
+                    
+                    if (this.isLevel2) {
+                        bg.classList.remove('bg-gray-200');
+                        bg.classList.add('bg-blue-600');
+                        dot.classList.remove('translate-x-0');
+                        dot.classList.add('translate-x-5');
+                        text.innerText = "Progression (Lvl 2)";
+                        text.classList.add('text-blue-700', 'font-bold');
+                    } else {
+                        bg.classList.add('bg-gray-200');
+                        bg.classList.remove('bg-blue-600');
+                        dot.classList.add('translate-x-0');
+                        dot.classList.remove('translate-x-5');
+                        text.innerText = "Standard";
+                        text.classList.remove('text-blue-700', 'font-bold');
                     }
                 }
 
@@ -251,7 +370,7 @@
 
                 switchTab(dayId) {
                     try {
-                        document.querySelectorAll('header button').forEach(b => {
+                        document.querySelectorAll('header button[id^="tab-"]').forEach(b => {
                             b.classList.remove('active-tab', 'text-blue-500');
                             b.classList.add('text-gray-500');
                         });
@@ -269,7 +388,8 @@
                         const contentArea = document.getElementById('content-area');
                         if(contentArea) contentArea.scrollTop = 0;
 
-                        const data = workoutData[dayId];
+                        const allData = getWorkoutData(this.isLevel2);
+                        const data = allData[dayId];
                         this.exercises = JSON.parse(JSON.stringify(data.exercises));
                         
                         this.exercises.forEach(ex => {
@@ -289,7 +409,6 @@
                         this.renderList();
                     } catch(e) {
                         console.error("Tab switch failed:", e);
-                        document.getElementById('day-desc').innerText = "Error loading tab: " + e.message;
                     }
                 }
 
@@ -512,6 +631,7 @@
                     this.activeIndex = -1;
                     this.closeHUD();
                     this.renderList();
+                    this.showToast("Completed");
 
                     const nextIndex = index + 1;
                     if (nextIndex < this.exercises.length) {
@@ -527,7 +647,7 @@
                             }
                         }, 500);
                     } else {
-                        setTimeout(() => alert("Workout Complete! Great job!"), 300);
+                        setTimeout(() => this.showToast("All Done!"), 300);
                     }
                 }
 
