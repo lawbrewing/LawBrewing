@@ -33,17 +33,65 @@
         .stats { font-family: 'Oswald', sans-serif; color: var(--accent); font-size: 1.1rem; margin: 10px 0; display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding-bottom: 10px; }
         .description { font-size: 0.95rem; color: #ccc; line-height: 1.5; margin-bottom: 20px; flex-grow: 1; white-space: pre-wrap; }
         
-        /* HALF STAR RATING SYSTEM */
+        /* ROBUST STAR RATING */
         .rating-box { background: rgba(255,255,255,0.03); padding: 5px; border-radius: 12px; margin-bottom: 20px; text-align: center; border: 1px solid #333; min-height: 60px; display: flex; align-items: center; justify-content: center; flex-direction: column; }
-        .rating-wrapper { display: flex; flex-direction: row-reverse; gap: 2px; }
-        .rating-wrapper > fieldset { border: none; padding: 0; margin: 0; display: inline-flex; flex-direction: row-reverse; }
-        .rating-wrapper > fieldset > input { display: none; }
-        .rating-wrapper > fieldset > label { color: #333; font-size: 2.2rem; padding: 0; cursor: pointer; position: relative; width: 1.1rem; overflow: hidden; white-space: nowrap; text-align: center; }
-        .rating-wrapper > fieldset > label:before { content: '★'; position: absolute; left: 0; width: 2.2rem; }
-        .rating-wrapper > fieldset > label:nth-of-type(odd):before { left: -1.1rem; }
-        .rating-wrapper > fieldset > input:checked ~ label,
-        .rating-wrapper > fieldset > label:hover,
-        .rating-wrapper > fieldset > label:hover ~ label { color: var(--accent); text-shadow: 0 0 10px rgba(255,180,0,0.5); }
+        
+        /* The Container */
+        .star-container {
+            display: inline-flex;
+            flex-direction: row-reverse; /* Standard CSS rating trick */
+            font-size: 0; /* Remove whitespace gaps */
+        }
+        
+        /* The Hidden Inputs */
+        .star-container input { display: none; }
+        
+        /* The Labels (Half Stars) */
+        .star-container label {
+            display: inline-block;
+            width: 16px; /* Explicit width for click target */
+            height: 32px;
+            font-size: 30px;
+            color: #555; /* High contrast gray */
+            cursor: pointer;
+            overflow: hidden;
+            position: relative;
+            line-height: 32px;
+        }
+        
+        /* Draw the Star Character */
+        .star-container label:before {
+            content: "★";
+            position: absolute;
+            top: 0;
+            color: inherit;
+        }
+
+        /* Even children (Right Halves) */
+        .star-container label:nth-of-type(2n+1) { 
+            direction: ltr; 
+        }
+        .star-container label:nth-of-type(2n+1):before {
+            left: 0px; 
+        }
+
+        /* Odd children (Left Halves) - Must flip/clip */
+        .star-container label:nth-of-type(2n) { 
+            direction: rtl; 
+            text-align: right;
+        }
+        .star-container label:nth-of-type(2n):before {
+            right: 0px;
+        }
+
+        /* Interaction Colors */
+        .star-container input:checked ~ label,
+        .star-container label:hover,
+        .star-container label:hover ~ label {
+            color: var(--accent);
+            text-shadow: 0 0 8px rgba(255,180,0,0.6);
+        }
+        
         .thanks-msg { display: none; font-family: 'Oswald'; color: var(--accent); font-size: 1.3rem; font-weight: bold; letter-spacing: 1px; }
 
         .volume-container { background: #000; height: 32px; border-radius: 16px; position: relative; overflow: hidden; border: 2px solid #444; margin-top: auto; }
@@ -340,19 +388,17 @@
                         <div class="rating-box" id="box-${i}">
                             ${hasVoted ? 
                                 '<div class="thanks-msg" style="display:block">CHEERS! 🍻</div>' : 
-                                `<div class="rating-wrapper">
-                                    <fieldset>
-                                        <input type="radio" id="st10-${i}" onclick="submitRating('${escapedName}', 5, ${i})"><label for="st10-${i}" title="5"></label>
-                                        <input type="radio" id="st9-${i}" onclick="submitRating('${escapedName}', 4.5, ${i})"><label for="st9-${i}" title="4.5"></label>
-                                        <input type="radio" id="st8-${i}" onclick="submitRating('${escapedName}', 4, ${i})"><label for="st8-${i}" title="4"></label>
-                                        <input type="radio" id="st7-${i}" onclick="submitRating('${escapedName}', 3.5, ${i})"><label for="st7-${i}" title="3.5"></label>
-                                        <input type="radio" id="st6-${i}" onclick="submitRating('${escapedName}', 3, ${i})"><label for="st6-${i}" title="3"></label>
-                                        <input type="radio" id="st5-${i}" onclick="submitRating('${escapedName}', 2.5, ${i})"><label for="st5-${i}" title="2.5"></label>
-                                        <input type="radio" id="st4-${i}" onclick="submitRating('${escapedName}', 2, ${i})"><label for="st4-${i}" title="2"></label>
-                                        <input type="radio" id="st3-${i}" onclick="submitRating('${escapedName}', 1.5, ${i})"><label for="st3-${i}" title="1.5"></label>
-                                        <input type="radio" id="st2-${i}" onclick="submitRating('${escapedName}', 1, ${i})"><label for="st2-${i}" title="1"></label>
-                                        <input type="radio" id="st1-${i}" onclick="submitRating('${escapedName}', 0.5, ${i})"><label for="st1-${i}" title="0.5"></label>
-                                    </fieldset>
+                                `<div class="star-container">
+                                    <input type="radio" id="st10-${i}" onclick="submitRating('${escapedName}', 5, ${i})"><label for="st10-${i}" title="5"></label>
+                                    <input type="radio" id="st9-${i}" onclick="submitRating('${escapedName}', 4.5, ${i})"><label for="st9-${i}" title="4.5"></label>
+                                    <input type="radio" id="st8-${i}" onclick="submitRating('${escapedName}', 4, ${i})"><label for="st8-${i}" title="4"></label>
+                                    <input type="radio" id="st7-${i}" onclick="submitRating('${escapedName}', 3.5, ${i})"><label for="st7-${i}" title="3.5"></label>
+                                    <input type="radio" id="st6-${i}" onclick="submitRating('${escapedName}', 3, ${i})"><label for="st6-${i}" title="3"></label>
+                                    <input type="radio" id="st5-${i}" onclick="submitRating('${escapedName}', 2.5, ${i})"><label for="st5-${i}" title="2.5"></label>
+                                    <input type="radio" id="st4-${i}" onclick="submitRating('${escapedName}', 2, ${i})"><label for="st4-${i}" title="2"></label>
+                                    <input type="radio" id="st3-${i}" onclick="submitRating('${escapedName}', 1.5, ${i})"><label for="st3-${i}" title="1.5"></label>
+                                    <input type="radio" id="st2-${i}" onclick="submitRating('${escapedName}', 1, ${i})"><label for="st2-${i}" title="1"></label>
+                                    <input type="radio" id="st1-${i}" onclick="submitRating('${escapedName}', 0.5, ${i})"><label for="st1-${i}" title="0.5"></label>
                                 </div>`
                             }
                         </div>`;
