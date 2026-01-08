@@ -102,48 +102,9 @@
 
         /* MENU BUTTONS */
         .button-center { display: flex; justify-content: center; gap: 20px; margin: 40px auto; flex-wrap: wrap; }
-        
-        /* Shared Button Style */
-        .toggle-btn { padding: 12px 30px; background: transparent; border: 2px solid var(--accent); color: var(--accent); font-family: 'Oswald'; cursor: pointer; border-radius: 50px; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s; font-size: 0.9rem; }
+        .toggle-btn { padding: 12px 30px; background: transparent; border: 2px solid var(--accent); color: var(--accent); font-family: 'Oswald'; cursor: pointer; border-radius: 50px; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s; }
         .toggle-btn:hover { background: var(--accent); color: #000; }
         
-        /* --- QR CODE DROPDOWN STYLING --- */
-        .dropdown-container {
-            position: relative;
-            display: inline-block;
-        }
-        
-        .dropdown-content {
-            display: none;
-            position: absolute;
-            bottom: 120%; /* Opens upwards so it doesn't get cut off */
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: var(--card);
-            min-width: 200px;
-            box-shadow: 0 0 20px rgba(255, 180, 0, 0.2);
-            border: 2px solid var(--accent);
-            border-radius: 15px;
-            padding: 15px;
-            z-index: 1000;
-            text-align: center;
-        }
-        
-        /* Show dropdown on hover */
-        .dropdown-container:hover .dropdown-content {
-            display: block;
-        }
-
-        .qr-item { margin-bottom: 15px; }
-        .qr-item:last-child { margin-bottom: 0; }
-        .qr-item span { display: block; color: var(--accent); font-family: 'Oswald'; margin-bottom: 5px; letter-spacing: 1px; }
-        .qr-item img { background: #fff; padding: 5px; border-radius: 5px; width: 130px; height: 130px; }
-
-        /* Hide QR dropdown on mobile */
-        @media (max-width: 768px) {
-            .dropdown-container { display: none; }
-        }
-
         /* EXPAND SECTIONS */
         .expand-section { max-height: 0; overflow: hidden; transition: max-height 0.8s ease-out; background: rgba(0,0,0,0.3); }
         .expand-section.open { max-height: 20000px; padding: 40px 0; }
@@ -190,21 +151,6 @@
         <button class="toggle-btn" onclick="toggleSection('archive-wrapper')">View The Cellar</button>
         <button class="toggle-btn" onclick="toggleSection('award-wrapper')">🏆 Trophy Case</button>
         <button class="toggle-btn" onclick="toggleSection('game-wrapper')">Bar Games</button>
-        
-        <div class="dropdown-container">
-            <button class="toggle-btn">Share / Vote ▼</button>
-            <div class="dropdown-content">
-                <div class="qr-item">
-                    <span>Vote Here</span>
-                    <img id="vote-qr" src="" alt="Scan to Vote">
-                </div>
-                <div style="height:1px; background:#444; margin:10px 0;"></div>
-                <div class="qr-item">
-                    <span>Untappd Menu</span>
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://untappd.com/LawBrewing/beer" alt="Untappd">
-                </div>
-            </div>
-        </div>
     </div>
 
     <div id="award-wrapper" class="expand-section">
@@ -235,13 +181,6 @@
     </form>
 
     <script>
-        // --- QR CODE GENERATION ---
-        const currentUrl = window.location.href;
-        const qrImage = document.getElementById('vote-qr');
-        if(qrImage) {
-            qrImage.src = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" + encodeURIComponent(currentUrl);
-        }
-
         const MAIN_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQWqyJ5-pMWhRUkkZLoHdmFPtOHJozHRJkL9c0ivSSY9J7Fp0lto4W05tH-XbFelBL-htJZXedhv7i3/pub?output=csv';
         const SCOREBOARD_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRHD6zTvSE5HfErbLPAHhb0NyXDLuvt_cpOEQxr76BFNpN-KgbL3y68LIogt1aEhVAxIP4JU9t1Kte1/pub?gid=1912157964&single=true&output=csv";
         let globalBeerData = [];
