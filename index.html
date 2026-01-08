@@ -33,11 +33,17 @@
         .stats { font-family: 'Oswald', sans-serif; color: var(--accent); font-size: 1.1rem; margin: 10px 0; display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding-bottom: 10px; }
         .description { font-size: 0.95rem; color: #ccc; line-height: 1.5; margin-bottom: 20px; flex-grow: 1; white-space: pre-wrap; }
         
-        .rating-box { background: rgba(255,255,255,0.03); padding: 12px; border-radius: 12px; margin-bottom: 20px; text-align: center; border: 1px solid #333; min-height: 70px; display: flex; align-items: center; justify-content: center; flex-direction: column; }
-        .stars { display: flex; flex-direction: row-reverse; justify-content: center; gap: 5px; }
-        .stars input { display: none; }
-        .stars label { font-size: 2.3rem; color: #333; cursor: pointer; transition: 0.2s; line-height: 1; }
-        .stars label:hover, .stars label:hover ~ label, .stars input:checked ~ label { color: var(--accent); text-shadow: 0 0 10px rgba(255,180,0,0.5); }
+        /* HALF STAR RATING SYSTEM */
+        .rating-box { background: rgba(255,255,255,0.03); padding: 5px; border-radius: 12px; margin-bottom: 20px; text-align: center; border: 1px solid #333; min-height: 60px; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        .rating-wrapper { display: flex; flex-direction: row-reverse; gap: 2px; }
+        .rating-wrapper > fieldset { border: none; padding: 0; margin: 0; display: inline-flex; flex-direction: row-reverse; }
+        .rating-wrapper > fieldset > input { display: none; }
+        .rating-wrapper > fieldset > label { color: #333; font-size: 2.2rem; padding: 0; cursor: pointer; position: relative; width: 1.1rem; overflow: hidden; white-space: nowrap; text-align: center; }
+        .rating-wrapper > fieldset > label:before { content: '★'; position: absolute; left: 0; width: 2.2rem; }
+        .rating-wrapper > fieldset > label:nth-of-type(odd):before { left: -1.1rem; }
+        .rating-wrapper > fieldset > input:checked ~ label,
+        .rating-wrapper > fieldset > label:hover,
+        .rating-wrapper > fieldset > label:hover ~ label { color: var(--accent); text-shadow: 0 0 10px rgba(255,180,0,0.5); }
         .thanks-msg { display: none; font-family: 'Oswald'; color: var(--accent); font-size: 1.3rem; font-weight: bold; letter-spacing: 1px; }
 
         .volume-container { background: #000; height: 32px; border-radius: 16px; position: relative; overflow: hidden; border: 2px solid #444; margin-top: auto; }
@@ -69,24 +75,14 @@
         /* AWARD MEDAL STYLES */
         .medal-icon { display: inline-block; cursor: pointer; margin-left: 6px; transition: transform 0.2s; vertical-align: middle; }
         .medal-icon:hover { transform: scale(1.2); }
-        
-        /* TIER 0: GRAND CHAMPION (Platinum/Diamond Pulse) */
         .medal-grand-champion { font-size: 1.8em; filter: drop-shadow(0 0 10px rgba(185, 242, 255, 0.9)); animation: pulse-prism 2.5s infinite alternate; }
-        
-        /* TIER 1: NATIONAL (Gold Pulse) */
         .medal-national { font-size: 1.6em; filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.8)); animation: pulse-gold 2s infinite; }
-        
-        /* TIER 2: STATE */
         .medal-state { font-size: 1.3em; filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.5)); }
-        
-        /* TIER 3: LOCAL */
         .medal-local { font-size: 1.0em; opacity: 0.9; }
 
         /* --- STOP ANIMATIONS IN TROPHY CASE --- */
         #award-wrapper .medal-grand-champion,
-        #award-wrapper .medal-national {
-            animation: none !important;
-        }
+        #award-wrapper .medal-national { animation: none !important; }
 
         @keyframes pulse-gold { 0% { transform: scale(1); filter: drop-shadow(0 0 5px gold); } 50% { transform: scale(1.1); filter: drop-shadow(0 0 15px gold); } 100% { transform: scale(1); filter: drop-shadow(0 0 5px gold); } }
         @keyframes pulse-prism { 0% { filter: drop-shadow(0 0 5px rgba(255,215,0,0.8)); transform: scale(1); } 50% { filter: drop-shadow(0 0 15px rgba(255,255,255,1)); transform: scale(1.15); } 100% { filter: drop-shadow(0 0 5px rgba(255,215,0,0.8)); transform: scale(1); } }
@@ -95,11 +91,12 @@
         #award-wrapper { text-align: center; }
         .award-container { max-width: 900px; margin: 0 auto; padding: 20px; text-align: left; }
         .award-group { margin-bottom: 25px; border-left: 4px solid #4caf50; padding-left: 20px; background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 0 8px 8px 0; }
-        .award-group h3 { margin: 0 0 10px 0; color: #ffc107; font-family: serif; letter-spacing: 1px; font-size: 1.5rem; border-bottom: 1px solid #444; padding-bottom: 5px; }
+        .award-group h3 { margin: 0 0 10px 0; color: #ffc107; font-family: serif; letter-spacing: 1px; font-size: 1.5rem; border-bottom: 1px solid #444; padding-bottom: 5px; text-transform: uppercase; }
         .award-row { display: flex; justify-content: space-between; padding: 10px 0; font-size: 1.1em; border-bottom: 1px solid #333; }
         .award-row:last-child { border-bottom: none; }
         .award-year { color: #888; font-weight: bold; margin-right: 15px; font-family: 'Oswald'; }
         .award-beer { color: #fff; font-weight: bold; }
+        .award-detail { color: #aaa; font-style: italic; margin-right: 5px; }
     </style>
 </head>
 <body>
@@ -176,27 +173,30 @@
             if (box) box.innerHTML = '<div class="thanks-msg" style="display:block">CHEERS! 🍻</div>';
         }
 
-        // --- AWARD LOGIC (FIXED) ---
         function getMedalClass(compName, medalName) {
             const c = compName.toLowerCase();
             const m = medalName.toLowerCase();
-            
-            // 1. Check Medal Name FIRST (Higher Priority)
-            if (m.includes('best of show') || m.includes('grand champion')) return 'medal-grand-champion';
-            
-            // 2. Then Check Competition Name
+            if (c.includes('best of show') || m.includes('best of show') || m.includes('grand champion')) return 'medal-grand-champion';
             if (c.includes('national') || c.includes('nhc')) return 'medal-national'; 
             if (c.includes('state') || c.includes('wisconsin')) return 'medal-state'; 
             return 'medal-local';
         }
 
-        function getMedalIcon(medalName) {
+        function getMedalIcon(compName, medalName) {
             const m = medalName.toLowerCase();
+            const c = compName.toLowerCase();
+            if (c.includes('best of show')) return '🏆';
             if (m.includes('best of show') || m.includes('grand')) return '🏆';
             if (m.includes('gold')) return '🥇';
             if (m.includes('silver')) return '🥈';
             if (m.includes('bronze')) return '🥉';
             return 'Ribbon'; 
+        }
+
+        function cleanMedalText(medalName) {
+            const m = medalName.toLowerCase();
+            if (m === 'gold' || m === 'silver' || m === 'bronze') return '';
+            return medalName;
         }
 
         function renderCardMedals(awardString) {
@@ -209,15 +209,13 @@
 
             let html = '';
             awards.forEach(a => {
-                // PASS BOTH COMP AND MEDAL TO DETERMINE CLASS
                 const cssClass = getMedalClass(a.comp, a.medal);
-                const icon = getMedalIcon(a.medal);
+                const icon = getMedalIcon(a.comp, a.medal);
                 html += `<span class="${cssClass} medal-icon" onclick="goToAwards()" title="${a.year} ${a.comp} (${a.medal})">${icon}</span>`;
             });
             return html;
         }
 
-        // Populates the Award Section
         function renderTrophyCase() {
             const content = document.getElementById('award-content');
             let html = '';
@@ -243,6 +241,7 @@
             const sortedKeys = Object.keys(groups).sort((a, b) => {
                 const getScore = (name) => {
                     const n = name.toLowerCase();
+                    if (n.includes('best of show')) return 4;
                     if (n.includes('national')) return 3;
                     if (n.includes('state')) return 2;
                     return 1;
@@ -259,14 +258,13 @@
                 html += `<div class="award-group"><h3>${comp}</h3>`;
                 groups[comp].sort((a,b) => b.year - a.year);
                 groups[comp].forEach(win => {
-                    // PASS BOTH FOR TROPHY CASE DISPLAY TOO
                     const cssClass = getMedalClass(win.comp, win.medal);
-                    const icon = getMedalIcon(win.medal);
+                    const icon = getMedalIcon(win.comp, win.medal);
+                    const cleanedMedal = cleanMedalText(win.medal);
                     
-                    // We need the icon to pulsate here too if it's Grand Champion
                     html += `<div class="award-row">
                         <span><span class="award-year">${win.year}</span> <span class="award-beer">${win.beer}</span></span>
-                        <span class="${cssClass}">${win.medal} ${icon}</span>
+                        <span class="${cssClass}"><span class="award-detail">${cleanedMedal}</span> ${icon}</span>
                     </div>`;
                 });
                 html += `</div>`;
@@ -342,63 +340,51 @@
                         <div class="rating-box" id="box-${i}">
                             ${hasVoted ? 
                                 '<div class="thanks-msg" style="display:block">CHEERS! 🍻</div>' : 
-                                `<div class="stars">
-                                    <input type="radio" id="s5-${i}" onclick="submitRating('${escapedName}', 5, ${i})"><label for="s5-${i}">★</label>
-                                    <input type="radio" id="s4-${i}" onclick="submitRating('${escapedName}', 4, ${i})"><label for="s4-${i}">★</label>
-                                    <input type="radio" id="s3-${i}" onclick="submitRating('${escapedName}', 3, ${i})"><label for="s3-${i}">★</label>
-                                    <input type="radio" id="s2-${i}" onclick="submitRating('${escapedName}', 2, ${i})"><label for="s2-${i}">★</label>
-                                    <input type="radio" id="s1-${i}" onclick="submitRating('${escapedName}', 1, ${i})"><label for="s1-${i}">★</label>
+                                `<div class="rating-wrapper">
+                                    <fieldset>
+                                        <input type="radio" id="st10-${i}" onclick="submitRating('${escapedName}', 5, ${i})"><label for="st10-${i}" title="5"></label>
+                                        <input type="radio" id="st9-${i}" onclick="submitRating('${escapedName}', 4.5, ${i})"><label for="st9-${i}" title="4.5"></label>
+                                        <input type="radio" id="st8-${i}" onclick="submitRating('${escapedName}', 4, ${i})"><label for="st8-${i}" title="4"></label>
+                                        <input type="radio" id="st7-${i}" onclick="submitRating('${escapedName}', 3.5, ${i})"><label for="st7-${i}" title="3.5"></label>
+                                        <input type="radio" id="st6-${i}" onclick="submitRating('${escapedName}', 3, ${i})"><label for="st6-${i}" title="3"></label>
+                                        <input type="radio" id="st5-${i}" onclick="submitRating('${escapedName}', 2.5, ${i})"><label for="st5-${i}" title="2.5"></label>
+                                        <input type="radio" id="st4-${i}" onclick="submitRating('${escapedName}', 2, ${i})"><label for="st4-${i}" title="2"></label>
+                                        <input type="radio" id="st3-${i}" onclick="submitRating('${escapedName}', 1.5, ${i})"><label for="st3-${i}" title="1.5"></label>
+                                        <input type="radio" id="st2-${i}" onclick="submitRating('${escapedName}', 1, ${i})"><label for="st2-${i}" title="1"></label>
+                                        <input type="radio" id="st1-${i}" onclick="submitRating('${escapedName}', 0.5, ${i})"><label for="st1-${i}" title="0.5"></label>
+                                    </fieldset>
                                 </div>`
                             }
                         </div>`;
 
-                    if (tapID.toLowerCase().includes("tap")) {
-                        const pct = weights[tapID] || 0;
-                        const tempVal = weights[tapID + "_temp"];
-                        const timeVal = weights[tapID + "_updated"] || "Waiting...";
-                        const pourVal = weights[tapID + "_last_pour"] || "";
-                        const tempHTML = tempVal ? `<span style="font-size:1.2rem;">🌡️</span> ${tempVal}°F` : '';
-                        const pourHTML = pourVal ? `LAST POUR: <span style="color:#fff">${pourVal}</span>` : '';
-
-                        tapContainer.innerHTML += `
-                            <div class="beer-card">
-                                ${topRibbon}
-                                <div class="label-art" style="background-image: url('${row[4]}');"></div>
-                                <div class="details">
-                                    <div style="font-size:0.8rem; color:#888; letter-spacing:2px; margin-bottom:5px;">${tapID}</div>
-                                    <div class="beer-name-row">
-                                        <h2 class="beer-name">${bName} ${medalHTML}</h2>
-                                        ${avg}
-                                    </div>
-                                    <div class="stats"><span>${row[6]}</span><span>ABV: ${row[3]}</span></div>
-                                    <p class="description">${row[5]}</p>
-                                    ${ratingHTML}
+                    const cardHTML = `
+                        <div class="beer-card">
+                            ${topRibbon}
+                            <div class="label-art" style="background-image: url('${row[4]}'); ${tapID.toLowerCase().includes("tap") ? '' : 'height:250px;'}"></div>
+                            <div class="details">
+                                ${tapID.toLowerCase().includes("tap") ? `<div style="font-size:0.8rem; color:#888; letter-spacing:2px; margin-bottom:5px;">${tapID}</div>` : ''}
+                                <div class="beer-name-row">
+                                    <h2 class="beer-name" ${tapID.toLowerCase().includes("tap") ? '' : 'style="font-size:1.5rem;"'}>${bName} ${medalHTML}</h2>
+                                    ${avg}
+                                </div>
+                                <div class="stats"><span>${row[6]}</span><span>ABV: ${row[3]}</span></div>
+                                ${tapID.toLowerCase().includes("tap") ? `<p class="description">${row[5]}</p>` : ''}
+                                ${ratingHTML}
+                                ${tapID.toLowerCase().includes("tap") ? `
                                     <div class="volume-container">
-                                        <div class="volume-bar" style="width:${pct}%"></div>
-                                        <div class="volume-text">${Math.round((pct/100)*41)} PINTS LEFT</div>
+                                        <div class="volume-bar" style="width:${weights[tapID]||0}%"></div>
+                                        <div class="volume-text">${Math.round(((weights[tapID]||0)/100)*41)} PINTS LEFT</div>
                                     </div>
                                     <div class="tap-footer">
-                                        <div class="temp-display">${tempHTML}</div>
-                                        <div class="pour-display">${pourHTML}</div>
-                                        <div class="time-display">${timeVal}</div>
-                                    </div>
-                                </div>
-                            </div>`;
-                    } else {
-                        archiveContainer.innerHTML += `
-                            <div class="beer-card">
-                                ${topRibbon}
-                                <div class="label-art" style="height:250px; background-image: url('${row[4]}');"></div>
-                                <div class="details">
-                                    <div class="beer-name-row">
-                                        <h2 class="beer-name" style="font-size:1.5rem;">${bName} ${medalHTML}</h2>
-                                        ${avg}
-                                    </div>
-                                    <div class="stats"><span>${row[6]}</span><span>ABV: ${row[3]}</span></div>
-                                    ${ratingHTML}
-                                </div>
-                            </div>`;
-                    }
+                                        <div class="temp-display">${weights[tapID+"_temp"] ? `<span style="font-size:1.2rem;">🌡️</span> `+weights[tapID+"_temp"]+`°F` : ''}</div>
+                                        <div class="pour-display">${weights[tapID+"_last_pour"] ? `LAST POUR: <span style="color:#fff">`+weights[tapID+"_last_pour"]+`</span>` : ''}</div>
+                                        <div class="time-display">${weights[tapID+"_updated"] || "Waiting..."}</div>
+                                    </div>` : ''}
+                            </div>
+                        </div>`;
+                    
+                    if (tapID.toLowerCase().includes("tap")) tapContainer.innerHTML += cardHTML;
+                    else archiveContainer.innerHTML += cardHTML;
                 });
             } catch (e) { console.error(e); }
         }
