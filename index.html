@@ -33,49 +33,57 @@
         .stats { font-family: 'Oswald', sans-serif; color: var(--accent); font-size: 1.1rem; margin: 10px 0; display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding-bottom: 10px; }
         .description { font-size: 0.95rem; color: #ccc; line-height: 1.5; margin-bottom: 20px; flex-grow: 1; white-space: pre-wrap; }
         
-        /* --- STABLE HALF STAR SYSTEM --- */
-        .rating-box { background: rgba(255,255,255,0.03); padding: 5px; border-radius: 12px; margin-bottom: 20px; text-align: center; border: 1px solid #333; min-height: 60px; display: flex; align-items: center; justify-content: center; flex-direction: column; }
-        
-        .rating-container { display: flex; flex-direction: row-reverse; justify-content: center; }
-        .rating-container input { display: none; }
-        
-        /* The Slices */
-        .rating-container label {
-            width: 15px; /* Exact pixel width */
-            height: 30px;
-            overflow: hidden;
-            position: relative;
-            cursor: pointer;
-            color: #555; /* Empty Color */
-        }
-        
-        /* The Star Character (Locked via Arial) */
-        .rating-container label::before {
-            content: '★';
-            position: absolute;
-            font-size: 30px;
-            line-height: 30px;
-            top: 0;
-            font-family: Arial, sans-serif; /* Prevents font distortion */
-        }
-        
-        /* Left Half Slices */
-        .rating-container label.half-left::before {
-            left: 0;
-        }
-        
-        /* Right Half Slices (Shift star left to reveal right side) */
-        .rating-container label.half-right::before {
-            left: -15px; 
+        /* --- SLIDER RATING SYSTEM --- */
+        .rating-box { 
+            background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; margin-bottom: 20px; 
+            text-align: center; border: 1px solid #333; min-height: 60px; 
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
         }
 
-        /* Hover & Checked States */
-        .rating-container input:checked ~ label,
-        .rating-container label:hover,
-        .rating-container label:hover ~ label {
-            color: var(--accent);
-            text-shadow: 0 0 10px rgba(255,180,0,0.6);
+        .slider-row {
+            display: flex; align-items: center; width: 100%; gap: 15px;
         }
+
+        .score-display {
+            font-family: 'Oswald', sans-serif;
+            font-size: 2rem;
+            color: var(--accent);
+            min-width: 60px;
+            text-align: right;
+            font-weight: bold;
+        }
+
+        /* Custom Range Slider Styling */
+        input[type=range] {
+            -webkit-appearance: none; width: 100%; background: transparent; cursor: pointer;
+        }
+        input[type=range]:focus { outline: none; }
+        
+        /* The Track */
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 8px; background: #333; border-radius: 4px; border: 1px solid #555;
+        }
+        input[type=range]::-moz-range-track {
+            width: 100%; height: 8px; background: #333; border-radius: 4px; border: 1px solid #555;
+        }
+
+        /* The Thumb (Handle) */
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%;
+            background: var(--accent); margin-top: -9px; box-shadow: 0 0 10px rgba(255,180,0,0.5);
+        }
+        input[type=range]::-moz-range-thumb {
+            height: 24px; width: 24px; border: none; border-radius: 50%;
+            background: var(--accent); box-shadow: 0 0 10px rgba(255,180,0,0.5);
+        }
+
+        .vote-btn {
+            background: var(--accent); color: #000; border: none; padding: 8px 20px;
+            font-family: 'Oswald'; font-weight: bold; font-size: 1rem; border-radius: 5px;
+            cursor: pointer; text-transform: uppercase; letter-spacing: 1px; width: 100%;
+            transition: 0.2s;
+        }
+        .vote-btn:active { transform: scale(0.95); background: #fff; }
         
         .thanks-msg { display: none; font-family: 'Oswald'; color: var(--accent); font-size: 1.3rem; font-weight: bold; letter-spacing: 1px; }
 
@@ -191,11 +199,18 @@
             return result;
         }
 
-        function submitRating(beerName, score, cardId) {
+        // --- NEW SLIDER LOGIC ---
+        function updateSliderScore(val, cardId) {
+            document.getElementById(`score-disp-${cardId}`).innerText = parseFloat(val).toFixed(1);
+        }
+
+        function submitSlider(beerName, cardId) {
             if (localStorage.getItem('voted_' + beerName)) {
                 alert("Cheers! You've already rated this brew.");
                 return;
             }
+            const score = document.getElementById(`slider-${cardId}`).value;
+            
             document.getElementById('form_beer').value = beerName;
             document.getElementById('form_score').value = score;
             document.getElementById('rating_form').submit();
@@ -368,22 +383,16 @@
                     const hasVoted = localStorage.getItem('voted_' + bName);
                     const medalHTML = renderCardMedals(awardsStr);
                     
+                    // NEW SLIDER UI
                     const ratingHTML = `
                         <div class="rating-box" id="box-${i}">
                             ${hasVoted ? 
                                 '<div class="thanks-msg" style="display:block">CHEERS! 🍻</div>' : 
-                                `<div class="rating-container">
-                                    <input type="radio" id="st10-${i}" onclick="submitRating('${escapedName}', 5, ${i})"><label for="st10-${i}" class="half-right" title="5"></label>
-                                    <input type="radio" id="st9-${i}" onclick="submitRating('${escapedName}', 4.5, ${i})"><label for="st9-${i}" class="half-left" title="4.5"></label>
-                                    <input type="radio" id="st8-${i}" onclick="submitRating('${escapedName}', 4, ${i})"><label for="st8-${i}" class="half-right" title="4"></label>
-                                    <input type="radio" id="st7-${i}" onclick="submitRating('${escapedName}', 3.5, ${i})"><label for="st7-${i}" class="half-left" title="3.5"></label>
-                                    <input type="radio" id="st6-${i}" onclick="submitRating('${escapedName}', 3, ${i})"><label for="st6-${i}" class="half-right" title="3"></label>
-                                    <input type="radio" id="st5-${i}" onclick="submitRating('${escapedName}', 2.5, ${i})"><label for="st5-${i}" class="half-left" title="2.5"></label>
-                                    <input type="radio" id="st4-${i}" onclick="submitRating('${escapedName}', 2, ${i})"><label for="st4-${i}" class="half-right" title="2"></label>
-                                    <input type="radio" id="st3-${i}" onclick="submitRating('${escapedName}', 1.5, ${i})"><label for="st3-${i}" class="half-left" title="1.5"></label>
-                                    <input type="radio" id="st2-${i}" onclick="submitRating('${escapedName}', 1, ${i})"><label for="st2-${i}" class="half-right" title="1"></label>
-                                    <input type="radio" id="st1-${i}" onclick="submitRating('${escapedName}', 0.5, ${i})"><label for="st1-${i}" class="half-left" title="0.5"></label>
-                                </div>`
+                                `<div class="slider-row">
+                                    <input type="range" id="slider-${i}" min="0" max="5" step="0.1" value="0" oninput="updateSliderScore(this.value, ${i})">
+                                    <div class="score-display" id="score-disp-${i}">0.0</div>
+                                </div>
+                                <button class="vote-btn" onclick="submitSlider('${escapedName}', ${i})">VOTE</button>`
                             }
                         </div>`;
 
