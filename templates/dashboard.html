@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LAW BREWING V2</title> <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Roboto:wght@300;400&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --accent: #ffb400; --temp: #03a9f4; --bg: #121212; --card: #1e1e1e; --text: #ffffff; }
+        body { background: var(--bg); color: var(--text); font-family: 'Roboto', sans-serif; margin: 0; padding: 20px; }
+        
+        .header { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 15px; 
+            margin-bottom: 30px; 
+            border-bottom: 1px solid #333;
+            padding-bottom: 20px;
+        }
+        h1 { font-family: 'Oswald', sans-serif; color: var(--accent); letter-spacing: 2px; margin: 0; text-align: center; }
+        
+        /* HUGE BUTTONS TO FORCE VISIBILITY */
+        .nav-group { display: flex; gap: 20px; justify-content: center; width: 100%; }
+        .btn { 
+            background: #222; 
+            color: #fff; 
+            text-decoration: none; 
+            padding: 15px 30px; /* Big padding */
+            border-radius: 8px; 
+            font-size: 1.1rem; 
+            border: 2px solid #555; 
+            font-weight: bold;
+            display: inline-block;
+        }
+        .btn:hover { background: var(--accent); border-color: var(--accent); color: #000; }
+        .btn-maint { border-color: #03a9f4; color: #03a9f4; }
+        
+        .tap-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto; }
+        .tap-card { background: var(--card); border-radius: 15px; padding: 25px; border: 1px solid #333; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .tap-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
+        .beer-name { font-family: 'Oswald', sans-serif; font-size: 1.8rem; margin: 0; color: #fff; }
+        .tap-id { font-size: 0.8rem; color: #666; text-transform: uppercase; letter-spacing: 1px; }
+        .stats-row { display: flex; justify-content: space-between; font-size: 0.9rem; color: #aaa; margin-bottom: 15px; align-items: center; }
+        .temp-stat { color: var(--temp); font-weight: bold; }
+        .date-btn { background: none; border: none; color: #666; cursor: pointer; font-size: 1rem; margin-left: 5px; }
+        .date-btn:hover { color: var(--accent); }
+        .volume-container { background: #000; height: 30px; border-radius: 15px; overflow: hidden; border: 2px solid #333; position: relative; }
+        .volume-bar { height: 100%; background: linear-gradient(90deg, #b8860b, var(--accent)); transition: width 1s; width: 0%; }
+        .volume-text { position: absolute; top: 5px; width: 100%; text-align: center; font-size: 0.85rem; font-weight: bold; text-shadow: 1px 1px 2px #000; z-index: 2; }
+        .last-pour { margin-top: 15px; text-align: center; font-size: 1.1rem; color: #fff; font-weight: bold; min-height: 1.2em; text-transform: uppercase; animation: flash 1s; }
+        @keyframes flash { 0% { color: var(--accent); } 100% { color: #fff; } }
+        .chart-box { height: 150px; margin-top: 20px; border-top: 1px solid #333; padding-top: 10px; }
+        .meta-info { margin-top: 10px; font-size: 0.8rem; color: #666; text-align: center; }
+        .highlight { color: var(--accent); }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🍺 LAW BREWING V2</h1>
+        <div class="nav-group">
+            <a href="/maintenance" class="btn btn-maint">🛠 MAINTENANCE TOOLS</a>
+            <a href="/admin/audit" class="btn">📜 AUDIT LOG</a>
+        </div>
+    </div>
+    <div id="tap-display" class="tap-grid">Loading Taps...</div>
+    <script>
+        let charts = {};
+        async function updateDate(tap) {
+            const newDate = prompt(`Enter Start Date for ${tap} (YYYY-MM-DD):`);
+            if (newDate) {
+                await fetch('/set_date', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ tap: tap, date: newDate })});
+                alert('Date Updated!'); location.reload();
+            }
+        }
+        async function update() {
+            try {
+                const res = await fetch('/data'); 
+                if (!res.ok) throw new Error("Server Error");
+                const data = await res.json();
+                const historyRes = await fetch('/history'); const history = await historyRes.json();
+                const container = document.getElementById('tap-display');
+                if (container.innerText === 'Loading Taps...') container.innerHTML = '';
+                data.taps.forEach(tap => {
+                    const safeId = tap.replace(/ /g, '-');
+                    let card = document.getElementById(`card-${safeId}`);
+                    const meta = data.meta[tap];
+                    const weight = data.weights[tap] || 0;
+                    const temp = data.weights[tap + '_temp'] || 0;
+                    const pour = data.weights[tap + '_last_pour'] || ""; 
+                    if (!card) {
+                        card = document.createElement('div'); card.id = `card-${safeId}`; card.className = 'tap-card';
+                        card.innerHTML = `<div class="tap-header"><div><div class="tap-id">${tap}</div><div class="beer-name">${meta.beer}</div><div style="font-size:0.9em; color:#888; font-style:italic;">${meta.style}</div></div></div><div class="stats-row"><span>⏳ ${meta.days_on_tap} Days <button class="date-btn" onclick="updateDate('${tap}')">📅</button></span><span class="temp-stat">🌡 ${temp}°F</span></div><div class="volume-container"><div class="volume-bar" id="bar-${safeId}"></div><div class="volume-text" id="text-${safeId}"></div></div><div class="last-pour" id="pour-${safeId}"></div><div class="meta-info">Burn Rate: <span class="highlight">${meta.pints_per_day}</span> pts/day <br>Est. Kick: <span class="highlight">${meta.kick_date || '--'}</span></div><div class="chart-box"><canvas id="chart-${safeId}"></canvas></div>`;
+                        container.appendChild(card);
+                        const ctx = document.getElementById(`chart-${safeId}`).getContext('2d');
+                        charts[tap] = new Chart(ctx, { type: 'line', data: { labels: [], datasets: [{ label: 'Vol (%)', data: [], borderColor: '#ffb400', borderWidth: 2, pointRadius: 0, tension: 0.4, fill: true, backgroundColor: 'rgba(255,180,0,0.1)', yAxisID: 'y' }, { label: 'Temp (°F)', data: [], borderColor: '#03a9f4', borderDash: [5, 5], borderWidth: 2, pointRadius: 0, tension: 0.4, yAxisID: 'y1' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { display: false, min: 0, max: 100 }, y1: { display: false, min: 25, max: 65, position: 'right' } } } });
+                    }
+                    card.querySelector('.beer-name').innerText = meta.beer;
+                    card.querySelector('.tap-header div div:nth-child(3)').innerText = meta.style;
+                    card.querySelector('.stats-row span').innerHTML = `⏳ ${meta.days_on_tap} Days <button class="date-btn" onclick="updateDate('${tap}')">📅</button>`;
+                    card.querySelector('.meta-info').innerHTML = `Burn Rate: <span class="highlight">${meta.pints_per_day}</span> pts/day <br>Est. Kick: <span class="highlight">${meta.kick_date || '--'}</span>`;
+                    document.getElementById(`bar-${safeId}`).style.width = weight + '%';
+                    const pints = Math.round((weight / 100) * 40);
+                    document.getElementById(`text-${safeId}`).innerText = `${weight}% (${pints} Pints)`;
+                    card.querySelector('.temp-stat').innerText = `🌡 ${temp}°F`;
+                    const pourEl = document.getElementById(`pour-${safeId}`);
+                    if (pourEl.innerText !== pour) { pourEl.innerText = pour; if(pour) { pourEl.style.animation = 'none'; pourEl.offsetHeight; pourEl.style.animation = 'flash 1s'; } }
+                    if (charts[tap] && history.length > 0) {
+                        const labels = history.map(h => h.time);
+                        const volPoints = history.map(h => h.data[tap] || 0);
+                        const tempPoints = history.map(h => h.data[tap + '_temp'] || 0);
+                        charts[tap].data.labels = labels; charts[tap].data.datasets[0].data = volPoints; charts[tap].data.datasets[1].data = tempPoints; charts[tap].update('none');
+                    }
+                });
+            } catch (e) { console.error(e); }
+        }
+        setInterval(update, 5000); update();
+    </script>
+</body>
+</html>

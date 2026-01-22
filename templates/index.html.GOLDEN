@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Law Brewing Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { background: #121212; color: white; font-family: sans-serif; text-align: center; }
+        .tap-card { background: #222; margin: 20px auto; padding: 20px; border-radius: 15px; max-width: 500px; border: 1px solid #333; }
+        .progress-bg { background: #444; border-radius: 20px; height: 30px; width: 100%; position: relative; margin-top: 15px;}
+        .progress-fill { background: linear-gradient(90deg, #f39c12, #f1c40f); height: 100%; border-radius: 20px; transition: width 0.5s; }
+        .label-img { width: 180px; border-radius: 10px; margin: 15px 0; border: 2px solid gold; }
+    </style>
+</head>
+<body>
+    <h1>LAW BREWING LIVE TAPS</h1>
+    {% for num, data in taps.items() %}
+    <div class="tap-card">
+        <h2>Tap {{ num }}: {{ data.name }}</h2>
+        {% if data.id != 'none' %}
+            <img src="{{ url_for('static', filename='images/library/' + data.image_file) }}" class="label-img">
+            <p>{{ data.desc }}</p>
+        {% endif %}
+        <div class="progress-bg">
+            <div class="progress-fill" style="width: {{ data.percent }}%;"></div>
+            <div style="position:absolute; width:100%; top:5px; font-weight:bold;">{{ data.percent }}%</div>
+        </div>
+    </div>
+    {% endfor %}
+    <p><a href="/manage" style="color: gold;">Manage Taps</a> | <a href="/library" style="color: gold;">Beer Vault</a></p>
+</body>
+</html>
