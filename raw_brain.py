@@ -1,7 +1,11 @@
+import subprocess
 import socket, json, os, re, time, struct, threading, csv, urllib.request, ssl, io, traceback, random
 from collections import deque
 from flask import Flask, render_template_string, jsonify, request
 from datetime import datetime, timedelta
+
+# Create a lock so only one Git operation happens at a time
+git_lock = threading.Lock()
 
 # ================= CONFIGURATION =================
 BASE_DIR = "/home/lawmj04/law-brewing"
@@ -213,33 +217,51 @@ def update_beer_names():
                     tap_beer_abv[t] = row[3]
     except: pass
 
-def save_data(force_git=False):
-    global last_local_save, last_git_push
-    now = time.time()
+def sync_to_github(filename):
+    """
+    Handles git operations safely in a separate thread.
+    Uses a lock to ensure only one git process runs at a time.
+    """
+    def _run_git():
+        # Check if locked. If locked, we skip this cycle to prevent pile-up.
+        if git_lock.acquire(blocking=False): 
+            try:
+                # 1. Add all files (captures pour_audit.csv, etc.)
+                subprocess.run(["git", "add", "."], cwd=BASE_DIR, check=False)
+                
+                # 2. Commit with timestamp
+                msg = f"Update {os.path.basename(filename)} - {datetime.now().strftime('%H:%M:%S')}"
+                subprocess.run(["git", "commit", "-m", msg], cwd=BASE_DIR, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                
+                # 3. Push safely
+                result = subprocess.run(["git", "push", "origin", "master"], cwd=BASE_DIR, capture_output=True, text=True)
+                
+                if result.returncode == 0:
+                    print(f"🚀 Pushed {os.path.basename(filename)} to GitHub")
+                else:
+                    print(f"⚠️ Git Push Warning: {result.stderr.strip()}")
+            except Exception as e:
+                print(f"❌ Git Sync Error: {e}")
+            finally:
+                git_lock.release()
+        else:
+            print(f"⏳ Git busy, skipping sync for {os.path.basename(filename)}")
 
-    # 1. ALWAYS Save Locally
+    # Launch in background
+    t = threading.Thread(target=_run_git)
+    t.start()
+
+def save_data(data, filename=WEIGHTS_FILE):
     try:
-        current_weights["last_updated"] = time.strftime("%Y-%m-%d %H:%M:%S")
-        with open(WEIGHTS_FILE, 'w') as f:
-            json.dump(current_weights, f, indent=4)
-        last_local_save = now
+        # Save the JSON file locally first
+        with open(filename, 'w') as f:
+            json.dump(data, f)
+        
+        # Trigger the safe background sync
+        sync_to_github(filename)
+            
     except Exception as e:
-        print(f"Local Write Error: {e}")
-
-    # 2. ISOLATED Git Push with BULLDOZER MODE (--force)
-    if force_git or (now - last_git_push > 600):
-        # We use --force to overwrite any GitHub history mismatches
-        cmd = (
-            f"cd {BASE_DIR} && "
-            "rm -f .git/index.lock && "
-            f"git add {WEIGHTS_FILE} && "
-            "git commit -m 'scale update' && "
-            "git push --force origin master"
-        )
-        # Run in foreground to see errors, but ignore exit code so python keeps running
-        os.system(f"({cmd}) > /dev/null 2>&1 &")
-        last_git_push = now
-        print("🚀 Pushed to GitHub")
+        print(f"Error saving {filename}: {e}")
 
 # --- BACKGROUND THREADS ---
 def history_loop():
