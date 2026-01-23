@@ -251,101 +251,116 @@ def sync_to_github(filename):
     t = threading.Thread(target=_run_git)
     t.start()
 
-def save_data(data, filename=WEIGHTS_FILE):
+def save_data(data, filename=WEIGHTS_FILE, force_git=False):
+    """
+    Saves the current data to JSON and pushes to GitHub.
+    force_git=True : Bypasses any checks and forces a push (used by Heartbeat).
+    """
     try:
-        # Save the JSON file locally first
+        # 1. Save JSON to disk (always)
         with open(filename, 'w') as f:
-            json.dump(data, f)
+            json.dump(data, f, indent=4)
         
-        # Trigger the safe background sync
-        sync_to_github(filename)
-            
+        # 2. Sync to GitHub
+        # We push if it's a forced heartbeat OR a regular update
+        if force_git:
+            # Add specific files to be safe
+            subprocess.run(["git", "add", filename], check=False)
+            subprocess.run(["git", "commit", "-m", f"💓 Heartbeat: {datetime.now().strftime('%H:%M')}"], check=False)
+            subprocess.run(["git", "push"], check=False)
+            print("🚀 Heartbeat Pushed to GitHub")
+        else:
+            # This is the standard "Data Changed" path
+            subprocess.run(["git", "add", filename], check=False)
+            subprocess.run(["git", "commit", "-m", f"🍺 Pour Update: {datetime.now().strftime('%H:%M')}"], check=False)
+            # Use 'subprocess.Popen' for non-blocking push on pours, or 'run' if you want safety
+            subprocess.run(["git", "push"], check=False)
+
     except Exception as e:
-        print(f"Error saving {filename}: {e}")
+        print(f"❌ Save/Sync Failed: {e}")
 
 # --- BACKGROUND THREADS ---
+
 def history_loop():
+    """
+    Background thread that handles:
+    1. Git Sync (Heartbeat) - Every 10 mins
+    2. History Logging - Every 1 min
+    3. Beer Name Updates - Every 10 mins
+    4. Low Keg Notifications - Realtime checks
+    """
+    global last_git_push
     last_name_update = 0
+    
+    # Track which kegs we have already alerted about to avoid spamming
+    notified_low = {"Law Tap": False, "Wisco Tap": False, "Nitro Tap": False}
+    notified_empty = {"Law Tap": False, "Wisco Tap": False, "Nitro Tap": False}
+
+    print("⏳ Background Thread Started (Heartbeat & History)")
+
     while True:
         try:
-            # 1. Update Beer Names every 10 mins
+            # --- 1. HEARTBEAT (Git Sync) ---
+            # Checks every minute if 10 minutes (600s) have passed since last push
+            if (time.time() - last_git_push) > 600:
+                last_git_push = time.time()  # Reset timer immediately
+                print("💓 Heartbeat: Pushing to GitHub...")
+                # We use the global current_weights dictionary
+                save_data(current_weights, force_git=True)
+
+            # --- 2. UPDATE BEER NAMES (Every 10 mins) ---
             if (time.time() - last_name_update) > 600:
                 update_beer_names()
                 last_name_update = time.time()
 
-            # 2. History & Graphs
+            # --- 3. SAVE HISTORY JSON (For Graphs) ---
             h = load_json(HISTORY_FILE, [])
-            if len(h) > 2880: h.pop(0)
-            h.append({"time": datetime.now().strftime('%H:%M:%S'), "data": current_weights.copy()})
+            # Keep history manageable (last ~48 hours at 1-min intervals)
+            if len(h) > 2880:
+                h.pop(0)
+            
+            # Snapshot the current state
+            h.append({
+                "time": datetime.now().strftime('%H:%M:%S'),
+                "data": current_weights.copy()
+            })
             save_json(HISTORY_FILE, h)
 
-            # 3. Notification Logic (Personality)
-            now_ts = time.time()
-            for tap in TAPS:
-                try: pct = float(current_weights.get(tap, 0))
-                except: pct = 0
-                beer = tap_beer_names.get(tap, tap)
+            # --- 4. NOTIFICATIONS (Low Keg Alerts) ---
+            for tap, weight in current_weights.items():
+                # Skip metadata keys (temps, timestamps, etc.)
+                if "_temp" in tap or "_updated" in tap or "last_" in tap or "_pour" in tap:
+                    continue
 
-                # Determine Zone
-                zone = "normal"
-                if pct <= CRIT_PCT: zone = "empty"
-                elif pct < DEAD_PCT: zone = "dead"
-                elif pct < LOW_PCT: zone = "low"
-                elif pct < BREW_PCT: zone = "brew"
-
-                last = volume_states.get(tap, "normal")
-                
-                # --- NEW PART 1: RESET SPAM MEMORY ON FRESH KEG ---
-                # If you put on a full keg (>90%), we forget the old alerts so they can fire again later.
-                if pct > 90:
-                    keys_to_clear = [k for k in volume_alert_history if k.startswith(tap)]
-                    for k in keys_to_clear: del volume_alert_history[k]
-
-                # --- NEW PART 2: ZONE CHANGE LOGIC ---
-                if zone != last:
-                    msg = None
+                try:
+                    w = float(weight)
                     
-                    # Case A: New Keg (Empty -> Full)
-                    if last in ['empty', 'dead'] and pct > 90:
-                        msg = random.choice(PHRASES["NEW"]).format(beer=beer, tap=tap)
+                    # ALERT: Keg Empty (< 10oz)
+                    if w < 10:
+                        if not notified_empty.get(tap, False):
+                            send_notification(f"🚨 KEG KICKED: {tap} is empty!", priority=1)
+                            notified_empty[tap] = True
+                    
+                    # ALERT: Low Keg (< 100oz)
+                    elif w < 100:
+                        if not notified_low.get(tap, False):
+                            send_notification(f"⚠️ LOW KEG: {tap} is below 100oz.")
+                            notified_low[tap] = True
+                    
+                    # RESET: If weight goes up (keg swapped), reset alerts
+                    if w > 100:
+                        notified_low[tap] = False
+                        notified_empty[tap] = False
 
-                    # Case B: Dropping Tiers
-                    else:
-                        levels = ["normal", "brew", "low", "dead", "empty"]
-                        if levels.index(zone) > levels.index(last):
-                            
-                            # GENERATE MESSAGE
-                            if zone == "brew": 
-                                msg = random.choice(PHRASES["BREW"]).format(beer=beer)
-                            elif zone == "low": 
-                                msg = random.choice(PHRASES["LOW"]).format(beer=beer)
-                            elif zone == "dead": 
-                                msg = random.choice(PHRASES["DEAD"]).format(beer=beer)
-                            elif zone == "empty":
-                                # 5-min debounce for empty (keep strict)
-                                if (now_ts - last_zero_alert.get(tap, 0)) > 300:
-                                    msg = random.choice(PHRASES["EMPTY"]).format(beer=beer, tap=tap)
-                                    last_zero_alert[tap] = now_ts
-                                else: msg = None
+                except ValueError:
+                    continue # Skip if weight isn't a number
 
-                            # --- NEW PART 3: THE 7-DAY SPAM FILTER ---
-                            # Only applies to Brew/Low/Dead. Empty has its own logic above.
-                            if zone in ["brew", "low", "dead"] and msg:
-                                alert_key = f"{tap}_{zone}"
-                                last_sent = volume_alert_history.get(alert_key, 0)
-                                
-                                # CHECK THE CLOCK (604800 seconds = 1 week)
-                                if (now_ts - last_sent) < VOLUME_ALERT_COOLDOWN:
-                                    print(f"🤐 Suppressed spam alert: {tap} {zone} (Last sent: {int((now_ts-last_sent)/3600)}h ago)")
-                                    msg = None # CANCEL SEND
-                                else:
-                                    volume_alert_history[alert_key] = now_ts # Update timestamp
-
-                    if msg: send_discord(msg)
-                    volume_states[tap] = zone # Save state
+            # --- 5. SLEEP (Crucial for CPU) ---
+            time.sleep(60)  # Run this loop once per minute
 
         except Exception as e:
-            print(f"History Loop Error: {e}")
+            print(f"❌ Background Loop Error: {e}")
+            time.sleep(60)  # Sleep even on error to prevent log spam
 
 # --- FLASK WEB SERVER ---
 app = Flask(__name__)
@@ -1082,11 +1097,6 @@ def start_brain():
                     if ip in TAP_CONFIG:
                         name = TAP_CONFIG[ip]['name']; conf = TAP_CONFIG[ip]
 
-                        # --- HEARTBEAT & GIT SYNC ---
-                        global last_git_push
-                        if (time.time() - last_git_push) > 600:
-                            print("💓 Heartbeat: Pushing to GitHub...")
-                            save_data(force_git=True)
 
                         # --- WEIGHT LOGIC (VW.51) ---
                         match = re.search(r"vw.51.(\d+\.?\d*)", data)
@@ -1171,6 +1181,25 @@ def start_brain():
         finally:
             try: conn.close()
             except: pass
+
+def background_heartbeat():
+    """Forces a Git sync every 10 minutes, independent of sensor activity."""
+    global last_git_push
+    print("💓 Pacemaker Thread Started")
+    while True:
+        time.sleep(60)  # Check every minute
+        if (time.time() - last_git_push) > 600:
+            last_git_push = time.time()
+            print("💓 Heartbeat: Pushing to GitHub...")
+            try:
+                # We save the global 'taps' data
+                save_data(taps, force_git=True)
+            except Exception as e:
+                print(f"❌ Heartbeat Failed: {e}")
+
+# Start the Heartbeat Pacemaker
+    t_heartbeat = threading.Thread(target=background_heartbeat, daemon=True)
+    t_heartbeat.start()
 
 if __name__ == "__main__":
     start_brain()
