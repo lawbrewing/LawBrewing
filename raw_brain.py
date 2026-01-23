@@ -256,6 +256,7 @@ def save_data(data, filename=WEIGHTS_FILE, force_git=False):
     Saves the current data to JSON and pushes to GitHub.
     force_git=True : Bypasses any checks and forces a push (used by Heartbeat).
     """
+    data["last_updated"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     try:
         # 1. Save JSON to disk (always)
         with open(filename, 'w') as f:
