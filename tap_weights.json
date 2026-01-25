@@ -1,18 +1,18 @@
 {
     "Law Tap": 21.5,
-    "Law Tap_temp": 37.6,
+    "Law Tap_temp": 38.3,
     "Law Tap_updated": "11:05 PM",
     "Wisco Tap": 48.4,
     "Wisco Tap_temp": 38.3,
     "Wisco Tap_updated": "11:19 PM",
-    "Nitro Tap": 10.5,
-    "Nitro Tap_temp": 49.8,
-    "Nitro Tap_updated": "11:44 PM",
-    "last_updated": "2026-01-24 23:46:53",
+    "Nitro Tap": 10.7,
+    "Nitro Tap_temp": 48.9,
+    "Nitro Tap_updated": "11:55 PM",
+    "last_updated": "2026-01-24 23:56:57",
     "Law Tap_last_pour": "Pint (12.2oz)",
     "Nitro Tap_last_pour": "Short Pour (9.3oz)",
     "Wisco Tap_last_pour": "Pint (12.2oz)",
     "Nitro Tap_pour_ts": 1769319768.1572948,
     "Law Tap_pour_ts": 1768870243.9734325,
-    "Wisco Tap_pour_ts": 1769319987.272131
+    "Wisco Tap_pour_ts": 1769320601.6875055
 }
