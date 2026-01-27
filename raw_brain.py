@@ -268,7 +268,7 @@ def save_data(data, filename=WEIGHTS_FILE, force_git=False):
             # Add specific files to be safe
             subprocess.run(["git", "add", filename], check=False)
             subprocess.run(["git", "commit", "-m", f"💓 Heartbeat: {datetime.now().strftime('%H:%M')}"], check=False)
-            subprocess.run(["git", "push"], check=False)
+            subprocess.run(["git", "push", "-f"], check=False)
             print("🚀 Heartbeat Pushed to GitHub")
         else:
             # This is the standard "Data Changed" path
@@ -1144,9 +1144,16 @@ def start_brain():
                                                 send_discord(f"🚨 SOS: TAP STUCK OPEN! {name} has lost {int(current_vol_loss)}oz!")
                                                 safety_cooldowns[alert_key] = time.time()
                                     # ============================
+                                        if (max(readings_history[name]) - min(readings_history[name])) < MOTION_SENSITIVITY:
+                                            oz = (pour_start_weights[name] - val) / 29.57
+    
+                                     # NEW STABILITY CHECK: If weight has stopped but volume is negligible 
+                                     # or the value is stuck, force a reset of the start weight.
+                                        if abs(oz) < 1.0: 
+                                            is_pouring[name] = False
+                                            pour_start_weights[name] = val
+                                            return
 
-                                    if (max(readings_history[name]) - min(readings_history[name])) < MOTION_SENSITIVITY:
-                                        oz = (pour_start_weights[name] - val) / 29.57
                                         dur = max(1, time.time() - pour_start_times.get(name, time.time()))
                                         if (oz/dur) <= MAX_FLOW_RATE:
                                             if oz > AUDIT_TRIGGER: log_event(name, f"{oz:.2f} oz", "POUR")
@@ -1182,25 +1189,6 @@ def start_brain():
         finally:
             try: conn.close()
             except: pass
-
-def background_heartbeat():
-    """Forces a Git sync every 10 minutes, independent of sensor activity."""
-    global last_git_push
-    print("💓 Pacemaker Thread Started")
-    while True:
-        time.sleep(60)  # Check every minute
-        if (time.time() - last_git_push) > 600:
-            last_git_push = time.time()
-            print("💓 Heartbeat: Pushing to GitHub...")
-            try:
-                # We save the global 'taps' data
-                save_data(taps, force_git=True)
-            except Exception as e:
-                print(f"❌ Heartbeat Failed: {e}")
-
-# Start the Heartbeat Pacemaker
-    t_heartbeat = threading.Thread(target=background_heartbeat, daemon=True)
-    t_heartbeat.start()
 
 if __name__ == "__main__":
     start_brain()
