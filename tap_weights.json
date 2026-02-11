@@ -1,18 +1,18 @@
 {
     "Law Tap": 12.3,
-    "Law Tap_temp": 42.4,
+    "Law Tap_temp": 40.8,
     "Law Tap_updated": "3:34 PM",
-    "Wisco Tap": 37.4,
+    "Wisco Tap": 37.5,
     "Wisco Tap_temp": 41.3,
-    "Wisco Tap_updated": "3:20 PM",
+    "Wisco Tap_updated": "3:43 PM",
     "Nitro Tap": 28.2,
-    "Nitro Tap_temp": 49.8,
+    "Nitro Tap_temp": 50.5,
     "Nitro Tap_updated": "3:32 PM",
-    "last_updated": "2026-02-11 15:39:24",
+    "last_updated": "2026-02-11 15:49:29",
     "Law Tap_last_pour": "Short Pour (9.5oz)",
     "Nitro Tap_last_pour": "Short Pour (8.6oz)",
-    "Wisco Tap_last_pour": "Short Pour (9.5oz)",
+    "Wisco Tap_last_pour": "Short Pour (9.1oz)",
     "Nitro Tap_pour_ts": 1770841988.6205835,
     "Law Tap_pour_ts": 1770845721.1353009,
-    "Wisco Tap_pour_ts": 1770845943.8495493
+    "Wisco Tap_pour_ts": 1770846495.5653782
 }
