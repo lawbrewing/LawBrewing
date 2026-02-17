@@ -1,0 +1,70 @@
+[
+    {
+        "beer": "Gutless Rusty",
+        "style": "Porter",
+        "abv": "6.0%",
+        "tap": "Nitro Tap",
+        "start_date": "2026-01-01",
+        "end_date": "2026-02-08",
+        "start_gallons": 5.0,
+        "pour_count": {
+            "Taster": 0,
+            "Short Pour": 67,
+            "Pint": 38,
+            "Crowler": 0,
+            "Growler": 0,
+            "Total_Oz": 1109.48
+        }
+    },
+    {
+        "beer": "Nitro Tap (Current)",
+        "style": "Unknown",
+        "abv": "0.0%",
+        "tap": "Nitro Tap",
+        "start_date": "2026-02-08",
+        "end_date": "Active",
+        "start_gallons": 5.0,
+        "pour_count": {
+            "Taster": 0,
+            "Short Pour": 10,
+            "Pint": 0,
+            "Crowler": 0,
+            "Growler": 0,
+            "Total_Oz": 89.82000000000001
+        }
+    },
+    {
+        "beer": "Law Tap",
+        "style": "House Beer",
+        "abv": "5.0%",
+        "tap": "Law Tap",
+        "start_date": "2026-01-01",
+        "end_date": "Active",
+        "start_gallons": 5.0,
+        "pour_count": {
+            "Taster": 0,
+            "Short Pour": 1,
+            "Pint": 0,
+            "Crowler": 0,
+            "Growler": 0,
+            "Total_Oz": 9.47
+        }
+    },
+    {
+        "beer": "Wisco Tap",
+        "style": "House Beer",
+        "abv": "5.0%",
+        "tap": "Wisco Tap",
+        "start_date": "2026-01-01",
+        "end_date": "Active",
+        "start_gallons": 5.0,
+        "pour_count": {
+            "Taster": 0,
+            "Short Pour": 51,
+            "Pint": 354,
+            "Crowler": 6,
+            "Growler": 0,
+            "Total_Oz": 6114.760000000012
+        }
+    }
+]

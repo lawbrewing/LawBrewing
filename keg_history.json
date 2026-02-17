@@ -1,1 +1,53 @@
-[]
+[
+    {
+        "beer": "Nitro Tap (Current)",
+        "style": "On Tap",
+        "abv": "0.0%",
+        "tap": "Nitro Tap",
+        "start_date": "2026-02-16",
+        "end_date": "Active",
+        "start_gallons": 5.0,
+        "pour_count": {
+            "Taster": 0,
+            "Short Pour": 0,
+            "Pint": 0,
+            "Crowler": 0,
+            "Growler": 0,
+            "Total_Oz": 0
+        }
+    },
+    {
+        "beer": "Law Tap (Current)",
+        "style": "On Tap",
+        "abv": "0.0%",
+        "tap": "Law Tap",
+        "start_date": "2026-02-16",
+        "end_date": "Active",
+        "start_gallons": 5.0,
+        "pour_count": {
+            "Taster": 0,
+            "Short Pour": 0,
+            "Pint": 0,
+            "Crowler": 0,
+            "Growler": 0,
+            "Total_Oz": 0
+        }
+    },
+    {
+        "beer": "Wisco Tap (Current)",
+        "style": "On Tap",
+        "abv": "0.0%",
+        "tap": "Wisco Tap",
+        "start_date": "2026-02-16",
+        "end_date": "Active",
+        "start_gallons": 5.0,
+        "pour_count": {
+            "Taster": 0,
+            "Short Pour": 0,
+            "Pint": 0,
+            "Crowler": 0,
+            "Growler": 0,
+            "Total_Oz": 0
+        }
+    }
+]

@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Weekly Cardio + Resistance</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
+        
+        body { 
+            font-family: 'Inter', sans-serif; 
+            height: 100dvh; 
+            width: 100%;
+            overflow: hidden; 
+            background-color: #f8fafc;
+        }
+        
+        .active-tab {
+            border-bottom: 4px solid #2563eb;
+            color: #1e40af;
+            font-weight: 900;
+        }
+
+        .completed-card { opacity: 0.6; filter: grayscale(0.5); background-color: #f1f5f9; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        
+        /* Modal Transitions */
+        .modal-hidden { opacity: 0; pointer-events: none; transform: scale(0.95); }
+        .modal-visible { opacity: 1; pointer-events: auto; transform: scale(1); }
+        
+        /* Interactive Set Bubbles */
+        .set-bubble { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .set-bubble.active { 
+            background-color: #2563eb; 
+            color: white; 
+            border-color: #1e40af; 
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3);
+        }
+
+        .progress-bar { transition: width 0.4s ease-out; }
+
+        .section-header {
+            font-size: 0.7rem;
+            font-weight: 900;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 1.5rem 0 0.5rem 0.25rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-header::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: #e2e8f0;
+        }
+    </style>
+</head>
+<body class="text-gray-800 flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm z-50 flex-none border-b border-gray-200">
+        <div class="max-w-md mx-auto px-4 py-3">
+            <div class="flex justify-between items-center mb-2">
+                <h1 class="text-xl font-black text-blue-900 flex items-center gap-2 tracking-tight">
+                    <i data-lucide="zap" class="text-yellow-500 fill-yellow-500"></i> Cardio + Resistance
+                </h1>
+                <div class="flex items-center gap-3">
+                    <div class="text-xs font-black bg-blue-100 text-blue-700 px-3 py-1 rounded-full border border-blue-200" id="progress-indicator">0%</div>
+                    <button onclick="window.app.showResetModal()" class="text-gray-400 hover:text-red-500 transition-colors">
+                        <i data-lucide="rotate-ccw" size="20"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Intensity Control -->
+            <div class="flex items-center justify-between bg-blue-50/50 p-2 rounded-xl border border-blue-100 mb-1">
+                <span class="text-[10px] font-black text-blue-400 uppercase tracking-widest ml-1">Training Intensity</span>
+                <button onclick="window.app.toggleLevel()" id="lvl-btn" class="text-xs font-bold px-4 py-1.5 bg-white rounded-lg shadow-sm border border-blue-100 transition-all active:scale-95">
+                    Standard
+                </button>
+            </div>
+        </div>
+
+        <!-- Weekly Navigation -->
+        <div class="flex overflow-x-auto no-scrollbar max-w-md mx-auto bg-white px-2">
+            <button onclick="window.app.switchTab('mon')" id="tab-mon" class="flex-1 py-4 text-xs font-black uppercase tracking-widest active-tab">Mon</button>
+            <button onclick="window.app.switchTab('tue')" id="tab-tue" class="flex-1 py-4 text-xs font-black uppercase tracking-widest">Tue</button>
+            <button onclick="window.app.switchTab('wed')" id="tab-wed" class="flex-1 py-4 text-xs font-black uppercase tracking-widest">Wed</button>
+            <button onclick="window.app.switchTab('thu')" id="tab-thu" class="flex-1 py-4 text-xs font-black uppercase tracking-widest">Thu</button>
+            <button onclick="window.app.switchTab('fri')" id="tab-fri" class="flex-1 py-4 text-xs font-black uppercase tracking-widest">Fri</button>
+        </div>
+    </header>
+
+    <!-- Workout Content -->
+    <main class="flex-1 overflow-y-auto pb-44 scroll-smooth" id="content-area">
+        <div class="max-w-md mx-auto p-4">
+            <div id="day-info" class="mb-2">
+                <h2 class="text-3xl font-black text-gray-900 tracking-tighter" id="day-title">Monday</h2>
+                <p class="text-sm text-gray-500 font-medium" id="day-desc">Heavy Lifting & Core Stability</p>
+            </div>
+            
+            <div id="exercise-list">
+                <!-- Exercises injected here -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Active Workout HUD -->
+    <div id="hud" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-6 shadow-[0_-15px_30px_-5px_rgba(0,0,0,0.15)] z-40 translate-y-full transition-transform duration-300 rounded-t-3xl">
+        <div class="max-w-md mx-auto">
+            <div class="flex justify-between items-start mb-4">
+                <div class="flex-1 mr-4">
+                    <p id="hud-status" class="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-1">Training Now</p>
+                    <h3 id="hud-name" class="font-bold text-gray-900 text-xl leading-tight">Exercise Name</h3>
+                </div>
+                <div id="hud-timer" class="text-4xl font-mono font-black text-gray-900 tracking-tighter">00:00</div>
+            </div>
+
+            <!-- Cardio Zone Confirmation -->
+            <div id="hr-prep" class="hidden mb-6 p-4 bg-red-50 rounded-2xl border-2 border-red-100 flex flex-col items-center gap-3">
+                <p class="text-xs font-black text-red-700 uppercase tracking-wider text-center">Wait! Reach Zone 4 (85% Max HR) before the clock starts.</p>
+                <button onclick="window.app.confirmHR()" class="w-full bg-red-600 text-white font-black py-3 rounded-xl shadow-lg shadow-red-200 active:scale-95 transition-transform">
+                    I'M IN ZONE 4 NOW
+                </button>
+            </div>
+
+            <div id="hud-prog-container" class="w-full bg-gray-100 h-3 rounded-full mb-6 overflow-hidden">
+                <div id="hud-progress" class="bg-blue-600 h-full w-0 progress-bar"></div>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="window.app.toggleTimer()" id="hud-play-btn" class="flex-[3] bg-blue-600 text-white font-black py-4 rounded-2xl shadow-xl shadow-blue-200 transition-all active:scale-95">Pause</button>
+                <button onclick="window.app.closeHUD()" class="flex-1 bg-gray-100 text-gray-500 font-black py-4 rounded-2xl">Skip</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="modal" class="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center modal-hidden transition-all duration-300 backdrop-blur-sm">
+        <div class="bg-white rounded-[2rem] p-8 max-w-xs w-full mx-4 shadow-2xl text-center">
+            <div class="w-20 h-20 bg-red-50 text-red-500 rounded-3xl flex items-center justify-center mx-auto mb-6 transform rotate-3">
+                <i data-lucide="trash-2" size="36"></i>
+            </div>
+            <h3 class="text-2xl font-black mb-2 text-gray-900">Reset Day?</h3>
+            <p class="text-sm text-gray-500 mb-8 font-medium">This will clear all sets and times for today's routine.</p>
+            <div class="flex flex-col gap-3">
+                <button onclick="window.app.confirmReset()" class="w-full py-4 bg-red-600 text-white rounded-2xl font-black shadow-lg shadow-red-100 active:scale-95 transition-transform">Confirm Reset</button>
+                <button onclick="window.app.hideResetModal()" class="w-full py-4 bg-gray-100 text-gray-500 rounded-2xl font-black">Nevermind</button>
+            </div>
+        </div>
+    </div>
+
+    <audio id="sfx-beep" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
+
+    <script>
+        class WorkoutApp {
+            constructor() {
+                this.currentDay = 'mon';
+                this.isLevel2 = false;
+                this.setHistory = {}; // { exId: count }
+                this.timer = { interval: null, timeLeft: 0, total: 0, activeId: null, isRunning: false, isWaiting: false };
+                this.init();
+            }
+
+            init() {
+                this.loadData();
+                this.render();
+                lucide.createIcons();
+                window.app = this;
+            }
+
+            loadData() {
+                const sets = localStorage.getItem('n44_sets_vfinal');
+                if (sets) this.setHistory = JSON.parse(sets);
+                const lvl = localStorage.getItem('n44_lvl_vfinal');
+                this.isLevel2 = lvl === 'true';
+                this.updateIntensityUI();
+            }
+
+            saveData() {
+                localStorage.setItem('n44_sets_vfinal', JSON.stringify(this.setHistory));
+                localStorage.setItem('n44_lvl_vfinal', this.isLevel2);
+                this.updateGlobalProgress();
+            }
+
+            updateIntensityUI() {
+                const btn = document.getElementById('lvl-btn');
+                btn.innerText = this.isLevel2 ? "Progression (Lvl 2)" : "Standard";
+                btn.className = this.isLevel2 
+                    ? "text-xs font-bold px-4 py-1.5 bg-blue-600 text-white rounded-lg shadow-sm active:scale-95" 
+                    : "text-xs font-bold px-4 py-1.5 bg-white text-gray-600 rounded-lg shadow-sm border border-gray-200 active:scale-95";
+            }
+
+            getWorkoutData() {
+                const lvl = this.isLevel2;
+                const reps = lvl ? 15 : 12;
+                const stretch = lvl ? 60 : 45;
+
+                return {
+                    mon: {
+                        title: "Monday", desc: "Upper Body PowerBlocks",
+                        sections: [
+                            { name: "Warm Up", exercises: [
+                                { id: 'm1', name: "Cat-Cow Stretch", type: 'timer', duration: 45, note: "Loosen the spine." },
+                                { id: 'm2', name: "Bird-Dog", type: 'reps', sets: 2, count: 10, note: "Balance and core." }
+                            ]},
+                            { name: "Strength Circuit", exercises: [
+                                { id: 'm3', name: "PowerBlock Chest Press", type: 'reps', sets: 3, count: reps, note: "Slow on the way down." },
+                                { id: 'm4', name: "One-Arm Row", type: 'reps', sets: 3, count: reps, note: "Focus on pulling with lats." },
+                                { id: 'm5', name: "Overhead Press", type: 'reps', sets: 3, count: reps, note: "Brace your core." },
+                                { id: 'm6', name: "Lateral Raise", type: 'reps', sets: 3, count: reps, note: "Keep it strict." }
+                            ]},
+                            { name: "Post-Lift Stretch", exercises: [
+                                { id: 'mc1', name: "Wall Pec Stretch", type: 'timer', duration: stretch, note: "Open the chest." },
+                                { id: 'mc2', name: "Child's Pose Side Reach", type: 'timer', duration: stretch, note: "Stretch the lats." }
+                            ]}
+                        ]
+                    },
+                    tue: {
+                        title: "Tuesday", desc: "Incline Intervals (Zone 4 Focus)",
+                        sections: [
+                            { name: "The Main Event", exercises: [
+                                { id: 't1', name: "Warm-up Walk", type: 'timer', duration: 300, note: "0% Incline." },
+                                { id: 't2', name: "Interval 1: ZONE 4", type: 'timer', duration: 240, wait: true, note: "Uphill grind." },
+                                { id: 't3', name: "Recovery", type: 'timer', duration: 180, note: "Decrease speed." },
+                                { id: 't4', name: "Interval 2: ZONE 4", type: 'timer', duration: 240, wait: true, note: "Back uphill." },
+                                { id: 't5', name: "Recovery", type: 'timer', duration: 180, note: "Breathe through nose." },
+                                { id: 't6', name: "Interval 3: ZONE 4", type: 'timer', duration: 240, wait: true, note: "Final push." }
+                            ]},
+                            { name: "Lower Body Recovery", exercises: [
+                                { id: 'tc1', name: "Calf Stretch", type: 'timer', duration: stretch, note: "Wall stretch." },
+                                { id: 'tc2', name: "Kneeling Hip Stretch", type: 'timer', duration: stretch, note: "Release the hips." }
+                            ]}
+                        ]
+                    },
+                    wed: {
+                        title: "Wednesday", desc: "Lower Body Strength",
+                        sections: [
+                            { name: "Leg Work", exercises: [
+                                { id: 'w1', name: "Goblet Squat", type: 'reps', sets: 3, count: reps, note: "Heavy PowerBlock." },
+                                { id: 'w2', name: "Romanian Deadlift", type: 'reps', sets: 3, count: reps, note: "Flat back." },
+                                { id: 'w3', name: "PowerBlock Lunges", type: 'reps', sets: 3, count: reps, note: "Controlled steps." },
+                                { id: 'w4', name: "Calf Raises", type: 'reps', sets: 3, count: 20, note: "Squeeze at top." }
+                            ]},
+                            { name: "Deep Flexibility", exercises: [
+                                { id: 'wc1', name: "Pigeon Pose", type: 'timer', duration: stretch, note: "Release deep glutes." },
+                                { id: 'wc2', name: "Spinal Twist", type: 'timer', duration: stretch, note: "Lower back relief." }
+                            ]}
+                        ]
+                    },
+                    thu: {
+                        title: "Thursday", desc: "Zone 4 Steady State",
+                        sections: [
+                            { name: "Steady Load", exercises: [
+                                { id: 'th1', name: "Warm-up", type: 'timer', duration: 300, note: "Gradual build." },
+                                { id: 'th2', name: "Zone 4 Steady State", type: 'timer', duration: lvl ? 1500 : 1200, wait: true, note: "Target 85% Max HR." },
+                                { id: 'th3', name: "Cool Down Walk", type: 'timer', duration: 300, note: "Flatten out." }
+                            ]},
+                            { name: "Total Body Reset", exercises: [
+                                { id: 'thc1', name: "Downward Dog", type: 'timer', duration: 60, note: "Full body line." },
+                                { id: 'thc2', name: "Butterfly Stretch", type: 'timer', duration: stretch, note: "Release inner thighs." }
+                            ]}
+                        ]
+                    },
+                    fri: {
+                        title: "Friday", desc: "Full Body 'Pump'",
+                        sections: [
+                            { name: "Mixed Finishers", exercises: [
+                                { id: 'f1', name: "Arnold Press", type: 'reps', sets: 3, count: reps, note: "Shoulder rotation." },
+                                { id: 'f2', name: "Stiff Leg Deadlift", type: 'reps', sets: 3, count: reps, note: "Grip and hamstrings." },
+                                { id: 'f3', name: "Farmer's Walk", type: 'timer', duration: 60, note: "Heavy blocks in hands." }
+                            ]},
+                            { name: "Weekend Prep Stretch", exercises: [
+                                { id: 'fc1', name: "Seated Forward Fold", type: 'timer', duration: stretch, note: "Reach for toes." },
+                                { id: 'fc2', name: "Cobra Stretch", type: 'timer', duration: stretch, note: "Open the abs/back." },
+                                { id: 'fc3', name: "Knee Hugs", type: 'timer', duration: 60, note: "Rock back and forth." }
+                            ]}
+                        ]
+                    }
+                };
+            }
+
+            switchTab(day) {
+                this.currentDay = day;
+                document.querySelectorAll('header button[id^="tab-"]').forEach(b => b.classList.remove('active-tab'));
+                document.getElementById(`tab-${day}`).classList.add('active-tab');
+                this.render();
+            }
+
+            toggleLevel() {
+                this.isLevel2 = !this.isLevel2;
+                this.updateIntensityUI();
+                this.saveData();
+                this.render();
+            }
+
+            render() {
+                const data = this.getWorkoutData()[this.currentDay];
+                document.getElementById('day-title').innerText = data.title;
+                document.getElementById('day-desc').innerText = data.desc;
+                
+                const container = document.getElementById('exercise-list');
+                container.innerHTML = '';
+                
+                data.sections.forEach(sec => {
+                    const h = document.createElement('div');
+                    h.className = 'section-header';
+                    h.innerHTML = `<span>${sec.name}</span>`;
+                    container.appendChild(h);
+
+                    sec.exercises.forEach(ex => {
+                        const count = this.setHistory[ex.id] || 0;
+                        const isDone = ex.type === 'reps' ? (count >= ex.sets) : (count > 0);
+                        const card = document.createElement('div');
+                        card.className = `p-5 mb-4 rounded-3xl bg-white shadow-sm border-2 border-transparent transition-all ${isDone ? 'completed-card' : 'border-white'}`;
+                        
+                        let actionHtml = '';
+                        if (ex.type === 'reps') {
+                            actionHtml = `<div class="flex gap-2.5 mt-4">`;
+                            for(let i=1; i<=ex.sets; i++) {
+                                const active = i <= count;
+                                actionHtml += `<button onclick="window.app.tapSet('${ex.id}', ${i}, ${ex.sets})" class="set-bubble flex-1 h-12 rounded-2xl border-2 font-black text-xs ${active ? 'active' : 'border-gray-50 text-gray-300'}">SET ${i}</button>`;
+                            }
+                            actionHtml += `</div>`;
+                        } else {
+                            actionHtml = `<button onclick="window.app.startTimer('${ex.id}', ${ex.duration}, '${ex.name}', ${ex.wait || false})" class="w-full mt-4 py-4 rounded-2xl bg-blue-50 text-blue-600 font-black text-xs border border-blue-100 flex items-center justify-center gap-2">START ${this.formatTime(ex.duration)} CLOCK</button>`;
+                        }
+
+                        card.innerHTML = `
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h4 class="font-black text-gray-900 text-lg leading-tight">${ex.name}</h4>
+                                    <p class="text-[10px] font-black text-blue-400 uppercase tracking-widest mt-1">
+                                        ${ex.type === 'reps' ? `${ex.sets} SETS • ${ex.count} REPS` : ex.note}
+                                    </p>
+                                </div>
+                                ${isDone ? '<div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-lg"><i data-lucide="check" class="text-white" size="18"></i></div>' : ''}
+                            </div>
+                            ${actionHtml}
+                        `;
+                        container.appendChild(card);
+                    });
+                });
+                lucide.createIcons();
+                this.updateGlobalProgress();
+            }
+
+            tapSet(id, num, max) {
+                const current = this.setHistory[id] || 0;
+                this.setHistory[id] = (current === num) ? num - 1 : num;
+                if (this.setHistory[id] === max) document.getElementById('sfx-beep').play().catch(()=>{});
+                this.saveData();
+                this.render();
+            }
+
+            formatTime(s) {
+                const m = Math.floor(s/60);
+                const sc = s%60;
+                return `${m}:${sc.toString().padStart(2, '0')}`;
+            }
+
+            startTimer(id, dur, name, wait) {
+                if (this.timer.interval) clearInterval(this.timer.interval);
+                this.timer = { activeId: id, timeLeft: dur, total: dur, isRunning: false, isWaiting: wait };
+                
+                document.getElementById('hud-name').innerText = name;
+                document.getElementById('hud-status').innerText = wait ? "ZONE 4 READY?" : "NOW TRAINING";
+                document.getElementById('hr-prep').classList.toggle('hidden', !wait);
+                document.getElementById('hud-prog-container').classList.toggle('hidden', wait);
+                document.getElementById('hud-play-btn').classList.toggle('hidden', wait);
+                
+                document.getElementById('hud').classList.remove('translate-y-full');
+                this.updateHUD();
+                if (!wait) this.resume();
+            }
+
+            confirmHR() {
+                this.timer.isWaiting = false;
+                document.getElementById('hr-prep').classList.add('hidden');
+                document.getElementById('hud-prog-container').classList.remove('hidden');
+                document.getElementById('hud-play-btn').classList.remove('hidden');
+                document.getElementById('hud-status').innerText = "CLIMBING...";
+                this.resume();
+            }
+
+            resume() {
+                this.timer.isRunning = true;
+                document.getElementById('hud-play-btn').innerText = "Pause";
+                this.timer.interval = setInterval(() => {
+                    this.timer.timeLeft--;
+                    this.updateHUD();
+                    if (this.timer.timeLeft <= 0) {
+                        clearInterval(this.timer.interval);
+                        this.setHistory[this.timer.activeId] = 1;
+                        this.saveData();
+                        this.render();
+                        this.closeHUD();
+                        document.getElementById('sfx-beep').play().catch(()=>{});
+                    }
+                }, 1000);
+            }
+
+            toggleTimer() {
+                if (this.timer.isRunning) {
+                    clearInterval(this.timer.interval);
+                    this.timer.isRunning = false;
+                    document.getElementById('hud-play-btn').innerText = "Resume";
+                } else this.resume();
+            }
+
+            updateHUD() {
+                const p = ((this.timer.total - this.timer.timeLeft) / this.timer.total) * 100;
+                document.getElementById('hud-timer').innerText = this.formatTime(this.timer.timeLeft);
+                document.getElementById('hud-progress').style.width = `${p}%`;
+            }
+
+            closeHUD() {
+                clearInterval(this.timer.interval);
+                document.getElementById('hud').classList.add('translate-y-full');
+            }
+
+            updateGlobalProgress() {
+                const d = this.getWorkoutData()[this.currentDay];
+                let tot = 0; let ok = 0;
+                d.sections.forEach(s => s.exercises.forEach(ex => {
+                    tot++;
+                    if (ex.type === 'reps') { if((this.setHistory[ex.id] || 0) >= ex.sets) ok++; }
+                    else if(this.setHistory[ex.id]) ok++;
+                }));
+                const perc = Math.round((ok/tot)*100) || 0;
+                document.getElementById('progress-indicator').innerText = `${perc}%`;
+            }
+
+            showResetModal() { document.getElementById('modal').classList.replace('modal-hidden', 'modal-visible'); }
+            hideResetModal() { document.getElementById('modal').classList.replace('modal-visible', 'modal-hidden'); }
+            confirmReset() {
+                const d = this.getWorkoutData()[this.currentDay];
+                d.sections.forEach(s => s.exercises.forEach(ex => delete this.setHistory[ex.id]));
+                this.saveData();
+                this.hideResetModal();
+                this.render();
+            }
+        }
+
+        window.onload = () => new WorkoutApp();
+    </script>
+</body>
+</html>

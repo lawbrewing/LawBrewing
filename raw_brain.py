@@ -39,7 +39,7 @@ TAP_CONFIG = {
     '192.168.86.116': {'name': 'Wisco Tap', 'empty': 0, 'full': 19000},
     '192.168.86.45':  {'name': 'Nitro Tap', 'empty': 0, 'full': 19000}
 }
-AUDIT_TRIGGER = 6.0; POUR_TRIGGER = 6.0; GIT_TRIGGER_PCT = 3.0; MOTION_SENSITIVITY = 5;
+AUDIT_TRIGGER = 6.0; POUR_TRIGGER = 6.0; GIT_TRIGGER_PCT = 3.0; MOTION_SENSITIVITY = 15; MAX_POUR_OZ = 130;
 MAX_FLOW_RATE = 2.5
 
 # Alert Thresholds
@@ -119,16 +119,17 @@ def get_pour_name(oz):
     return "Growler"
 
 # --- NEW: ARCHIVE FUNCTION FOR HISTORY ---
-def archive_current_keg(tap):
+def archive_current_keg(tap, manual_name=None):
     try:
-        # 1. Gather Basic Data
         sessions = load_json(SESSIONS_FILE, {})
         if tap not in sessions: return
 
         session_data = sessions[tap]
-        beer_name = tap_beer_names.get(tap, "Unknown Beer")
-        beer_style = tap_beer_styles.get(tap, "Unknown Style") 
-        beer_abv = tap_beer_abv.get(tap, "??%") # <--- NEW: Get ABV
+        
+        # USE THE PASSED NAME IF AVAILABLE, OTHERWISE FALLBACK TO CACHE
+        beer_name = manual_name if manual_name else tap_beer_names.get(tap, "Unknown Beer")
+        beer_style = tap_beer_styles.get(tap, "Unknown Style")
+        beer_abv = tap_beer_abv.get(tap, "??%")
 
         start_str = session_data.get('start_date', datetime.now().strftime('%Y-%m-%d'))
         start_pct = float(session_data.get('start_pct', 100))
@@ -162,6 +163,7 @@ def archive_current_keg(tap):
                         try:
                             val_str = parts[2].replace('oz','').replace('pts','').strip()
                             oz = float(val_str)
+                            if oz <= 0 or oz > MAX_POUR_OZ: continue
                             stats["Total_Oz"] += oz
                             
                             # Categorize
@@ -418,12 +420,31 @@ DASHBOARD_HTML = """
     <script>
         let charts = {};
         async function updateDate(tap) {
-            const newDate = prompt(`Enter Start Date for ${tap} (YYYY-MM-DD):`);
+            const safeId = tap.replace(/ /g, '-');
+            const card = document.getElementById(`card-${safeId}`);
+            const currentDisplayedBeer = card ? card.querySelector('.beer-name').innerText : "Unknown Beer";
+            
+            // Step 1: Confirm the Beer Name for the Archive
+            const archivedBeerName = prompt(`Confirm name of the KEG BEING REMOVED from ${tap}:`, currentDisplayedBeer);
+            if (!archivedBeerName) return; // Cancel if they hit cancel
+
+            // Step 2: Enter the new Start Date
+            const newDate = prompt(`Enter Start Date for the NEW keg on ${tap} (YYYY-MM-DD):`, new Date().toISOString().split('T')[0]);
+    
             if (newDate) {
-                await fetch('/set_date', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ tap: tap, date: newDate })});
+                await fetch('/set_date', {
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'}, 
+                    body: JSON.stringify({ 
+                        tap: tap, 
+                        date: newDate,
+                        old_beer_name: archivedBeerName // Passing the confirmed name to the Pi
+                    })
+                });
                 location.reload();
             }
-        }
+}
+
         async function update() {
             try {
                 const res = await fetch('/data');
@@ -882,24 +903,22 @@ def set_date():
         r = request.json
         tap_name = r.get('tap')
         new_date = r.get('date')
+        old_beer_name = r.get('old_beer_name') # The name captured from the UI
 
-        # 1. ARCHIVE THE OLD KEG (Triggers the save to history)
-        archive_current_keg(tap_name)
+        # 1. ARCHIVE THE OLD KEG WITH THE CONFIRMED NAME
+        archive_current_keg(tap_name, manual_name=old_beer_name)
 
         # 2. START THE NEW SESSION
         s = load_json(SESSIONS_FILE, {})
-        
         if tap_name not in s: s[tap_name] = {}
         s[tap_name]['start_date'] = new_date
         
-        # Capture the NEW starting fullness for the NEXT archive event
-        try: 
+        try:
             s[tap_name]['start_pct'] = float(current_weights.get(tap_name, 100))
-        except: 
+        except:
             s[tap_name]['start_pct'] = 100
-            
-        save_json(SESSIONS_FILE, s)
 
+        save_json(SESSIONS_FILE, s)
         return jsonify({"status": "ok"})
     except Exception as e:
         print(f"Set Date Error: {e}")
@@ -967,7 +986,7 @@ def calculate_analytics():
                         oz = float(raw_vol)
 
                         # Fix 4: Filter Infinity/NaN/Negative
-                        if math.isnan(oz) or math.isinf(oz) or oz < 0 or oz > 500: continue
+                        if math.isnan(oz) or math.isinf(oz) or oz < 0 or oz > 130: continue
 
                         if oz > 6.0:
                             # Parse Date
@@ -1085,19 +1104,24 @@ def start_brain():
     # Pre-fetch beer names
     update_beer_names()
 
-    # 4. MAIN LOOP
+# 4. MAIN LOOP
     while True:
         try:
-            conn, addr = sock.accept(); conn.settimeout(10.0); ip = addr[0]
+            conn, addr = sock.accept()
+            conn.settimeout(10.0)
+            ip = addr[0]
+            
             while True:
                 header = conn.recv(5)
                 if not header: break
+                
                 cmd, msg_id, length = struct.unpack('!BHH', header)
                 if length > 0:
                     data = conn.recv(length).decode('utf-8', errors='ignore')
+                    
                     if ip in TAP_CONFIG:
-                        name = TAP_CONFIG[ip]['name']; conf = TAP_CONFIG[ip]
-
+                        name = TAP_CONFIG[ip]['name']
+                        conf = TAP_CONFIG[ip]
 
                         # --- WEIGHT LOGIC (VW.51) ---
                         match = re.search(r"vw.51.(\d+\.?\d*)", data)
@@ -1105,90 +1129,80 @@ def start_brain():
                             try:
                                 raw = float(match.group(1))
                                 if 0.1 <= raw < 100: raw *= 1000
-                                if name not in readings_history: readings_history[name] = deque(maxlen=10)
+                                if name not in readings_history: 
+                                    readings_history[name] = deque(maxlen=5)
                                 readings_history[name].append(raw)
+                                
                                 val = sum(readings_history[name]) / len(readings_history[name])
                                 pct = max(0, min(100, round(((val - conf['empty']) / (conf['full'] - conf['empty'])) * 100, 1)))
                                 old_pct = float(current_weights.get(name, pct))
-                                
-                                # Logic 1: Handle Weight Changes
+
+                                # Logic 1: Handle Weight Changes (The Moving Baseline)
                                 if old_pct != pct:
+                                    # Update Dashboard immediately for accuracy
                                     current_weights[name] = pct
                                     current_weights[f"{name}_updated"] = time.strftime("%-I:%M %p")
-                                    log_event(name, f"{pct}%", "UPDATE")
-                                    if abs(old_pct - pct) >= GIT_TRIGGER_PCT:
-                                        save_data(force_git=True)
+                                    
+                                    # DRIFT SHIELD: Only log/process as a 'real move' if weight DECREASED
+                                    if pct < old_pct:
+                                        log_event(name, f"{pct}%", "UPDATE")
+                                        if abs(old_pct - pct) >= GIT_TRIGGER_PCT:
+                                            save_data(force_git=True)
+                                    else:
+                                        # Weight went UP or Jittered (Baseline Adjustment)
+                                        log_event(name, f"{pct}%", "BASELINE_ADJUST")
 
                                 # Logic 2: Pour Detection
                                 if name not in pour_start_weights:
-                                    pour_start_weights[name] = val; is_pouring[name] = False
+                                    pour_start_weights[name] = val
+                                    is_pouring[name] = False
+
                                 if not is_pouring[name]:
+                                    # Use the new MOTION_SENSITIVITY (15) we set in config
                                     if abs(pour_start_weights[name] - val) > MOTION_SENSITIVITY:
-                                        is_pouring[name] = True; pour_start_times[name] = time.time()
-                                    else: pour_start_weights[name] = val
+                                        is_pouring[name] = True
+                                        pour_start_times[name] = time.time()
+                                    else:
+                                        pour_start_weights[name] = val
                                 else:
-                                    # ==== SAFETY & GHOST FIX ====
+                                    # Check for completion of pour or leak timeout
                                     current_pour_dur = time.time() - pour_start_times.get(name, time.time())
                                     if current_pour_dur > LEAK_FLOW_MAX_SEC:
-                                        current_vol_loss = (pour_start_weights.get(name, val) - val) / 29.57
+                                        # Drift or leak: Reset to stop the "7,000 oz" phantom pours
+                                        is_pouring[name] = False
+                                        pour_start_weights[name] = val
                                         
-                                        # FIX: If pouring > 60s but lost < 3oz, it is a sensor glitch. Reset.
-                                        if current_vol_loss < 3.0:
-                                            is_pouring[name] = False
-                                            continue
+                            except Exception as e:
+                                print(f"Error in Inner Weight Logic: {e}")
 
-                                        # REAL LEAK: Only alert if > 80oz lost
-                                        if current_vol_loss > LEAK_VOL_TRIGGER_OZ:
-                                            alert_key = f"stuck_{ip}"
-                                            if (time.time() - safety_cooldowns.get(alert_key, 0)) > 300:
-                                                send_discord(f"🚨 SOS: TAP STUCK OPEN! {name} has lost {int(current_vol_loss)}oz!")
-                                                safety_cooldowns[alert_key] = time.time()
-                                    # ============================
-                                        if (max(readings_history[name]) - min(readings_history[name])) < MOTION_SENSITIVITY:
-                                            oz = (pour_start_weights[name] - val) / 29.57
-    
-                                     # NEW STABILITY CHECK: If weight has stopped but volume is negligible 
-                                     # or the value is stuck, force a reset of the start weight.
-                                        if abs(oz) < 1.0: 
-                                            is_pouring[name] = False
-                                            pour_start_weights[name] = val
-                                            return
+                        # --- OTHER DATA (VW.50, ETC) ---
+                        elif "vw.50" in data:
+                            # Add any logic for other Plaato signals here if needed
+                            pass
 
-                                        dur = max(1, time.time() - pour_start_times.get(name, time.time()))
-                                        if (oz/dur) <= MAX_FLOW_RATE:
-                                            if oz > AUDIT_TRIGGER: log_event(name, f"{oz:.2f} oz", "POUR")
-                                            if oz > POUR_TRIGGER:
-                                                if get_pour_name(oz):
-                                                    current_weights[f"{name}_last_pour"] = f"{get_pour_name(oz)} ({oz:.1f}oz)"
-                                                    current_weights[f"{name}_pour_ts"] = time.time()
-                                                save_data(force_git=True)
-                                        is_pouring[name] = False; pour_start_weights[name] = val; save_data()
-                            except: pass
+                # Respond to the scale so it knows we got the data
+                resp = struct.pack('!BHH', 1, msg_id, 0)
+                conn.sendall(resp)
 
-                        # --- TEMP LOGIC (VW.69) ---
-                        match = re.search(r"vw.69.(\d+\.?\d*)", data)
-                        if match:
-                            try:
-                                f = round((float(match.group(1)) * 1.8) + 32, 1)
-                                try: old = float(current_weights.get(f"{name}_temp", 0))
-                                except: old = 0
-                                if abs(f - old) > 0.5:
-                                    current_weights[f"{name}_temp"] = f; save_data()
-
-                                # ==== SAFETY: TEMP CHECK (NEW) ====
-                                limit = TEMP_LIMIT_NITRO if NITRO_IP_SUFFIX in ip else TEMP_LIMIT_STD
-                                if f > limit:
-                                    alert_key = f"temp_{ip}"
-                                    if (time.time() - safety_cooldowns.get(alert_key, 0)) > ALERT_COOLDOWN:
-                                        send_discord(f"🔥 TEMP ALERT: {name} is {f}°F (Limit: {limit}°F)")
-                                        safety_cooldowns[alert_key] = time.time()
-                                # ==================================
-                            except: pass
-                    conn.sendall(struct.pack('!BHH', 0, msg_id, 200))
-        except: pass
+        except Exception as e:
+            print(f"Server Connection Error: {e}")
+            time.sleep(1)
         finally:
-            try: conn.close()
-            except: pass
+            if 'conn' in locals():
+                conn.close()
+# ================= STARTUP =================
 
 if __name__ == "__main__":
-    start_brain()
+    # 1. Load your weights from the JSON so the dashboard isn't blank on start
+    current_weights.update(load_json(WEIGHTS_FILE, {}))
+    
+    # 2. Start the "Brain" (the weight loop) in a background thread
+    # This allows the scales to be monitored while the website stays live
+    import threading
+    brain_thread = threading.Thread(target=start_brain, daemon=True)
+    brain_thread.start()
+    
+    # 3. Start the Dashboard (Flask Server)
+    # Accessible at http://[PI_IP]:5000
+    print("🚀 Law Brewing Brain & Dashboard Starting...")
+    app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False)
