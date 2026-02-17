@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Weekly Cardio + Resistance</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; height: 100dvh; width: 100%; overflow: hidden; background-color: #f8fafc; }
+        .active-tab { border-bottom: 3px solid #3b82f6; color: #3b82f6; font-weight: 800; }
+        .completed-card { opacity: 0.6; background-color: #f1f5f9; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .modal-hidden { opacity: 0; pointer-events: none; transform: scale(0.95); }
+        .modal-visible { opacity: 1; pointer-events: auto; transform: scale(1); }
+        .set-bubble { transition: all 0.2s ease; }
+        .set-bubble.active { background-color: #3b82f6; color: white; border-color: #3b82f6; transform: scale(1.1); }
+        .progress-bar { transition: width 0.3s ease; }
+        .section-header { font-size: 0.7rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; padding: 1.5rem 0 0.5rem 0.25rem; }
+    </style>
+</head>
+<body class="text-gray-800 flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm z-50 flex-none border-b border-gray-200">
+        <div class="max-w-md mx-auto px-4 py-3">
+            <div class="flex justify-between items-center mb-2">
+                <h1 class="text-xl font-extrabold text-gray-900 flex items-center gap-2">
+                    <i data-lucide="heart-pulse" class="text-red-500"></i> N44 Tracker
+                </h1>
+                <div class="flex items-center gap-3">
+                    <span class="text-xs font-bold bg-blue-100 text-blue-700 px-2 py-1 rounded-full" id="progress-indicator">0%</span>
+                    <button onclick="window.app.showResetModal()" class="text-gray-400 p-1"><i data-lucide="rotate-ccw" size="18"></i></button>
+                </div>
+            </div>
+            
+            <div class="flex items-center justify-between bg-gray-50 p-2 rounded-lg mb-1 border border-gray-100">
+                <span class="text-[10px] font-bold text-gray-400 uppercase">Intensity Mode</span>
+                <button onclick="window.app.toggleLevel()" id="lvl-btn" class="text-xs font-bold px-3 py-1 bg-white rounded shadow-sm border border-gray-200 transition-all">
+                    Standard
+                </button>
+            </div>
+        </div>
+
+        <div class="flex overflow-x-auto no-scrollbar max-w-md mx-auto bg-white px-2">
+            <button onclick="window.app.switchTab('mon')" id="tab-mon" class="flex-1 py-3 text-xs font-bold uppercase active-tab">Mon</button>
+            <button onclick="window.app.switchTab('tue')" id="tab-tue" class="flex-1 py-3 text-xs font-bold uppercase">Tue</button>
+            <button onclick="window.app.switchTab('wed')" id="tab-wed" class="flex-1 py-3 text-xs font-bold uppercase">Wed</button>
+            <button onclick="window.app.switchTab('thu')" id="tab-thu" class="flex-1 py-3 text-xs font-bold uppercase">Thu</button>
+            <button onclick="window.app.switchTab('fri')" id="tab-fri" class="flex-1 py-3 text-xs font-bold uppercase">Fri</button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto pb-40 scroll-smooth" id="content-area">
+        <div class="max-w-md mx-auto p-4">
+            <div id="day-info" class="mb-2">
+                <h2 class="text-2xl font-black text-gray-900" id="day-title">Monday</h2>
+                <p class="text-sm text-gray-500 font-medium" id="day-desc">Upper Body Strength</p>
+            </div>
+            <div id="exercise-list"></div>
+        </div>
+    </main>
+
+    <!-- HUD (Timer / Set Tracker) -->
+    <div id="hud" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-5 shadow-[0_-10px_25px_-5px_rgba(0,0,0,0.1)] z-40 translate-y-full transition-transform duration-300">
+        <div class="max-w-md mx-auto">
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex-1 mr-4">
+                    <p id="hud-status" class="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">In Progress</p>
+                    <h3 id="hud-name" class="font-bold text-gray-900 truncate text-lg">Exercise Name</h3>
+                </div>
+                <div id="hud-timer" class="text-4xl font-mono font-black text-gray-800 tracking-tighter">00:00</div>
+            </div>
+
+            <!-- Heart Rate Prep Logic -->
+            <div id="hr-prep-area" class="hidden mb-4 p-3 bg-red-50 rounded-xl border border-red-100 flex items-center justify-between">
+                <p class="text-xs font-bold text-red-700">Reach Zone 4 before starting...</p>
+                <button onclick="window.app.startCardioCountdown()" class="bg-red-600 text-white text-xs font-bold px-4 py-2 rounded-lg shadow-sm">I'm in Zone 4</button>
+            </div>
+
+            <div id="hud-progress-container" class="w-full bg-gray-100 h-2.5 rounded-full mb-5 overflow-hidden">
+                <div id="hud-progress" class="bg-blue-600 h-full w-0 progress-bar"></div>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="window.app.toggleTimer()" id="hud-play-btn" class="flex-[2] bg-blue-600 text-white font-black py-4 rounded-2xl shadow-lg active:scale-95 transition-transform">Pause</button>
+                <button onclick="window.app.closeHUD()" class="flex-1 bg-gray-100 text-gray-500 font-bold py-4 rounded-2xl">Minimize</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="modal" class="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center modal-hidden transition-all duration-200">
+        <div class="bg-white rounded-3xl p-8 max-w-xs w-full mx-4 shadow-2xl text-center">
+            <div class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="alert-circle" size="32"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-2">Reset Progress?</h3>
+            <p class="text-sm text-gray-500 mb-8 leading-relaxed">This will clear all completed sets and timers for today.</p>
+            <div class="flex flex-col gap-3">
+                <button onclick="window.app.confirmReset()" class="w-full py-4 bg-red-600 text-white rounded-2xl font-bold shadow-lg">Yes, Reset Day</button>
+                <button onclick="window.app.hideResetModal()" class="w-full py-4 bg-gray-50 text-gray-500 rounded-2xl font-bold">Go Back</button>
+            </div>
+        </div>
+    </div>
+
+    <audio id="sfx-beep" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
+
+    <script>
+        class WorkoutApp {
+            constructor() {
+                this.currentDayKey = 'mon';
+                this.isLevel2 = false;
+                this.completedSets = {}; // Format: { exerciseId: count }
+                this.timer = { interval: null, timeLeft: 0, total: 0, isActive: false, activeId: null, isWaitingForHR: false };
+                this.init();
+            }
+
+            init() {
+                this.loadState();
+                this.renderList();
+                this.updateGlobalProgress();
+                lucide.createIcons();
+                window.app = this;
+            }
+
+            loadState() {
+                const savedSets = localStorage.getItem('n44_sets_v3');
+                if (savedSets) this.completedSets = JSON.parse(savedSets);
+                const lvl = localStorage.getItem('n44_lvl2_v3');
+                this.isLevel2 = lvl === 'true';
+                this.updateLevelUI();
+            }
+
+            saveState() {
+                localStorage.setItem('n44_sets_v3', JSON.stringify(this.completedSets));
+                localStorage.setItem('n44_lvl2_v3', this.isLevel2);
+            }
+
+            updateLevelUI() {
+                const btn = document.getElementById('lvl-btn');
+                btn.innerText = this.isLevel2 ? "Progression (Lvl 2)" : "Standard";
+                btn.className = this.isLevel2 ? "text-xs font-bold px-3 py-1 bg-blue-600 text-white rounded shadow-sm" : "text-xs font-bold px-3 py-1 bg-white rounded shadow-sm border border-gray-200";
+            }
+
+            getWorkoutData() {
+                const lvl = this.isLevel2;
+                const rpe = lvl ? 15 : 12;
+                const sets = 3; 
+                const stretch = lvl ? 60 : 45;
+
+                return {
+                    mon: {
+                        title: "Monday", desc: "Upper Body Strength (PowerBlocks)",
+                        sections: [
+                            { name: "Warm Up", exercises: [
+                                { id: 'm1', name: "Cat-Cow Stretch", type: 'timer', duration: 45, note: "Loosen the spine." },
+                                { id: 'm2', name: "Bird-Dog", type: 'reps', sets: 2, count: 10, note: "10 per side." }
+                            ]},
+                            { name: "PowerBlock Circuits", exercises: [
+                                { id: 'm3', name: "Chest Press", type: 'reps', sets: sets, count: rpe, note: "Keep back flat." },
+                                { id: 'm4', name: "One-Arm Row", type: 'reps', sets: sets, count: rpe, note: "Pull PowerBlock to hip." },
+                                { id: 'm5', name: "Overhead Press", type: 'reps', sets: sets, count: rpe, note: "Don't arch lower back." },
+                                { id: 'm6', name: "Lateral Raise", type: 'reps', sets: sets, count: rpe, note: "Slight bend in elbows." }
+                            ]},
+                            { name: "Cool Down", exercises: [
+                                { id: 'm7', name: "Child's Pose", type: 'timer', duration: stretch, note: "Reach side to side." },
+                                { id: 'm8', name: "Wall Pec Stretch", type: 'timer', duration: stretch, note: "Open the chest." }
+                            ]}
+                        ]
+                    },
+                    tue: {
+                        title: "Tuesday", desc: "Zone 4 Incline Intervals",
+                        sections: [
+                            { name: "Prep", exercises: [
+                                { id: 't1', name: "Warm-up Walk", type: 'timer', duration: 300, note: "2.5 - 3.0 mph @ 2% incline." }
+                            ]},
+                            { name: "Threshold Intervals", exercises: [
+                                { id: 't2', name: "Interval 1: ZONE 4", type: 'timer', duration: 240, requireHR: true, note: "Clock only runs in Zone 4." },
+                                { id: 't3', name: "Recovery Walk", type: 'timer', duration: 180, note: "Easy pace / No incline." },
+                                { id: 't4', name: "Interval 2: ZONE 4", type: 'timer', duration: 240, requireHR: true, note: "Maintain intensity." },
+                                { id: 't5', name: "Recovery Walk", type: 'timer', duration: 180, note: "Breathe through nose." },
+                                { id: 't6', name: "Interval 3: ZONE 4", type: 'timer', duration: 240, requireHR: true, note: "Final uphill push." }
+                            ]},
+                            { name: "Cool Down", exercises: [
+                                { id: 't7', name: "Calf Stretch", type: 'timer', duration: stretch, note: "Against a wall." },
+                                { id: 't8', name: "Hip Flexor Stretch", type: 'timer', duration: stretch, note: "Lunge position." }
+                            ]}
+                        ]
+                    },
+                    wed: {
+                        title: "Wednesday", desc: "Lower Body & Core",
+                        sections: [
+                            { name: "Strength Work", exercises: [
+                                { id: 'w1', name: "Goblet Squat", type: 'reps', sets: sets, count: rpe, note: "Heavy PowerBlock at chest." },
+                                { id: 'w2', name: "Romanian Deadlift", type: 'reps', sets: sets, count: rpe, note: "Stretch the hamstrings." },
+                                { id: 'w3', name: "Reverse Lunges", type: 'reps', sets: sets, count: rpe, note: "Holding blocks at sides." },
+                                { id: 'w4', name: "Calf Raises", type: 'reps', sets: sets, count: 20, note: "Explosive up, slow down." }
+                            ]},
+                            { name: "Cool Down", exercises: [
+                                { id: 'w5', name: "Pigeon Pose", type: 'timer', duration: stretch, note: "Release deep glutes." },
+                                { id: 'w6', name: "Spinal Twist", type: 'timer', duration: stretch, note: "Lower back relief." }
+                            ]}
+                        ]
+                    },
+                    thu: {
+                        title: "Thursday", desc: "Zone 4 Steady State",
+                        sections: [
+                            { name: "Steady Grind", exercises: [
+                                { id: 'th1', name: "Warm-up Build", type: 'timer', duration: 300, note: "Gradually increase incline." },
+                                { id: 'th2', name: "Zone 4: Steady State", type: 'timer', duration: lvl ? 1500 : 1200, requireHR: true, note: "Timer counts only in target zone." },
+                                { id: 'th3', name: "Flat Cool Down", type: 'timer', duration: 300, note: "Bring HR back to normal." }
+                            ]},
+                            { name: "Cool Down", exercises: [
+                                { id: 'th4', name: "Downward Dog", type: 'timer', duration: 60, note: "Full body stretch." },
+                                { id: 'th5', name: "Butterfly Stretch", type: 'timer', duration: stretch, note: "Inner thighs." }
+                            ]}
+                        ]
+                    },
+                    fri: {
+                        title: "Friday", desc: "Full Body Finishing Pump",
+                        sections: [
+                            { name: "Mixed Load", exercises: [
+                                { id: 'f1', name: "Arnold Press", type: 'reps', sets: 3, count: rpe, note: "PowerBlocks - Full rotation." },
+                                { id: 'f2', name: "Stiff Leg Deadlift", type: 'reps', sets: 3, count: rpe, note: "Grip strength focus." },
+                                { id: 'f3', name: "Farmer's Walk", type: 'timer', duration: 60, note: "Walk with heavy blocks." }
+                            ]},
+                            { name: "Total Body Recovery", exercises: [
+                                { id: 'f4', name: "Seated Forward Fold", type: 'timer', duration: stretch, note: "Stretch hamstrings/back." },
+                                { id: 'f5', name: "Cobra Stretch", type: 'timer', duration: stretch, note: "Stretch abs/spine." },
+                                { id: 'f6', name: "Knee Hugs", type: 'timer', duration: 60, note: "Rock side to side." }
+                            ]}
+                        ]
+                    }
+                };
+            }
+
+            switchTab(day) {
+                this.currentDayKey = day;
+                document.querySelectorAll('header button[id^="tab-"]').forEach(btn => btn.classList.remove('active-tab'));
+                document.getElementById(`tab-${day}`).classList.add('active-tab');
+                this.renderList();
+            }
+
+            toggleLevel() {
+                this.isLevel2 = !this.isLevel2;
+                this.saveState();
+                this.updateLevelUI();
+                this.renderList();
+            }
+
+            renderList() {
+                const data = this.getWorkoutData()[this.currentDayKey];
+                document.getElementById('day-title').innerText = data.title;
+                document.getElementById('day-desc').innerText = data.desc;
+                
+                const list = document.getElementById('exercise-list');
+                list.innerHTML = '';
+                
+                data.sections.forEach(section => {
+                    const header = document.createElement('div');
+                    header.className = 'section-header';
+                    header.innerText = section.name;
+                    list.appendChild(header);
+
+                    section.exercises.forEach(ex => {
+                        const currentSets = this.completedSets[ex.id] || 0;
+                        const isDone = ex.type === 'reps' ? (currentSets >= ex.sets) : (currentSets > 0);
+                        const div = document.createElement('div');
+                        div.className = `p-4 mb-3 rounded-2xl bg-white shadow-sm border border-gray-200 transition-all ${isDone ? 'completed-card' : ''}`;
+                        
+                        let controlsHtml = '';
+                        if (ex.type === 'reps') {
+                            controlsHtml = `<div class="flex gap-2 mt-3">`;
+                            for (let i = 1; i <= ex.sets; i++) {
+                                const isActive = i <= currentSets;
+                                controlsHtml += `
+                                    <button onclick="window.app.toggleSet('${ex.id}', ${i}, ${ex.sets})" 
+                                        class="set-bubble flex-1 h-10 rounded-xl border-2 font-black text-xs ${isActive ? 'active border-blue-600 bg-blue-600 text-white' : 'border-gray-100 text-gray-300'}">
+                                        SET ${i}
+                                    </button>`;
+                            }
+                            controlsHtml += `</div>`;
+                        } else {
+                            controlsHtml = `
+                                <button onclick="window.app.startTimer('${ex.id}', ${ex.duration}, '${ex.name}', ${ex.requireHR || false})" 
+                                    class="w-full mt-3 py-3 rounded-xl bg-blue-50 text-blue-600 font-bold text-xs border border-blue-100 flex items-center justify-center gap-2">
+                                    <i data-lucide="${isDone ? 'check-circle' : 'play'}" size="14"></i> ${isDone ? 'DO IT AGAIN' : 'START TIMER'}
+                                </button>`;
+                        }
+
+                        div.innerHTML = `
+                            <div class="flex justify-between items-start">
+                                <div class="flex-1">
+                                    <h4 class="font-black text-gray-900 leading-tight">${ex.name}</h4>
+                                    <p class="text-[11px] text-gray-400 font-medium mt-1 uppercase tracking-tighter">
+                                        ${ex.type === 'reps' ? `${ex.sets} SETS • ${ex.count} REPS` : `${this.formatTime(ex.duration)} • ${ex.note}`}
+                                    </p>
+                                </div>
+                                ${isDone ? '<i data-lucide="check-circle-2" class="text-green-500"></i>' : ''}
+                            </div>
+                            ${controlsHtml}
+                        `;
+                        list.appendChild(div);
+                    });
+                });
+                lucide.createIcons();
+                this.updateGlobalProgress();
+            }
+
+            toggleSet(id, setNum, maxSets) {
+                const current = this.completedSets[id] || 0;
+                // If tapping the highest completed set, toggle it off. Otherwise, set it to this number.
+                if (current === setNum) this.completedSets[id] = setNum - 1;
+                else this.completedSets[id] = setNum;
+                
+                if (this.completedSets[id] === maxSets) {
+                    document.getElementById('sfx-beep').play().catch(() => {});
+                }
+                
+                this.saveState();
+                this.renderList();
+            }
+
+            formatTime(seconds) {
+                const m = Math.floor(seconds / 60);
+                const s = seconds % 60;
+                return `${m}:${s.toString().padStart(2, '0')}`;
+            }
+
+            // Timer Logic
+            startTimer(id, duration, name, requireHR) {
+                if (this.timer.interval) clearInterval(this.timer.interval);
+                this.timer = { activeId: id, timeLeft: duration, total: duration, isActive: false, interval: null, isWaitingForHR: requireHR };
+                
+                document.getElementById('hud-name').innerText = name;
+                document.getElementById('hud-status').innerText = requireHR ? "HEART RATE CHECK" : "IN PROGRESS";
+                document.getElementById('hr-prep-area').classList.toggle('hidden', !requireHR);
+                document.getElementById('hud-progress-container').classList.toggle('hidden', requireHR);
+                document.getElementById('hud-play-btn').classList.toggle('hidden', requireHR);
+                
+                document.getElementById('hud').classList.remove('translate-y-full');
+                this.updateHUD();
+                
+                if (!requireHR) this.resumeTimer();
+            }
+
+            startCardioCountdown() {
+                this.timer.isWaitingForHR = false;
+                document.getElementById('hr-prep-area').classList.add('hidden');
+                document.getElementById('hud-progress-container').classList.remove('hidden');
+                document.getElementById('hud-play-btn').classList.remove('hidden');
+                document.getElementById('hud-status').innerText = "IN ZONE 4";
+                this.resumeTimer();
+            }
+
+            resumeTimer() {
+                this.timer.isActive = true;
+                document.getElementById('hud-play-btn').innerText = "Pause";
+                this.timer.interval = setInterval(() => {
+                    this.timer.timeLeft--;
+                    this.updateHUD();
+                    if (this.timer.timeLeft <= 0) this.finishTimer();
+                }, 1000);
+            }
+
+            toggleTimer() {
+                if (this.timer.isActive) {
+                    clearInterval(this.timer.interval);
+                    this.timer.isActive = false;
+                    document.getElementById('hud-play-btn').innerText = "Resume";
+                } else this.resumeTimer();
+            }
+
+            finishTimer() {
+                clearInterval(this.timer.interval);
+                this.completedSets[this.timer.activeId] = 1;
+                this.saveState();
+                this.renderList();
+                document.getElementById('hud').classList.add('translate-y-full');
+                document.getElementById('sfx-beep').play().catch(() => {});
+            }
+
+            closeHUD() {
+                clearInterval(this.timer.interval);
+                document.getElementById('hud').classList.add('translate-y-full');
+            }
+
+            updateHUD() {
+                const perc = ((this.timer.total - this.timer.timeLeft) / this.timer.total) * 100;
+                document.getElementById('hud-timer').innerText = this.formatTime(this.timer.timeLeft);
+                document.getElementById('hud-progress').style.width = `${perc}%`;
+            }
+
+            updateGlobalProgress() {
+                const data = this.getWorkoutData()[this.currentDayKey];
+                let total = 0; let done = 0;
+                data.sections.forEach(s => s.exercises.forEach(ex => {
+                    total++;
+                    if (ex.type === 'reps') {
+                        if ((this.completedSets[ex.id] || 0) >= ex.sets) done++;
+                    } else if (this.completedSets[ex.id]) done++;
+                }));
+                const perc = Math.round((done / total) * 100) || 0;
+                document.getElementById('progress-indicator').innerText = `${perc}%`;
+            }
+
+            showResetModal() { document.getElementById('modal').classList.add('modal-visible'); document.getElementById('modal').classList.remove('modal-hidden'); }
+            hideResetModal() { document.getElementById('modal').classList.remove('modal-visible'); document.getElementById('modal').classList.add('modal-hidden'); }
+            confirmReset() {
+                const data = this.getWorkoutData()[this.currentDayKey];
+                data.sections.forEach(s => s.exercises.forEach(ex => delete this.completedSets[ex.id]));
+                this.saveState();
+                this.hideResetModal();
+                this.renderList();
+            }
+        }
+
+        window.onload = () => new WorkoutApp();
+    </script>
+</body>
+</html>
