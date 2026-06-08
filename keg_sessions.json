@@ -2,15 +2,15 @@
     "Law Tap": {
         "beer": "Angels with Filthy Souls",
         "style": "Winter Warmer",
-        "start_date": "2026-01-05",
-        "start_pct": 28.0,
+        "start_date": "2026-04-18",
+        "start_pct": 64.4,
         "active": true
     },
     "Wisco Tap": {
         "beer": "nIPLy",
         "style": "Cold IPA",
-        "start_date": "2026-01-05",
-        "start_pct": 10.0,
+        "start_date": "2026-05-05",
+        "start_pct": 72.8,
         "active": true
     },
     "Nitro Tap": {

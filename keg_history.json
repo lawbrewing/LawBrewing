@@ -1,5 +1,39 @@
 [
     {
+        "beer": "It was all a Dreamsicle",
+        "style": "Soured Milkshaked Juicy IPA",
+        "abv": "5.60%",
+        "tap": "Wisco Tap",
+        "start_date": "2026-01-05",
+        "end_date": "2026-05-04",
+        "start_gallons": 0.5,
+        "pour_count": {
+            "Taster": 0,
+            "Short Pour": 0,
+            "Pint": 0,
+            "Crowler": 0,
+            "Growler": 0,
+            "Total_Oz": 0
+        }
+    },
+    {
+        "beer": "Hopped Up On Enemy's Blood",
+        "style": "IPA",
+        "abv": "6.70%",
+        "tap": "Law Tap",
+        "start_date": "2026-02-27",
+        "end_date": "2026-04-18",
+        "start_gallons": 1.71,
+        "pour_count": {
+            "Taster": 0,
+            "Short Pour": 0,
+            "Pint": 0,
+            "Crowler": 0,
+            "Growler": 0,
+            "Total_Oz": 0
+        }
+    },
+    {
         "beer": "Nitro Tap (Current)",
         "style": "On Tap",
         "abv": "0.0%",
