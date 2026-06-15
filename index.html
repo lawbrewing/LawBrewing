@@ -120,7 +120,7 @@ padding-bottom: 5px; text-transform: uppercase; }
 }
 
 .infinity-scroll-content {
-    animation: scrollUp 20s linear infinite; 
+    animation: scrollUp 20s linear forwards; 
 }
 
 .infinity-scroll-container:hover .infinity-scroll-content {
@@ -129,7 +129,7 @@ padding-bottom: 5px; text-transform: uppercase; }
 
 @keyframes scrollUp {
     0% { transform: translateY(300px); }
-    100% { transform: translateY(-100%); }
+    100% { transform: translateY(calc(-100% + 250px)); }
 }
 </style>
 </head>
