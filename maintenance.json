@@ -26,10 +26,21 @@
         ]
     },
     "propane": {
-        "used_hours": 0,
+        "used_hours": 0.15,
         "capacity": 20,
         "burn_rate": 1.5,
         "logs": [
+            {
+                "date": "2026-07-03",
+                "hours": 0.15,
+                "type": "usage"
+            },
+            {
+                "date": "2026-07-03",
+                "old_hours": 0,
+                "new_rate": 1.5,
+                "type": "reset"
+            },
             {
                 "date": "2026-01-11",
                 "amount": 0,
