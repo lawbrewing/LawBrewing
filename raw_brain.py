@@ -35,7 +35,7 @@ tap_beer_abv = {}            # Stores ABV from Google Sheet
 # CONSTANTS
 TAPS = ['Law Tap', 'Wisco Tap', 'Nitro Tap']
 TAP_CONFIG = {
-    '192.168.86.22':  {'name': 'Law Tap',   'empty': 0, 'full': 19000},
+    '192.168.86.47':  {'name': 'Law Tap',   'empty': 0, 'full': 19000},
     '192.168.86.116': {'name': 'Wisco Tap', 'empty': 0, 'full': 19000},
     '192.168.86.45':  {'name': 'Nitro Tap', 'empty': 0, 'full': 19000}
 }
