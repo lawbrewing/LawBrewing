@@ -1172,7 +1172,8 @@ def handle_scale_connection(conn, addr):
                                     save_json(WEIGHTS_FILE, current_weights)
                             else:
                                 log_event(name, f"{pct}%", "BASELINE_ADJUST")
-                                save_json(WEIGHTS_FILE, current_weights)
+                                if abs(pct - old_pct) >= GIT_TRIGGER_PCT:
+                                    save_json(WEIGHTS_FILE, current_weights)
 
                         if name not in pour_start_weights:
                             pour_start_weights[name] = val
