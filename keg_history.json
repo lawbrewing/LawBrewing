@@ -1,5 +1,22 @@
 [
     {
+        "beer": "Hopped Up On Enemy's Blood",
+        "style": "IPA",
+        "abv": "5.80%",
+        "tap": "Law Tap",
+        "start_date": "2026-04-18",
+        "end_date": "2026-08-13",
+        "start_gallons": 3.22,
+        "pour_count": {
+            "Taster": 0,
+            "Short Pour": 2,
+            "Pint": 2,
+            "Crowler": 2,
+            "Growler": 1,
+            "Total_Oz": 163.7
+        }
+    },
+    {
         "beer": "A-Salt",
         "style": "Gose",
         "abv": "5.80%",
