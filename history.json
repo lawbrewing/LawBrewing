@@ -1,215 +1,5 @@
 [
     {
-        "time": "17:12:09",
-        "data": {
-            "Law Tap": 64.3,
-            "Law Tap_temp": 45.5,
-            "Law Tap_updated": "1:50 PM",
-            "Wisco Tap": 60.3,
-            "Wisco Tap_temp": 40.4,
-            "Wisco Tap_updated": "2:58 PM",
-            "Nitro Tap": 63.0,
-            "Nitro Tap_temp": 57.0,
-            "Nitro Tap_updated": "2:05 PM",
-            "last_updated": "2026-07-16 18:24:29",
-            "Law Tap_last_pour": "Short Pour (9.5oz)",
-            "Nitro Tap_last_pour": "Short Pour (9.5oz)",
-            "Wisco Tap_last_pour": "Short Pour (9.5oz)",
-            "Nitro Tap_pour_ts": 1770849514.271543,
-            "Law Tap_pour_ts": 1770845721.1353009,
-            "Wisco Tap_pour_ts": 1770849849.7152545
-        }
-    },
-    {
-        "time": "17:13:10",
-        "data": {
-            "Law Tap": 64.3,
-            "Law Tap_temp": 45.5,
-            "Law Tap_updated": "1:50 PM",
-            "Wisco Tap": 60.3,
-            "Wisco Tap_temp": 40.4,
-            "Wisco Tap_updated": "2:58 PM",
-            "Nitro Tap": 63.0,
-            "Nitro Tap_temp": 57.0,
-            "Nitro Tap_updated": "2:05 PM",
-            "last_updated": "2026-07-16 18:24:29",
-            "Law Tap_last_pour": "Short Pour (9.5oz)",
-            "Nitro Tap_last_pour": "Short Pour (9.5oz)",
-            "Wisco Tap_last_pour": "Short Pour (9.5oz)",
-            "Nitro Tap_pour_ts": 1770849514.271543,
-            "Law Tap_pour_ts": 1770845721.1353009,
-            "Wisco Tap_pour_ts": 1770849849.7152545
-        }
-    },
-    {
-        "time": "17:14:10",
-        "data": {
-            "Law Tap": 64.3,
-            "Law Tap_temp": 45.5,
-            "Law Tap_updated": "1:50 PM",
-            "Wisco Tap": 60.3,
-            "Wisco Tap_temp": 40.4,
-            "Wisco Tap_updated": "2:58 PM",
-            "Nitro Tap": 63.0,
-            "Nitro Tap_temp": 57.0,
-            "Nitro Tap_updated": "2:05 PM",
-            "last_updated": "2026-07-16 18:24:29",
-            "Law Tap_last_pour": "Short Pour (9.5oz)",
-            "Nitro Tap_last_pour": "Short Pour (9.5oz)",
-            "Wisco Tap_last_pour": "Short Pour (9.5oz)",
-            "Nitro Tap_pour_ts": 1770849514.271543,
-            "Law Tap_pour_ts": 1770845721.1353009,
-            "Wisco Tap_pour_ts": 1770849849.7152545
-        }
-    },
-    {
-        "time": "17:15:10",
-        "data": {
-            "Law Tap": 64.3,
-            "Law Tap_temp": 45.5,
-            "Law Tap_updated": "1:50 PM",
-            "Wisco Tap": 60.3,
-            "Wisco Tap_temp": 40.4,
-            "Wisco Tap_updated": "2:58 PM",
-            "Nitro Tap": 63.0,
-            "Nitro Tap_temp": 57.0,
-            "Nitro Tap_updated": "2:05 PM",
-            "last_updated": "2026-07-16 18:24:29",
-            "Law Tap_last_pour": "Short Pour (9.5oz)",
-            "Nitro Tap_last_pour": "Short Pour (9.5oz)",
-            "Wisco Tap_last_pour": "Short Pour (9.5oz)",
-            "Nitro Tap_pour_ts": 1770849514.271543,
-            "Law Tap_pour_ts": 1770845721.1353009,
-            "Wisco Tap_pour_ts": 1770849849.7152545
-        }
-    },
-    {
-        "time": "17:16:10",
-        "data": {
-            "Law Tap": 64.3,
-            "Law Tap_temp": 45.5,
-            "Law Tap_updated": "1:50 PM",
-            "Wisco Tap": 60.3,
-            "Wisco Tap_temp": 40.4,
-            "Wisco Tap_updated": "2:58 PM",
-            "Nitro Tap": 63.0,
-            "Nitro Tap_temp": 57.0,
-            "Nitro Tap_updated": "2:05 PM",
-            "last_updated": "2026-07-16 18:24:29",
-            "Law Tap_last_pour": "Short Pour (9.5oz)",
-            "Nitro Tap_last_pour": "Short Pour (9.5oz)",
-            "Wisco Tap_last_pour": "Short Pour (9.5oz)",
-            "Nitro Tap_pour_ts": 1770849514.271543,
-            "Law Tap_pour_ts": 1770845721.1353009,
-            "Wisco Tap_pour_ts": 1770849849.7152545
-        }
-    },
-    {
-        "time": "17:17:11",
-        "data": {
-            "Law Tap": 64.3,
-            "Law Tap_temp": 45.5,
-            "Law Tap_updated": "1:50 PM",
-            "Wisco Tap": 60.3,
-            "Wisco Tap_temp": 40.4,
-            "Wisco Tap_updated": "2:58 PM",
-            "Nitro Tap": 63.0,
-            "Nitro Tap_temp": 57.0,
-            "Nitro Tap_updated": "2:05 PM",
-            "last_updated": "2026-07-16 18:24:29",
-            "Law Tap_last_pour": "Short Pour (9.5oz)",
-            "Nitro Tap_last_pour": "Short Pour (9.5oz)",
-            "Wisco Tap_last_pour": "Short Pour (9.5oz)",
-            "Nitro Tap_pour_ts": 1770849514.271543,
-            "Law Tap_pour_ts": 1770845721.1353009,
-            "Wisco Tap_pour_ts": 1770849849.7152545
-        }
-    },
-    {
-        "time": "17:18:11",
-        "data": {
-            "Law Tap": 64.3,
-            "Law Tap_temp": 45.5,
-            "Law Tap_updated": "1:50 PM",
-            "Wisco Tap": 60.3,
-            "Wisco Tap_temp": 40.4,
-            "Wisco Tap_updated": "2:58 PM",
-            "Nitro Tap": 63.0,
-            "Nitro Tap_temp": 57.0,
-            "Nitro Tap_updated": "2:05 PM",
-            "last_updated": "2026-07-16 18:24:29",
-            "Law Tap_last_pour": "Short Pour (9.5oz)",
-            "Nitro Tap_last_pour": "Short Pour (9.5oz)",
-            "Wisco Tap_last_pour": "Short Pour (9.5oz)",
-            "Nitro Tap_pour_ts": 1770849514.271543,
-            "Law Tap_pour_ts": 1770845721.1353009,
-            "Wisco Tap_pour_ts": 1770849849.7152545
-        }
-    },
-    {
-        "time": "17:19:11",
-        "data": {
-            "Law Tap": 64.3,
-            "Law Tap_temp": 45.5,
-            "Law Tap_updated": "1:50 PM",
-            "Wisco Tap": 60.3,
-            "Wisco Tap_temp": 40.4,
-            "Wisco Tap_updated": "2:58 PM",
-            "Nitro Tap": 63.0,
-            "Nitro Tap_temp": 57.0,
-            "Nitro Tap_updated": "2:05 PM",
-            "last_updated": "2026-07-16 18:24:29",
-            "Law Tap_last_pour": "Short Pour (9.5oz)",
-            "Nitro Tap_last_pour": "Short Pour (9.5oz)",
-            "Wisco Tap_last_pour": "Short Pour (9.5oz)",
-            "Nitro Tap_pour_ts": 1770849514.271543,
-            "Law Tap_pour_ts": 1770845721.1353009,
-            "Wisco Tap_pour_ts": 1770849849.7152545
-        }
-    },
-    {
-        "time": "17:20:11",
-        "data": {
-            "Law Tap": 64.3,
-            "Law Tap_temp": 45.5,
-            "Law Tap_updated": "1:50 PM",
-            "Wisco Tap": 60.3,
-            "Wisco Tap_temp": 40.4,
-            "Wisco Tap_updated": "2:58 PM",
-            "Nitro Tap": 63.0,
-            "Nitro Tap_temp": 57.0,
-            "Nitro Tap_updated": "2:05 PM",
-            "last_updated": "2026-07-16 18:24:29",
-            "Law Tap_last_pour": "Short Pour (9.5oz)",
-            "Nitro Tap_last_pour": "Short Pour (9.5oz)",
-            "Wisco Tap_last_pour": "Short Pour (9.5oz)",
-            "Nitro Tap_pour_ts": 1770849514.271543,
-            "Law Tap_pour_ts": 1770845721.1353009,
-            "Wisco Tap_pour_ts": 1770849849.7152545
-        }
-    },
-    {
-        "time": "17:21:11",
-        "data": {
-            "Law Tap": 64.3,
-            "Law Tap_temp": 45.5,
-            "Law Tap_updated": "1:50 PM",
-            "Wisco Tap": 60.3,
-            "Wisco Tap_temp": 40.4,
-            "Wisco Tap_updated": "2:58 PM",
-            "Nitro Tap": 63.0,
-            "Nitro Tap_temp": 57.0,
-            "Nitro Tap_updated": "2:05 PM",
-            "last_updated": "2026-07-16 18:24:29",
-            "Law Tap_last_pour": "Short Pour (9.5oz)",
-            "Nitro Tap_last_pour": "Short Pour (9.5oz)",
-            "Wisco Tap_last_pour": "Short Pour (9.5oz)",
-            "Nitro Tap_pour_ts": 1770849514.271543,
-            "Law Tap_pour_ts": 1770845721.1353009,
-            "Wisco Tap_pour_ts": 1770849849.7152545
-        }
-    },
-    {
         "time": "17:22:11",
         "data": {
             "Law Tap": 64.3,
@@ -60484,6 +60274,216 @@
         "data": {
             "Law Tap": 64.1,
             "Law Tap_temp": 36.7,
+            "Law Tap_updated": "3:02 PM",
+            "Wisco Tap": 60.4,
+            "Wisco Tap_temp": 36.3,
+            "Wisco Tap_updated": "10:43 AM",
+            "Nitro Tap": 62.4,
+            "Nitro Tap_temp": 56.3,
+            "Nitro Tap_updated": "5:00 PM",
+            "last_updated": "2026-07-16 18:24:29",
+            "Law Tap_last_pour": "Short Pour (9.5oz)",
+            "Nitro Tap_last_pour": "Short Pour (9.5oz)",
+            "Wisco Tap_last_pour": "Short Pour (9.5oz)",
+            "Nitro Tap_pour_ts": 1770849514.271543,
+            "Law Tap_pour_ts": 1770845721.1353009,
+            "Wisco Tap_pour_ts": 1770849849.7152545
+        }
+    },
+    {
+        "time": "17:24:55",
+        "data": {
+            "Law Tap": 64.1,
+            "Law Tap_temp": 36.7,
+            "Law Tap_updated": "3:02 PM",
+            "Wisco Tap": 60.4,
+            "Wisco Tap_temp": 36.3,
+            "Wisco Tap_updated": "10:43 AM",
+            "Nitro Tap": 62.4,
+            "Nitro Tap_temp": 56.3,
+            "Nitro Tap_updated": "5:00 PM",
+            "last_updated": "2026-07-16 18:24:29",
+            "Law Tap_last_pour": "Short Pour (9.5oz)",
+            "Nitro Tap_last_pour": "Short Pour (9.5oz)",
+            "Wisco Tap_last_pour": "Short Pour (9.5oz)",
+            "Nitro Tap_pour_ts": 1770849514.271543,
+            "Law Tap_pour_ts": 1770845721.1353009,
+            "Wisco Tap_pour_ts": 1770849849.7152545
+        }
+    },
+    {
+        "time": "17:25:55",
+        "data": {
+            "Law Tap": 64.1,
+            "Law Tap_temp": 36.7,
+            "Law Tap_updated": "3:02 PM",
+            "Wisco Tap": 60.4,
+            "Wisco Tap_temp": 36.3,
+            "Wisco Tap_updated": "10:43 AM",
+            "Nitro Tap": 62.4,
+            "Nitro Tap_temp": 56.3,
+            "Nitro Tap_updated": "5:00 PM",
+            "last_updated": "2026-07-16 18:24:29",
+            "Law Tap_last_pour": "Short Pour (9.5oz)",
+            "Nitro Tap_last_pour": "Short Pour (9.5oz)",
+            "Wisco Tap_last_pour": "Short Pour (9.5oz)",
+            "Nitro Tap_pour_ts": 1770849514.271543,
+            "Law Tap_pour_ts": 1770845721.1353009,
+            "Wisco Tap_pour_ts": 1770849849.7152545
+        }
+    },
+    {
+        "time": "17:26:55",
+        "data": {
+            "Law Tap": 64.1,
+            "Law Tap_temp": 36.7,
+            "Law Tap_updated": "3:02 PM",
+            "Wisco Tap": 60.4,
+            "Wisco Tap_temp": 36.3,
+            "Wisco Tap_updated": "10:43 AM",
+            "Nitro Tap": 62.4,
+            "Nitro Tap_temp": 56.3,
+            "Nitro Tap_updated": "5:00 PM",
+            "last_updated": "2026-07-16 18:24:29",
+            "Law Tap_last_pour": "Short Pour (9.5oz)",
+            "Nitro Tap_last_pour": "Short Pour (9.5oz)",
+            "Wisco Tap_last_pour": "Short Pour (9.5oz)",
+            "Nitro Tap_pour_ts": 1770849514.271543,
+            "Law Tap_pour_ts": 1770845721.1353009,
+            "Wisco Tap_pour_ts": 1770849849.7152545
+        }
+    },
+    {
+        "time": "17:27:55",
+        "data": {
+            "Law Tap": 64.1,
+            "Law Tap_temp": 36.7,
+            "Law Tap_updated": "3:02 PM",
+            "Wisco Tap": 60.4,
+            "Wisco Tap_temp": 36.3,
+            "Wisco Tap_updated": "10:43 AM",
+            "Nitro Tap": 62.4,
+            "Nitro Tap_temp": 56.3,
+            "Nitro Tap_updated": "5:00 PM",
+            "last_updated": "2026-07-16 18:24:29",
+            "Law Tap_last_pour": "Short Pour (9.5oz)",
+            "Nitro Tap_last_pour": "Short Pour (9.5oz)",
+            "Wisco Tap_last_pour": "Short Pour (9.5oz)",
+            "Nitro Tap_pour_ts": 1770849514.271543,
+            "Law Tap_pour_ts": 1770845721.1353009,
+            "Wisco Tap_pour_ts": 1770849849.7152545
+        }
+    },
+    {
+        "time": "17:28:55",
+        "data": {
+            "Law Tap": 64.1,
+            "Law Tap_temp": 36.7,
+            "Law Tap_updated": "3:02 PM",
+            "Wisco Tap": 60.4,
+            "Wisco Tap_temp": 36.3,
+            "Wisco Tap_updated": "10:43 AM",
+            "Nitro Tap": 62.4,
+            "Nitro Tap_temp": 56.3,
+            "Nitro Tap_updated": "5:00 PM",
+            "last_updated": "2026-07-16 18:24:29",
+            "Law Tap_last_pour": "Short Pour (9.5oz)",
+            "Nitro Tap_last_pour": "Short Pour (9.5oz)",
+            "Wisco Tap_last_pour": "Short Pour (9.5oz)",
+            "Nitro Tap_pour_ts": 1770849514.271543,
+            "Law Tap_pour_ts": 1770845721.1353009,
+            "Wisco Tap_pour_ts": 1770849849.7152545
+        }
+    },
+    {
+        "time": "17:29:55",
+        "data": {
+            "Law Tap": 64.1,
+            "Law Tap_temp": 36.7,
+            "Law Tap_updated": "3:02 PM",
+            "Wisco Tap": 60.4,
+            "Wisco Tap_temp": 36.3,
+            "Wisco Tap_updated": "10:43 AM",
+            "Nitro Tap": 62.4,
+            "Nitro Tap_temp": 56.3,
+            "Nitro Tap_updated": "5:00 PM",
+            "last_updated": "2026-07-16 18:24:29",
+            "Law Tap_last_pour": "Short Pour (9.5oz)",
+            "Nitro Tap_last_pour": "Short Pour (9.5oz)",
+            "Wisco Tap_last_pour": "Short Pour (9.5oz)",
+            "Nitro Tap_pour_ts": 1770849514.271543,
+            "Law Tap_pour_ts": 1770845721.1353009,
+            "Wisco Tap_pour_ts": 1770849849.7152545
+        }
+    },
+    {
+        "time": "17:30:56",
+        "data": {
+            "Law Tap": 64.1,
+            "Law Tap_temp": 36.7,
+            "Law Tap_updated": "3:02 PM",
+            "Wisco Tap": 60.4,
+            "Wisco Tap_temp": 36.3,
+            "Wisco Tap_updated": "10:43 AM",
+            "Nitro Tap": 62.4,
+            "Nitro Tap_temp": 56.3,
+            "Nitro Tap_updated": "5:00 PM",
+            "last_updated": "2026-07-16 18:24:29",
+            "Law Tap_last_pour": "Short Pour (9.5oz)",
+            "Nitro Tap_last_pour": "Short Pour (9.5oz)",
+            "Wisco Tap_last_pour": "Short Pour (9.5oz)",
+            "Nitro Tap_pour_ts": 1770849514.271543,
+            "Law Tap_pour_ts": 1770845721.1353009,
+            "Wisco Tap_pour_ts": 1770849849.7152545
+        }
+    },
+    {
+        "time": "17:31:56",
+        "data": {
+            "Law Tap": 64.1,
+            "Law Tap_temp": 36.7,
+            "Law Tap_updated": "3:02 PM",
+            "Wisco Tap": 60.4,
+            "Wisco Tap_temp": 36.3,
+            "Wisco Tap_updated": "10:43 AM",
+            "Nitro Tap": 62.4,
+            "Nitro Tap_temp": 56.3,
+            "Nitro Tap_updated": "5:00 PM",
+            "last_updated": "2026-07-16 18:24:29",
+            "Law Tap_last_pour": "Short Pour (9.5oz)",
+            "Nitro Tap_last_pour": "Short Pour (9.5oz)",
+            "Wisco Tap_last_pour": "Short Pour (9.5oz)",
+            "Nitro Tap_pour_ts": 1770849514.271543,
+            "Law Tap_pour_ts": 1770845721.1353009,
+            "Wisco Tap_pour_ts": 1770849849.7152545
+        }
+    },
+    {
+        "time": "17:32:56",
+        "data": {
+            "Law Tap": 64.1,
+            "Law Tap_temp": 36.0,
+            "Law Tap_updated": "3:02 PM",
+            "Wisco Tap": 60.4,
+            "Wisco Tap_temp": 36.3,
+            "Wisco Tap_updated": "10:43 AM",
+            "Nitro Tap": 62.4,
+            "Nitro Tap_temp": 56.3,
+            "Nitro Tap_updated": "5:00 PM",
+            "last_updated": "2026-07-16 18:24:29",
+            "Law Tap_last_pour": "Short Pour (9.5oz)",
+            "Nitro Tap_last_pour": "Short Pour (9.5oz)",
+            "Wisco Tap_last_pour": "Short Pour (9.5oz)",
+            "Nitro Tap_pour_ts": 1770849514.271543,
+            "Law Tap_pour_ts": 1770845721.1353009,
+            "Wisco Tap_pour_ts": 1770849849.7152545
+        }
+    },
+    {
+        "time": "17:33:56",
+        "data": {
+            "Law Tap": 64.1,
+            "Law Tap_temp": 36.0,
             "Law Tap_updated": "3:02 PM",
             "Wisco Tap": 60.4,
             "Wisco Tap_temp": 36.3,
