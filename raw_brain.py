@@ -22,7 +22,7 @@ DISCORD_INVITE = "https://discord.gg/KkK6C9C4"
 
 # ==== SAFETY ALERT CONFIGURATION ====
 NITRO_IP_SUFFIX = "45"       # Nitro is .45
-TEMP_LIMIT_NITRO = 56.0      # Alert if Nitro > 56F
+TEMP_LIMIT_NITRO = 59.0      # Alert if Nitro > 59F
 TEMP_LIMIT_STD = 50.0        # Alert others > 50F
 LEAK_FLOW_MAX_SEC = 60       # Time threshold to check for leaks
 LEAK_VOL_TRIGGER_OZ = 80.0   # Only alert if > 80oz lost (Major leak)
@@ -304,46 +304,38 @@ def history_loop():
     1. Git Sync (Heartbeat) - Every 10 mins
     2. History Logging - Every 1 min
     3. Beer Name Updates - Every 10 mins
-    4. Low Keg Notifications - Realtime checks
+    4. Low Keg Notifications - Realtime checks based on percentages
     """
     global last_git_push, last_recon_weights
     last_name_update = 0
     
-    # Track which kegs we have already alerted about to avoid spamming
-    notified_low = {"Law Tap": False, "Wisco Tap": False, "Nitro Tap": False}
-    notified_empty = {"Law Tap": False, "Wisco Tap": False, "Nitro Tap": False}
-
+    # Track notification states to prevent spamming the Discord channel
+    notified_state = {
+        tap: {"BREW": False, "LOW": False, "DEAD": False, "EMPTY": False} 
+        for tap in TAPS
+    }
+    
     print("⏳ Background Thread Started (Heartbeat & History)")
-
     while True:
         try:
             # --- 1. HEARTBEAT (Git Sync) ---
-            # Checks every minute if 10 minutes (600s) have passed since last push
             if (time.time() - last_git_push) > 600:
-                last_git_push = time.time()  # Reset timer immediately
+                last_git_push = time.time()  
                 
                 # RECONCILIATION ENGINE: Catch missed pours
                 for tap in TAPS:
                     if tap in current_weights and tap in last_recon_weights:
                         old_pct = last_recon_weights[tap]
                         new_pct = current_weights[tap]
-                    
-                        # Calculate drop in % and convert to oz (Assuming 5gal/640oz keg)
                         pct_drop = old_pct - new_pct
                         drop_oz = (pct_drop / 100.0) * 640.0
                     
-                        # If drop > 6.0oz and no POUR was recently logged
                         if drop_oz > 6.0:
-                            # Check if a pour was already logged in the last 10 mins
-                            # to avoid double-counting
                             log_event(tap, f"{drop_oz:.1f} oz", "RECONCILED_POUR")
                             print(f"🕵️ Reconciliation: Caught missed {drop_oz:.1f}oz pour on {tap}")
             
-                # Update baselines for the next 10-minute window
                 last_recon_weights = current_weights.copy()
-
                 print("💓 Heartbeat: Pushing to GitHub...")
-                # We use the global current_weights dictionary
                 sync_to_github(HISTORY_FILE)
 
             # --- 2. UPDATE BEER NAMES (Every 10 mins) ---
@@ -353,52 +345,64 @@ def history_loop():
 
             # --- 3. SAVE HISTORY JSON (For Graphs) ---
             h = load_json(HISTORY_FILE, [])
-            # Keep history manageable (last ~48 hours at 1-min intervals)
             if len(h) > 2880:
                 h.pop(0)
             
-            # Snapshot the current state
             h.append({
                 "time": datetime.now().strftime('%H:%M:%S'),
                 "data": current_weights.copy()
             })
             save_json(HISTORY_FILE, h)
 
-            # --- 4. NOTIFICATIONS (Low Keg Alerts) ---
+            # --- 4. NOTIFICATIONS (Percentage-Based Alerts) ---
             for tap, weight in current_weights.items():
-                # Skip metadata keys (temps, timestamps, etc.)
                 if "_temp" in tap or "_updated" in tap or "last_" in tap or "_pour" in tap:
                     continue
-
                 try:
-                    w = float(weight)
+                    w = float(weight) # This is a percentage (e.g., 100.0)
+                    beer_name = tap_beer_names.get(tap, "Unknown Beer")
                     
-                    # ALERT: Keg Empty (< 10oz)
-                    if w < 10:
-                        if not notified_empty.get(tap, False):
-                            send_discord(f"🚨 KEG KICKED: {tap} is empty!")
-                            notified_empty[tap] = True
+                    # ALERT: Keg Empty / Eulogy
+                    if w <= CRIT_PCT:
+                        if not notified_state[tap]["EMPTY"]:
+                            msg = random.choice(PHRASES["EMPTY"]).format(beer=beer_name, tap=tap)
+                            send_discord(msg)
+                            notified_state[tap]["EMPTY"] = True
+                            
+                    # ALERT: Death Imminent (~3 Pints)
+                    elif CRIT_PCT < w <= DEAD_PCT:
+                        if not notified_state[tap]["DEAD"]:
+                            msg = random.choice(PHRASES["DEAD"]).format(beer=beer_name, tap=tap)
+                            send_discord(msg)
+                            notified_state[tap]["DEAD"] = True
+                            
+                    # ALERT: Dangerously Low
+                    elif DEAD_PCT < w <= LOW_PCT:
+                        if not notified_state[tap]["LOW"]:
+                            msg = random.choice(PHRASES["LOW"]).format(beer=beer_name, tap=tap)
+                            send_discord(msg)
+                            notified_state[tap]["LOW"] = True
+                            
+                    # ALERT: Brewmaster Warning
+                    elif LOW_PCT < w <= BREW_PCT:
+                        if not notified_state[tap]["BREW"]:
+                            msg = random.choice(PHRASES["BREW"]).format(beer=beer_name, tap=tap)
+                            send_discord(msg)
+                            notified_state[tap]["BREW"] = True
                     
-                    # ALERT: Low Keg (< 100oz)
-                    elif w < 100:
-                        if not notified_low.get(tap, False):
-                            send_discord(f"⚠️ LOW KEG: {tap} is below 100oz.")
-                            notified_low[tap] = True
-                    
-                    # RESET: If weight goes up (keg swapped), reset alerts
-                    if w > 100:
-                        notified_low[tap] = False
-                        notified_empty[tap] = False
+                    # RESET: If weight goes up above the brew threshold (keg swapped)
+                    elif w > BREW_PCT:
+                        for state in notified_state[tap]:
+                            notified_state[tap][state] = False
 
                 except ValueError:
-                    continue # Skip if weight isn't a number
+                    continue 
 
             # --- 5. SLEEP (Crucial for CPU) ---
-            time.sleep(60)  # Run this loop once per minute
-
+            time.sleep(60) 
         except Exception as e:
             print(f"❌ Background Loop Error: {e}")
-            time.sleep(60)  # Sleep even on error to prevent log spam
+            time.sleep(60)
 
 # --- FLASK WEB SERVER ---
 app = Flask(__name__)
@@ -939,10 +943,10 @@ def set_date():
         tap_name = r.get('tap')
         new_date = r.get('date')
         old_beer_name = r.get('old_beer_name') # The name captured from the UI
-
+        
         # 1. ARCHIVE THE OLD KEG WITH THE CONFIRMED NAME
         archive_current_keg(tap_name, manual_name=old_beer_name)
-
+        
         # 2. START THE NEW SESSION
         s = load_json(SESSIONS_FILE, {})
         if tap_name not in s: s[tap_name] = {}
@@ -952,8 +956,14 @@ def set_date():
             s[tap_name]['start_pct'] = float(current_weights.get(tap_name, 100))
         except:
             s[tap_name]['start_pct'] = 100
-
         save_json(SESSIONS_FILE, s)
+
+        # 3. DISPATCH NEW KEG NOTIFICATION
+        # We use a placeholder for {beer} since the Google Sheet hasn't been updated yet per your SOP
+        placeholder_name = "a Mystery Brew (Update Google Sheets!)"
+        msg = random.choice(PHRASES["NEW"]).format(beer=placeholder_name, tap=tap_name)
+        send_discord(msg)
+
         return jsonify({"status": "ok"})
     except Exception as e:
         print(f"Set Date Error: {e}")
