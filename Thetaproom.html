@@ -755,8 +755,9 @@
     }
 
     function endShift() {
-        players.sort((a,b) => calcScore(b.flight) - calcScore(a.flight));
-        let winner = players[0];
+        // Sort a copy of the array so players[0] remains the human
+        let sortedPlayers = [...players].sort((a,b) => calcScore(b.flight) - calcScore(a.flight));
+        let winner = sortedPlayers[0];
         
         // INDIVIDUAL WIN UPDATE
         winner.matchWins++;
