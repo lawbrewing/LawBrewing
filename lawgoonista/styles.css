@@ -1,0 +1,129 @@
+:root {
+    --deep-water: #0b2b36;
+    --lagoon-teal: #19647e;
+    --foam: #e5f4e3;
+    --sand: #f4a261;
+    --accent: #28afb0;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Raleway', sans-serif;
+    background-color: var(--deep-water);
+    color: var(--foam);
+    position: relative;
+    min-height: 100vh;
+}
+
+/* Subtle water gradient background */
+.water-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at 50% 0%, var(--lagoon-teal) 0%, transparent 70%);
+    opacity: 0.6;
+    z-index: -1;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 3.5rem;
+    margin: 0;
+    letter-spacing: 2px;
+}
+
+/* Creative typographic play on the name */
+.law {
+    color: var(--sand);
+    font-style: italic;
+}
+.goon {
+    color: var(--accent);
+    font-weight: 700;
+}
+.ista {
+    color: var(--foam);
+    font-weight: 600;
+}
+
+.subtitle {
+    font-size: 1.2rem;
+    color: var(--accent);
+    margin-top: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+}
+
+#menu-container {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.drink-card {
+    background: rgba(25, 100, 126, 0.2);
+    border: 1px solid rgba(40, 175, 176, 0.3);
+    border-radius: 12px;
+    padding: 1.5rem;
+    backdrop-filter: blur(5px);
+    transition: transform 0.3s ease, background 0.3s ease;
+}
+
+.drink-card:hover {
+    transform: translateY(-3px);
+    background: rgba(25, 100, 126, 0.4);
+    border-color: var(--accent);
+}
+
+.drink-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem;
+    color: var(--sand);
+    margin: 0 0 0.5rem 0;
+}
+
+.drink-desc {
+    font-size: 1rem;
+    margin: 0 0 1rem 0;
+    font-style: italic;
+    color: #b0d0d3;
+}
+
+.drink-ingredients {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.drink-ingredients li {
+    background: rgba(11, 43, 54, 0.6);
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    color: var(--foam);
+}
+
+footer {
+    text-align: center;
+    margin-top: 4rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(40, 175, 176, 0.2);
+    font-size: 0.9rem;
+    color: var(--accent);
+}
