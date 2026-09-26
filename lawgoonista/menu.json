@@ -44,6 +44,16 @@
       "name": "Law's Gold",
       "description": "The perfect balance of sweet and salty.",
       "syrups": ["1 pump Salted Caramel", "1 pump Bourbon Caramel"]
+    },
+    {
+      "name": "The Top Rope Splash",
+      "description": "A high-flying wave of sweet and salty richness.",
+      "syrups": ["1 pump Brown Butter Toffee", "1 pump Salted Caramel", "1 pump Diamond (Torani)"]
+    },
+    {
+      "name": "The Pastry Pour",
+      "description": "A decadent, dessert-like nod to sweet pastry stouts.",
+      "syrups": ["2 pumps Cookie Butter", "1 pump Bourbon Caramel"]
     }
   ]
 }
