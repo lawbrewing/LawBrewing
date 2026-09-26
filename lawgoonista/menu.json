@@ -1,0 +1,49 @@
+{
+  "syrups": [
+    "Creme de Banana",
+    "Carmel Pecan",
+    "Salted Caramel",
+    "Diamond (Torani)",
+    "Brown Butter Toffee",
+    "Cookie Butter",
+    "Bourbon Caramel",
+    "Brown Sugar"
+  ],
+  "drinks": [
+    {
+      "name": "The Loomis",
+      "description": "A majestic and sweet lagoon signature.",
+      "ingredients": ["1 pump Creme de Banana", "2 pumps Cookie Butter"]
+    },
+    {
+      "name": "Diamond Bay",
+      "description": "Clear and crisp sweetness with a hint of salt.",
+      "ingredients": ["2 pumps Diamond (Torani)", "1 pump Salted Caramel"]
+    },
+    {
+      "name": "Toffee Tide",
+      "description": "Rich, buttery waves of flavor.",
+      "ingredients": ["2 pumps Brown Butter Toffee", "1 pump Carmel Pecan"]
+    },
+    {
+      "name": "Bourbon Bank",
+      "description": "A dark, robust shoreline classic.",
+      "ingredients": ["2 pumps Bourbon Caramel", "1 pump Brown Sugar"]
+    },
+    {
+      "name": "Banana Bread Drift",
+      "description": "Comforting baked goods in a glass.",
+      "ingredients": ["2 pumps Creme de Banana", "1 pump Carmel Pecan"]
+    },
+    {
+      "name": "Cookie Craze",
+      "description": "Sweet, spiced, and decadent.",
+      "ingredients": ["1 pump Cookie Butter", "1 pump Brown Butter Toffee", "1 pump Brown Sugar"]
+    },
+    {
+      "name": "Law's Gold",
+      "description": "The perfect balance of sweet and salty.",
+      "ingredients": ["1 pump Salted Caramel", "1 pump Bourbon Caramel"]
+    }
+  ]
+}
