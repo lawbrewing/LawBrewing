@@ -1,12 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <!-- Deep Lagoon Background -->
-  <rect width="100" height="100" rx="22" fill="#06161c"/>
-  
   <!-- Teal Water Droplet -->
   <path d="M 50 15 C 65 35, 75 55, 75 70 A 25 25 0 0 1 25 70 C 25 55, 35 35, 50 15 Z" fill="#288796"/>
   
-  <!-- Sand-colored Coffee Bean -->
-  <ellipse cx="50" cy="65" rx="12" ry="16" fill="#d9cbb8"/>
+  <!-- Black Coffee Bean -->
+  <ellipse cx="50" cy="65" rx="12" ry="16" fill="#000000"/>
   
   <!-- Bean Crack (S-curve) -->
   <path d="M 50 51 C 57 58, 43 72, 50 79" fill="none" stroke="#288796" stroke-width="2.5" stroke-linecap="round"/>
