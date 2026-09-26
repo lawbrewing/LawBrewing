@@ -1,56 +1,42 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const menuContainer = document.getElementById('menu-container');
+    const container = document.getElementById('menu-container');
 
-    // Fetch the JSON file
     fetch('menu.json')
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            renderMenu(data.drinks);
+        .then(response => response.json())
+        .then(menuData => {
+            container.innerHTML = ''; // Clear loading state
+            
+            menuData.drinks.forEach(drink => {
+                const ingredientsHTML = drink.syrups.map(item => `
+                    <li class="flex items-start text-sm text-sand-200/90 mb-1.5">
+                        <svg class="w-4 h-4 text-lagoon-teal mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        <span>${item}</span>
+                    </li>
+                `).join('');
+
+                const cardHTML = `
+                    <div class="glass-card rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-lagoon-teal/10 flex flex-col h-full group">
+                        <div class="mb-4">
+                            <h3 class="text-xl font-serif text-lagoon-foam mb-1 group-hover:text-lagoon-teal transition-colors duration-300">${drink.name}</h3>
+                            <p class="text-xs text-sand-300/70 italic">${drink.description}</p>
+                        </div>
+                        
+                        <div class="mt-auto pt-4 border-t border-lagoon-teal/20">
+                            <h4 class="text-xs uppercase tracking-wider text-lagoon-teal font-semibold mb-3">Composition</h4>
+                            <ul class="space-y-1">
+                                ${ingredientsHTML}
+                            </ul>
+                        </div>
+                    </div>
+                `;
+                
+                container.innerHTML += cardHTML;
+            });
         })
         .catch(error => {
             console.error('Error fetching menu:', error);
-            menuContainer.innerHTML = '<p>The menu is currently drifting out to sea. Please check back later.</p>';
+            container.innerHTML = '<p class="text-sand-300 text-center w-full">The menu is drifting out to sea. Please check back later.</p>';
         });
-
-    function renderMenu(drinks) {
-        // Clear any loading text
-        menuContainer.innerHTML = '';
-
-        drinks.forEach(drink => {
-            // Create card container
-            const card = document.createElement('div');
-            card.className = 'drink-card';
-
-            // Create drink name
-            const nameEl = document.createElement('h2');
-            nameEl.className = 'drink-name';
-            nameEl.textContent = drink.name;
-
-            // Create drink description
-            const descEl = document.createElement('p');
-            descEl.className = 'drink-desc';
-            descEl.textContent = drink.description;
-
-            // Create ingredients list
-            const ingredientsList = document.createElement('ul');
-            ingredientsList.className = 'drink-ingredients';
-            
-            drink.ingredients.forEach(ingredient => {
-                const li = document.createElement('li');
-                li.textContent = ingredient;
-                ingredientsList.appendChild(li);
-            });
-
-            // Append elements to card, then card to container
-            card.appendChild(nameEl);
-            card.appendChild(descEl);
-            card.appendChild(ingredientsList);
-            menuContainer.appendChild(card);
-        });
-    }
 });
