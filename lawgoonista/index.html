@@ -3,32 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lawgoonista Menu</title>
+    <title>Lawgoonista | Craft Coffee</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,700&family=Raleway:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Pacifico&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        lagoon: {
+                            900: '#06161c',
+                            800: '#0a232b',
+                            700: '#113946',
+                            600: '#195466',
+                            teal: '#288796',
+                            foam: '#e2f4f6',
+                        },
+                        sand: {
+                            300: '#d9cbb8',
+                            200: '#ecdcd3',
+                            100: '#f7f4ed'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                        cursive: ['Pacifico', 'cursive'],
+                    }
+                }
+            }
+        }
+    </script>
 </head>
-<body>
-    <div class="water-overlay"></div>
-    <div class="container">
-        <header>
-            <div class="logo-container">
-                <h1>
-                    <span class="law">Law</span><span class="goon">goon</span><span class="ista">ista</span>
-                </h1>
-                <p class="subtitle">Craft Lattes on the Water</p>
-            </div>
-        </header>
+<body class="text-sand-100 antialiased selection:bg-lagoon-teal selection:text-white pb-20">
 
-        <main id="menu-container">
-            <!-- Menu items will be injected here by app.js -->
-        </main>
-        
-        <footer>
-            <p>Every latte crafted to order with milk of the day.</p>
-        </footer>
-    </div>
+    <header class="w-full pt-12 pb-8 flex flex-col items-center justify-center text-center px-4">
+        <h1 class="flex items-baseline justify-center gap-1 mb-2">
+            <span class="font-serif text-5xl md:text-6xl text-sand-200 tracking-tight">Law</span>
+            <span class="font-cursive text-5xl md:text-6xl text-lagoon-teal -ml-2 drop-shadow-md">goon</span>
+            <span class="font-sans font-semibold text-lg md:text-xl text-sand-300 tracking-[0.3em] uppercase ml-1">ista</span>
+        </h1>
+        <div class="h-px w-24 bg-lagoon-teal/50 mt-4 mb-6"></div>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section class="text-center max-w-2xl mx-auto mb-16">
+            <p class="text-lg md:text-xl text-lagoon-foam/90 font-light leading-relaxed mb-4">
+                Welcome to the edge of the water. 
+            </p>
+            <p class="text-sm md:text-base text-sand-300/80 leading-relaxed font-light">
+                Legend has it that <strong>Loomis</strong>, our resident Great Egret, watches over the marshlands just outside our windows. He embodies the perfect balance of patience and precision—the exact same philosophy we pour into every craft brew. Discover our signature, lagoon-inspired menu below.
+            </p>
+        </section>
+
+        <section>
+            <h2 class="text-2xl font-serif text-center text-lagoon-foam mb-10 flex items-center justify-center gap-4">
+                <span class="h-px w-8 bg-lagoon-teal/50 block"></span>
+                Signature Pours
+                <span class="h-px w-8 bg-lagoon-teal/50 block"></span>
+            </h2>
+            
+            <div id="menu-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Drinks dynamically load here -->
+            </div>
+        </section>
+    </main>
+
     <script src="app.js"></script>
 </body>
 </html>
